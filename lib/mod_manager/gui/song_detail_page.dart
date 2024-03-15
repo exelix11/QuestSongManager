@@ -30,12 +30,12 @@ class SongDetailPage extends StatelessWidget {
     }
 
     // Leave the song detail page
-    Navigator.pop(context);
+    if (context.mounted) Navigator.pop(context);
   }
 
   Future _deleteSong(BuildContext context) async {
     await App.modManager.deleteSong(song);
-    Navigator.pop(context);
+    if (context.mounted) Navigator.pop(context);
   }
 
   Future _recheckSongHash() async {

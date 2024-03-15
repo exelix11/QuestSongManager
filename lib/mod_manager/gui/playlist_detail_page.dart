@@ -57,20 +57,21 @@ class PlaylistDetailPageState extends State<PlaylistDetailPage> {
     setState(() {});
   }
 
-  Future _deletePlaylist(BuildContext context) async {
-    var confirm = await _confirmPlaylistDelete(context);
+  Future _deletePlaylist() async {
+    var confirm = await _confirmPlaylistDelete();
 
     if (confirm == null || !confirm) {
       return;
     }
 
     await App.modManager.deletePlaylist(widget.playlist);
-    Navigator.pop(context);
+
+    if (mounted) Navigator.pop(this.context);
   }
 
-  Future<bool?> _confirmPlaylistDelete(BuildContext context) {
+  Future<bool?> _confirmPlaylistDelete() {
     return showDialog<bool>(
-      context: context,
+      context: this.context,
       barrierDismissible: false, // user must tap button!
       builder: (BuildContext context) {
         return AlertDialog(
@@ -132,7 +133,7 @@ class PlaylistDetailPageState extends State<PlaylistDetailPage> {
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 ElevatedButton(
-                  onPressed: () => _deletePlaylist(context),
+                  onPressed: _deletePlaylist,
                   child: const Text('Delete this playlist'),
                 ),
               ],

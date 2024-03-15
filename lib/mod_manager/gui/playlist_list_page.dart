@@ -43,8 +43,8 @@ class PlaylistListPageState extends State<PlaylistListPage> {
 
   String? _pickedName;
 
-  Future<void> _playlistNameInput(BuildContext context) async {
-    final TextEditingController _controller = TextEditingController();
+  Future<void> _playlistNameInput() async {
+    final TextEditingController controller = TextEditingController();
     return showDialog<void>(
       context: context,
       barrierDismissible: false, // user must tap button!
@@ -52,13 +52,13 @@ class PlaylistListPageState extends State<PlaylistListPage> {
         return AlertDialog(
           title: const Text('Enter the name for the new playlist'),
           content: TextField(
-            controller: _controller,
+            controller: controller,
           ),
           actions: <Widget>[
             TextButton(
               child: const Text('OK'),
               onPressed: () {
-                _pickedName = _controller.text;
+                _pickedName = controller.text;
                 Navigator.of(context).pop();
               },
             ),
@@ -69,14 +69,13 @@ class PlaylistListPageState extends State<PlaylistListPage> {
   }
 
   void _onNewplaylistTap() async {
-    await _playlistNameInput(context);
+    await _playlistNameInput();
+
     if (_pickedName != null) {
       try {
         await App.modManager.createPlaylist(_pickedName!);
       } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('Failed to create playlist: $e'),
-        ));
+        App.showToast('Failed to create playlist: $e');
       }
       _pickedName = null;
     }
