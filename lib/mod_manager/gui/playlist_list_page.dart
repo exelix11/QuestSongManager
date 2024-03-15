@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:bsaberquest/gui_util.dart';
 import 'package:bsaberquest/main.dart';
 import 'package:bsaberquest/mod_manager/gui/playlist_detail_page.dart';
 import 'package:bsaberquest/mod_manager/gui/simple_widgets.dart';
@@ -41,43 +42,16 @@ class PlaylistListPageState extends State<PlaylistListPage> {
     );
   }
 
-  String? _pickedName;
-
-  Future<void> _playlistNameInput() async {
-    final TextEditingController controller = TextEditingController();
-    return showDialog<void>(
-      context: context,
-      barrierDismissible: false, // user must tap button!
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Enter the name for the new playlist'),
-          content: TextField(
-            controller: controller,
-          ),
-          actions: <Widget>[
-            TextButton(
-              child: const Text('OK'),
-              onPressed: () {
-                _pickedName = controller.text;
-                Navigator.of(context).pop();
-              },
-            ),
-          ],
-        );
-      },
-    );
-  }
-
   void _onNewplaylistTap() async {
-    await _playlistNameInput();
+    var name = await GuiUtil.textInputDialog(
+        context, 'Enter the name for the new playlist');
 
-    if (_pickedName != null) {
+    if (name != null) {
       try {
-        await App.modManager.createPlaylist(_pickedName!);
+        await App.modManager.createPlaylist(name);
       } catch (e) {
         App.showToast('Failed to create playlist: $e');
       }
-      _pickedName = null;
     }
   }
 

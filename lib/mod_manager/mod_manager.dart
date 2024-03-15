@@ -277,9 +277,8 @@ class ModManager {
     return song;
   }
 
-  Future deleteSong(Song song) async {
-    await reloadIfNeeded();
-
+  // Delete a song and remove it from all playlists, but don't save the playlists
+  Future<Set<Playlist>> _deleteSingleSong(Song song) async {
     // Get the song from our list to ensure we know it exists
     song = songs[song.hash]!;
 
@@ -289,13 +288,57 @@ class ModManager {
     }
 
     songs.remove(song.hash);
+
+    Set<Playlist> affectedPlaylists = {};
+    for (var playlist in playlists.values) {
+      if (playlist.songs.any((element) => element.hash == song.hash)) {
+        affectedPlaylists.add(playlist);
+        playlist.songs.removeWhere((element) => element.hash == song.hash);
+      }
+    }
+
+    return affectedPlaylists;
+  }
+
+  // Apply changes to a playlist and save it to disk but don't notify the UI
+  Future _internalApplyPlaylistChanges(Playlist playlist) async {
+    await reloadIfNeeded();
+
+    if (!playlists.containsKey(playlist.fileName)) {
+      throw Exception(
+          "Playlist with name ${playlist.playlistTitle} does not exist");
+    }
+
+    var file = File("$modDataPath/$_playlistsPath/${playlist.fileName}");
+    await file.writeAsString(jsonEncode(playlist.toJson()));
+  }
+
+  Future deleteSongs(List<Song> songs) async {
+    await reloadIfNeeded();
+
+    Set<Playlist> affectedPlaylists = {};
+
+    for (var song in songs) {
+      affectedPlaylists.addAll(await _deleteSingleSong(song));
+    }
+
+    // Notify the UI only once
     songListObservable.sink.add(null);
 
-    for (var playlist in playlists.values) {
-      playlist.songs.removeWhere((element) => element.hash == song.hash);
+    if (affectedPlaylists.isEmpty) {
+      return;
+    }
+
+    // Save all the playlists that were affected and notify only once
+    for (var playlist in affectedPlaylists) {
+      await _internalApplyPlaylistChanges(playlist);
     }
 
     playlistObservable.sink.add(null);
+  }
+
+  Future deleteSong(Song song) async {
+    return deleteSongs([song]);
   }
 
   Future<Playlist> createPlaylist(String name) async {
@@ -325,15 +368,7 @@ class ModManager {
   }
 
   Future applyPlaylistChanges(Playlist playlist) async {
-    await reloadIfNeeded();
-
-    if (!playlists.containsKey(playlist.fileName)) {
-      throw Exception(
-          "Playlist with name ${playlist.playlistTitle} does not exist");
-    }
-
-    var file = File("$modDataPath/$_playlistsPath/${playlist.fileName}");
-    await file.writeAsString(jsonEncode(playlist.toJson()));
+    await _internalApplyPlaylistChanges(playlist);
     playlistObservable.sink.add(null);
   }
 

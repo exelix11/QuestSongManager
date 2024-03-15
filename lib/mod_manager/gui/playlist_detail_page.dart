@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:bsaberquest/gui_util.dart';
 import 'package:bsaberquest/main.dart';
 import 'package:bsaberquest/mod_manager/gui/simple_widgets.dart';
 import 'package:bsaberquest/mod_manager/gui/song_detail_page.dart';
@@ -58,7 +59,8 @@ class PlaylistDetailPageState extends State<PlaylistDetailPage> {
   }
 
   Future _deletePlaylist() async {
-    var confirm = await _confirmPlaylistDelete();
+    var confirm = await GuiUtil.confirmChoice(this.context, 'Delete Playlist',
+        'Are you sure you want to delete this playlist? The songs will not be deleted.');
 
     if (confirm == null || !confirm) {
       return;
@@ -67,40 +69,6 @@ class PlaylistDetailPageState extends State<PlaylistDetailPage> {
     await App.modManager.deletePlaylist(widget.playlist);
 
     if (mounted) Navigator.pop(this.context);
-  }
-
-  Future<bool?> _confirmPlaylistDelete() {
-    return showDialog<bool>(
-      context: this.context,
-      barrierDismissible: false, // user must tap button!
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Delete Playlist'),
-          content: const SingleChildScrollView(
-            child: ListBody(
-              children: [
-                Text(
-                    'Are you sure you want to delete this playlist? The songs will not be deleted.'),
-              ],
-            ),
-          ),
-          actions: <Widget>[
-            TextButton(
-              child: const Text('Cancel'),
-              onPressed: () {
-                Navigator.of(context).pop(false);
-              },
-            ),
-            TextButton(
-              child: const Text('Delete'),
-              onPressed: () {
-                Navigator.of(context).pop(true);
-              },
-            ),
-          ],
-        );
-      },
-    );
   }
 
   void _songDetails(BuildContext context, Song song) {
