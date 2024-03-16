@@ -216,7 +216,7 @@ class SongsListState extends State<SongListPage> {
           icon: const Icon(Icons.delete), onPressed: _deleteSelection));
 
       actions.add(IconButton(
-          icon: const Icon(Icons.close), onPressed: _clearSelection));
+          icon: const Icon(Icons.clear), onPressed: _clearSelection));
     } else {
       actions.add(IconButton(
           icon: const Icon(Icons.select_all), onPressed: _selectAllInView));

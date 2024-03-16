@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:bsaberquest/download_manager/gui/bookmarks_manager.dart';
 import 'package:bsaberquest/download_manager/gui/util.dart';
 import 'package:bsaberquest/gui_util.dart';
 import 'package:bsaberquest/main.dart';
@@ -109,6 +110,32 @@ class OptionsPageState extends State<OptionsPage> {
     );
   }
 
+  Widget _utilOptions() {
+    return Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+      ElevatedButton(
+          onPressed: _reloadSongs,
+          child: const Text("Reload songs and playlists")),
+      const SizedBox(width: 10),
+      ElevatedButton(
+          onPressed: _openBookmarksManager,
+          child: const Text("Manage browser bookmarks"))
+    ]);
+  }
+
+  void _reloadSongs() async {
+    try {
+      await App.modManager.reloadFromDisk();
+      App.showToast("Songs reloaded");
+    } catch (e) {
+      App.showToast("Reloading songs failed: $e");
+    }
+  }
+
+  void _openBookmarksManager() {
+    Navigator.of(context).push(
+        MaterialPageRoute(builder: (context) => const BookmarksManager()));
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -119,7 +146,9 @@ class OptionsPageState extends State<OptionsPage> {
         child: Column(
           children: [
             _permissionCheckWidget(),
-            const SizedBox(height: 10),
+            const SizedBox(height: 20),
+            _utilOptions(),
+            const SizedBox(height: 20),
             _hashCacheOptions(),
             const SizedBox(height: 20),
             Row(

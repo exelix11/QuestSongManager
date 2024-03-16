@@ -1,11 +1,14 @@
 import 'package:bsaberquest/download_manager/gui/pending_downloads_widget.dart';
 import 'package:bsaberquest/download_manager/gui/util.dart';
+import 'package:bsaberquest/preferences.dart';
 import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:webview_flutter_android/webview_flutter_android.dart';
 
 class BrowserPageViewState extends State<BrowserPageView> {
   late WebViewController controller;
+
+  List<WebBookmark> bookmarks = [];
 
   @override
   void initState() {
@@ -40,7 +43,20 @@ class BrowserPageViewState extends State<BrowserPageView> {
       androidparams.setMediaPlaybackRequiresUserGesture(false);
     }
 
-    _navigateTo(widget.initialUrl ?? 'https://bsaber.com/');
+    PreferencesManager().getWebBookmarks().then((value) {
+      setState(() {
+        bookmarks = value;
+      });
+
+      var startFrom = widget.initialUrl;
+
+      if (startFrom == null || startFrom.isEmpty) {
+        startFrom =
+            bookmarks.isEmpty ? 'https://bsaber.com/' : bookmarks[0].url;
+      }
+
+      _navigateTo(startFrom);
+    });
 
     super.initState();
   }
@@ -93,18 +109,14 @@ class BrowserPageViewState extends State<BrowserPageView> {
             IconButton(onPressed: _quitPage, icon: const Icon(Icons.close)),
           ],
           title: SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(children: [
-              ElevatedButton(
-                child: const Text('bsaber.com'),
-                onPressed: () => _navigateTo("https://bsaber.com/"),
-              ),
-              ElevatedButton(
-                child: const Text('beatsaver.com'),
-                onPressed: () => _navigateTo("https://beatsaver.com/"),
-              ),
-            ]),
-          ),
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                  children: bookmarks
+                      .map((e) => ElevatedButton(
+                            child: Text(e.title),
+                            onPressed: () => _navigateTo(e.url),
+                          ))
+                      .toList())),
         ),
         // ignore: deprecated_member_use
         body: WillPopScope(

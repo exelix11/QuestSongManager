@@ -27,6 +27,7 @@ class MainPageState extends State<MainPage> {
     });
 
     try {
+      await Future.delayed(const Duration(seconds: 10));
       await App.modManager.reloadIfNeeded();
     } catch (e) {
       App.showToast(
@@ -36,7 +37,7 @@ class MainPageState extends State<MainPage> {
 
   Widget _buildLoader() {
     return Scaffold(
-      appBar: AppBar(title: const Text('Bsaber Quest')),
+      appBar: AppBar(title: const Text('Loading')),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -58,8 +59,7 @@ class MainPageState extends State<MainPage> {
       length: 4,
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Bsaber Quest'),
-          bottom: const TabBar(
+          title: const TabBar(
             tabs: [
               Tab(icon: Icon(Icons.music_note)),
               Tab(icon: Icon(Icons.list)),
