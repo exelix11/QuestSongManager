@@ -194,8 +194,15 @@ class SongsListState extends State<SongListPage> {
   }
 
   AppBar _appbar() {
-    var titleText =
-        _isAnySelected() ? '${_selection.length} selected' : 'Song List';
+    var titleText = "";
+
+    if (_isAnySelected()) {
+      titleText = "${_selection.length} selected";
+    } else if (_showSearch) {
+      titleText = "${_uiSongs.length} results";
+    } else {
+      titleText = "Found ${_uiSongs.length} songs";
+    }
 
     List<Widget> actions = [];
 

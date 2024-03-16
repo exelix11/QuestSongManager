@@ -344,6 +344,10 @@ class ModManager {
   Future<Playlist> createPlaylist(String name) async {
     await reloadIfNeeded();
 
+    if (name.isEmpty) {
+      throw Exception("Playlist name cannot be empty");
+    }
+
     var filename = "${name.replaceAll(" ", "_")}.bplist_BMBF.json";
 
     if (playlists.containsKey(filename)) {
