@@ -26,6 +26,32 @@ class GuiUtil {
     );
   }
 
+  static Future<Future<T>?> loadingDialog<T>(
+      BuildContext context, String message, Future<T> future) async {
+    return showDialog<Future<T>>(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(message),
+          content: FutureBuilder(
+            future: future,
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.done) {
+                Navigator.of(context).pop(future);
+              }
+              return const Center(
+                  child: SizedBox(
+                      width: 100,
+                      height: 100,
+                      child: CircularProgressIndicator()));
+            },
+          ),
+        );
+      },
+    );
+  }
+
   static Future<bool?> confirmChoice(
       BuildContext context, String title, String content) {
     return showDialog<bool>(

@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:bsaberquest/download_manager/gui/util.dart';
+import 'package:bsaberquest/gui_util.dart';
 import 'package:bsaberquest/main.dart';
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -29,6 +30,41 @@ class OptionsPageState extends State<OptionsPage> {
     }
 
     return const SizedBox();
+  }
+
+  Future<int> _doRehashAllSongs() async {
+    // First reload in case of changes
+    await App.modManager.reloadFromDisk();
+    // Then rehash all songs
+    int fixed = 0;
+    for (var song in App.modManager.songs.values) {
+      if (!await App.modManager.checkSongHash(song)) {
+        fixed++;
+      }
+    }
+
+    return fixed;
+  }
+
+  void _rehasAllSongs() async {
+    if (!App.modManager.useFastHashCache) {
+      App.showToast(
+          "Hash cache is disabled, rehashing all songs is not possible");
+      return;
+    }
+
+    var future = _doRehashAllSongs();
+    var res = await GuiUtil.loadingDialog(
+        context, "Recalculating the hash of all the songs...", future);
+
+    if (res != null) {
+      var num = await res;
+      if (num == 0) {
+        App.showToast("All songs hashes were correct");
+      } else {
+        App.showToast("$num songs hashes were invalid and have been corrected");
+      }
+    }
   }
 
   Widget _hashCacheOptions() {
@@ -63,7 +99,12 @@ class OptionsPageState extends State<OptionsPage> {
       children: [
         Text(using ? "Using fast hash cache" : "hash cache has been disabled"),
         const SizedBox(width: 10),
-        button
+        button,
+        const SizedBox(width: 10),
+        ElevatedButton(
+          onPressed: () => _rehasAllSongs(),
+          child: const Text("Check all song hashes"),
+        ),
       ],
     );
   }
