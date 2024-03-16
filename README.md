@@ -1,6 +1,6 @@
 # Quest Song Manager
 
-This is a simple song maanger for the Quest version of Beat Saber.
+This is a simple song manager for the Quest version of Beat Saber.
 
 ## Features
 
