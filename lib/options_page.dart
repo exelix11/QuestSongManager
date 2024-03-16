@@ -145,6 +145,36 @@ class OptionsPageState extends State<OptionsPage> {
         MaterialPageRoute(builder: (context) => const BookmarksManager()));
   }
 
+  Widget _downloadByIdTest() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        const Text("Download by ID"),
+        const SizedBox(width: 10),
+        SizedBox(
+          width: 100,
+          child: TextField(
+            controller: _idController,
+          ),
+        ),
+        const SizedBox(width: 10),
+        ElevatedButton(
+          onPressed: () => _downloadById(context),
+          child: const Text("Download"),
+        )
+      ],
+    );
+  }
+
+  Widget _credits() {
+    return const Column(children: [
+      SizedBox(height: 60),
+      Text("Quest Song Manager, by exelix11"),
+      Text("Release 1.0"),
+      Text("https://github.com/exelix11/QuestSongManager"),
+    ]);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -160,24 +190,8 @@ class OptionsPageState extends State<OptionsPage> {
             const SizedBox(height: 20),
             _hashCacheOptions(),
             const SizedBox(height: 20),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Text("Download by ID"),
-                const SizedBox(width: 10),
-                SizedBox(
-                  width: 100,
-                  child: TextField(
-                    controller: _idController,
-                  ),
-                ),
-                const SizedBox(width: 10),
-                ElevatedButton(
-                  onPressed: () => _downloadById(context),
-                  child: const Text("Download"),
-                )
-              ],
-            ),
+            _downloadByIdTest(),
+            _credits(),
           ],
         ),
       ),
