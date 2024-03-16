@@ -64,7 +64,6 @@ class ModManager {
   Future reloadFromDisk() async {
     songs.clear();
     playlists.clear();
-    _isInitialized = true;
 
     var invalidCounter = 0;
 
@@ -115,6 +114,7 @@ class ModManager {
       }
     }
 
+    _isInitialized = true;
     songListObservable.sink.add(null);
     playlistObservable.sink.add(null);
   }

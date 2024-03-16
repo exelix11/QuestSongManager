@@ -3,6 +3,15 @@ import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class PreferencesManager {
+  Future<bool> isFirstLaunchPermissionRequested() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    var res = prefs.getBool('first_launch_permission_requested') ?? false;
+    if (!res) {
+      prefs.setBool('first_launch_permission_requested', true);
+    }
+    return res;
+  }
+
   Future<bool> useHashCache() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     return prefs.getBool('use_hash_cache') ?? true;
@@ -13,36 +22,84 @@ class PreferencesManager {
     prefs.setBool('use_hash_cache', value);
   }
 
-  List<WebBookmark> _getDefaults() {
-    return [
-      WebBookmark('bsaber.com', 'https://bsaber.com/'),
-      WebBookmark('beatsaver.com', 'https://beatsaver.com/'),
-    ];
+  BrowserPreferences _getDefaults() {
+    return BrowserPreferences()
+      ..bookmarks = [
+        WebBookmark('bsaber.com', 'https://bsaber.com/'),
+        WebBookmark('beatsaver.com', 'https://beatsaver.com/'),
+      ];
   }
 
   Future resetWebBookmarks() async {
     await setWebBookmarks(_getDefaults());
   }
 
-  Future<List<WebBookmark>> getWebBookmarks() async {
+  Future<BrowserPreferences> getWebBookmarks() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    List<String>? bookmarks = prefs.getStringList('web_bookmarks');
+    String? bookmarks = prefs.getString('web_preferences');
 
     if (bookmarks == null) {
       return _getDefaults();
     }
 
     try {
-      return bookmarks.map((e) => WebBookmark.fromJson(e)).toList();
+      return BrowserPreferences.fromJson(jsonDecode(bookmarks));
     } catch (e) {
       return _getDefaults();
     }
   }
 
-  Future setWebBookmarks(List<WebBookmark> bookmarks) async {
+  Future setWebBookmarks(BrowserPreferences settings) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    prefs.setStringList(
-        'web_bookmarks', bookmarks.map((e) => '${e.title} ${e.url}').toList());
+    prefs.setString("web_preferences", jsonEncode(settings.toJson()));
+  }
+}
+
+class BrowserPreferences {
+  List<WebBookmark> bookmarks = [];
+  String? homepage;
+
+  BrowserPreferences();
+
+  int getHomepageIndex() {
+    if (bookmarks.isEmpty) {
+      return -1;
+    }
+
+    if (homepage == null) {
+      return 0;
+    }
+
+    try {
+      return bookmarks.indexWhere((element) => element.url == homepage);
+    } catch (e) {
+      return 0;
+    }
+  }
+
+  WebBookmark? getHomepage() {
+    var index = getHomepageIndex();
+    if (index == -1) {
+      return null;
+    }
+
+    return bookmarks[index];
+  }
+
+  factory BrowserPreferences.fromJson(Map<String, dynamic> json) {
+    var prefs = BrowserPreferences();
+    prefs.bookmarks = (json['bookmarks'] as List)
+        .map((e) => WebBookmark.fromJson(e))
+        .toList();
+    prefs.homepage = json['homepage'];
+    return prefs;
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'bookmarks': bookmarks.map((e) => e.toJson()).toList(),
+      'homepage': homepage
+    };
   }
 }
 

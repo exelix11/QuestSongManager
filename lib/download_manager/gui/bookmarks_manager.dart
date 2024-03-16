@@ -1,17 +1,22 @@
 import 'package:bsaberquest/gui_util.dart';
 import 'package:bsaberquest/main.dart';
 import 'package:bsaberquest/preferences.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 class BookmarksManagerState extends State<BookmarksManager> {
-  List<WebBookmark> bookmarks = [];
+  BrowserPreferences prefs = BrowserPreferences();
+  int homeIndex = 0;
 
   void _reloadBookmarks() {
     PreferencesManager().getWebBookmarks().then((value) {
-      setState(() {
-        bookmarks = value;
-      });
+      prefs = value;
+      _updateState();
+    });
+  }
+
+  void _updateState() {
+    setState(() {
+      homeIndex = prefs.getHomepageIndex();
     });
   }
 
@@ -22,18 +27,37 @@ class BookmarksManagerState extends State<BookmarksManager> {
   }
 
   Widget _buildItem(BuildContext context, int index) {
-    var bookmark = bookmarks[index];
+    var bookmark = prefs.bookmarks[index];
+
+    var isDefault = index == homeIndex;
+    var leading = isDefault ? const Icon(Icons.home) : null;
+
     return ListTile(
       title: Text(bookmark.title),
       subtitle: Text(bookmark.url),
-      trailing: IconButton(
-        icon: const Icon(Icons.delete),
-        onPressed: () async {
-          await App.preferences.setWebBookmarks(bookmarks);
-          setState(() {
-            bookmarks.removeAt(index);
-          });
-        },
+      leading: leading,
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          isDefault
+              ? const SizedBox()
+              : IconButton(
+                  icon: const Icon(Icons.home),
+                  onPressed: () async {
+                    prefs.homepage = bookmark.url;
+                    await App.preferences.setWebBookmarks(prefs);
+                    _updateState();
+                  },
+                ),
+          IconButton(
+            icon: const Icon(Icons.delete),
+            onPressed: () async {
+              prefs.bookmarks.removeAt(index);
+              await App.preferences.setWebBookmarks(prefs);
+              _updateState();
+            },
+          )
+        ],
       ),
     );
   }
@@ -44,7 +68,7 @@ class BookmarksManagerState extends State<BookmarksManager> {
       return;
     }
 
-    if (!context.mounted) return;
+    if (!mounted) return;
 
     var name =
         await GuiUtil.textInputDialog(context, "Enter the bookmark short name");
@@ -55,11 +79,11 @@ class BookmarksManagerState extends State<BookmarksManager> {
     if (!url.toLowerCase().startsWith("http")) url = "https://$url";
 
     var newBookmark = WebBookmark(name, url);
-    bookmarks.add(newBookmark);
+    prefs.bookmarks.add(newBookmark);
 
-    await App.preferences.setWebBookmarks(bookmarks);
+    await App.preferences.setWebBookmarks(prefs);
 
-    setState(() {});
+    _updateState();
   }
 
   void _revertDefault() async {
@@ -86,7 +110,7 @@ class BookmarksManagerState extends State<BookmarksManager> {
           ],
         ),
         body: ListView.builder(
-          itemCount: bookmarks.length,
+          itemCount: prefs.bookmarks.length,
           itemBuilder: _buildItem,
         ));
   }

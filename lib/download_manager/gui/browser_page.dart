@@ -45,14 +45,13 @@ class BrowserPageViewState extends State<BrowserPageView> {
 
     PreferencesManager().getWebBookmarks().then((value) {
       setState(() {
-        bookmarks = value;
+        bookmarks = value.bookmarks;
       });
 
       var startFrom = widget.initialUrl;
 
       if (startFrom == null || startFrom.isEmpty) {
-        startFrom =
-            bookmarks.isEmpty ? 'https://bsaber.com/' : bookmarks[0].url;
+        startFrom = value.getHomepage()?.url ?? 'https://bsaber.com/';
       }
 
       _navigateTo(startFrom);

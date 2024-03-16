@@ -19,13 +19,22 @@ class OptionsPageState extends State<OptionsPage> {
     await DownloadUtil.downloadById(id, null);
   }
 
+  static Future<bool> requestFileAccess() async {
+    if (await Permission.manageExternalStorage.request().isGranted) {
+      return true;
+    }
+    return false;
+  }
+
   Widget _permissionCheckWidget() {
     if (Platform.isAndroid) {
       return ElevatedButton(
-          child: const Text('Request Permission'),
+          child: const Text('Request file access permission'),
           onPressed: () async {
-            if (await Permission.manageExternalStorage.request().isGranted) {
-              // The user granted the permission
+            if (await requestFileAccess()) {
+              _reloadSongs();
+            } else {
+              App.showToast("Permission denied");
             }
           });
     }
@@ -47,7 +56,7 @@ class OptionsPageState extends State<OptionsPage> {
     return fixed;
   }
 
-  void _rehasAllSongs() async {
+  void _rehashAllSongs() async {
     if (!App.modManager.useFastHashCache) {
       App.showToast(
           "Hash cache is disabled, rehashing all songs is not possible");
@@ -103,7 +112,7 @@ class OptionsPageState extends State<OptionsPage> {
         button,
         const SizedBox(width: 10),
         ElevatedButton(
-          onPressed: () => _rehasAllSongs(),
+          onPressed: () => _rehashAllSongs(),
           child: const Text("Check all song hashes"),
         ),
       ],

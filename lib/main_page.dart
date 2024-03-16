@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:bsaberquest/download_manager/gui/downloads_tab.dart';
 import 'package:bsaberquest/options_page.dart';
 import 'package:bsaberquest/main.dart';
@@ -27,11 +29,23 @@ class MainPageState extends State<MainPage> {
     });
 
     try {
-      await Future.delayed(const Duration(seconds: 10));
       await App.modManager.reloadIfNeeded();
     } catch (e) {
-      App.showToast(
-          "Error during initialization: $e\nTry enabling permissions in the settings page");
+      if (e is FileSystemException && e.osError?.errorCode == 13) {
+        if (!await App.preferences.isFirstLaunchPermissionRequested()) {
+          if (await OptionsPageState.requestFileAccess()) {
+            setState(() {
+              _init = _initialize();
+            });
+            return;
+          }
+        }
+
+        App.showToast(
+            "Failed to access the storage, please enable the storage permission in the settings");
+      } else {
+        App.showToast("Error during initialization: $e");
+      }
     }
   }
 
