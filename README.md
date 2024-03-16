@@ -5,12 +5,12 @@ This is a simple song manager for the Quest version of Beat Saber.
 ## Features
 
 - Manage songs and playlists
-- WebView to download songs from sources that support the `beatsaver://` protocol, examples are
+- Download songs from sources that support the `beatsaver://` protocol, examples are
 	- https://bsaber.com/
 	- https://beatsaver.com/
 - Download songs directly to playlists
 - Add your own sources to the browser bookmarks
-- Super fast startup thanks to caching of the song hashes
+- Super fast startup
 - Open source :)
 
 ## Getting Started
@@ -20,6 +20,10 @@ This is a simple song manager for the Quest version of Beat Saber.
 3) Enjoy!
 
 ## Details
+
+This started as a personal project from my unsatisfaction with the other song management options available on the Quest. I made it public hoping it can be useful to others but I don't plan to offer support or major updates. 
+
+I tested this app only on my own device where I use a limited number of mods, use at your own risk.
 
 The app will scan the beat saber `ModData` folder in the quest internal storage. It can load and save `json` playlists in a way that is compatible with BMBF.
 
