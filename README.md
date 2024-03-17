@@ -31,6 +31,8 @@ Additionally, the app caches the song hashes to files called `.bsq_hash_cache` i
 
 ## Screenshots
 
+[Video recorded on a Quest](https://imgur.com/a/K1zUxex)
+
 Main screen
 
 ![Main screen](.images/songlist.png)
