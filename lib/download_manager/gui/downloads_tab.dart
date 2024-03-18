@@ -68,6 +68,11 @@ class DownloadsTabState extends State<DownloadsTab> {
     return Scaffold(
         appBar: AppBar(
           title: const Text('Download manager'),
+          actions: [
+            IconButton(
+                onPressed: App.downloadManager.clearCompleted,
+                icon: const Icon(Icons.playlist_remove))
+          ],
         ),
         body: Center(
           child: Column(children: [

@@ -341,14 +341,37 @@ class ModManager {
     return deleteSongs([song]);
   }
 
-  Future<Playlist> createPlaylist(String name) async {
+  String _playlistNameToFileName(String name) {
+    var filename = "${name.replaceAll(" ", "_")}.bplist_BMBF.json";
+    return filename;
+  }
+
+  Future<bool> isPlaylistNameFree(String name) async {
     await reloadIfNeeded();
+
+    var filename = _playlistNameToFileName(name);
+    if (playlists.containsKey(filename)) {
+      return false;
+    }
+
+    var file = File("$modDataPath/$_playlistsPath/$filename");
+    if (await file.exists()) {
+      return false;
+    }
+
+    return true;
+  }
+
+  Future addPlaylist(Playlist playlist) async {
+    await reloadIfNeeded();
+
+    var name = playlist.playlistTitle;
 
     if (name.isEmpty) {
       throw Exception("Playlist name cannot be empty");
     }
 
-    var filename = "${name.replaceAll(" ", "_")}.bplist_BMBF.json";
+    var filename = _playlistNameToFileName(name);
 
     if (playlists.containsKey(filename)) {
       throw Exception("Playlist with name $name already exists");
@@ -359,15 +382,17 @@ class ModManager {
       throw Exception("Playlist file with name $name already exists");
     }
 
-    var playlist = Playlist()
-      ..fileName = filename
-      ..playlistTitle = name;
-
+    playlist.fileName = filename;
     playlists[filename] = playlist;
-
     await file.writeAsString(jsonEncode(playlist.toJson()));
-
     playlistObservable.sink.add(null);
+  }
+
+  Future<Playlist> createPlaylist(String name) async {
+    var playlist = Playlist()..playlistTitle = name;
+
+    await addPlaylist(playlist);
+
     return playlist;
   }
 

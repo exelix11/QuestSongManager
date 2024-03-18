@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 
 class GuiUtil {
-  static Future<String?> textInputDialog(
-      BuildContext context, String prompt) async {
+  static Future<String?> textInputDialog(BuildContext context, String prompt,
+      {String? defaultValue}) async {
     final TextEditingController controller = TextEditingController();
+    if (defaultValue != null) {
+      controller.text = defaultValue;
+    }
     return showDialog<String?>(
       context: context,
       barrierDismissible: false, // user must tap button!

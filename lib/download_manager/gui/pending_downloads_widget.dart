@@ -2,12 +2,14 @@ import 'dart:async';
 
 import 'package:bsaberquest/download_manager/downloader.dart';
 import 'package:bsaberquest/main.dart';
+import 'package:bsaberquest/mod_manager/gui/playlist_detail_page.dart';
 import 'package:bsaberquest/mod_manager/gui/song_detail_page.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 
 class PendingDownloadsState extends State<PendingDownloadsWidget> {
-  late StreamSubscription<DownloadItem> _downloadItemsSubscription;
+  late StreamSubscription<DownloadItem?> _downloadItemsSubscription;
 
   @override
   void initState() {
@@ -27,13 +29,14 @@ class PendingDownloadsState extends State<PendingDownloadsWidget> {
   }
 
   void _tappedItem(DownloadItem item) {
-    if (item.status == ItemDownloadStatus.peding) {
+    if (item.status == ItemDownloadStatus.pending) {
       return;
     } else if (item.status == ItemDownloadStatus.error) {
       if (widget.navigateCallback != null && item.webSource != null) {
         widget.navigateCallback!(item.webSource!);
       }
-    } else if (item.status == ItemDownloadStatus.done) {
+    } else if (item.status == ItemDownloadStatus.done &&
+        item is SongDownloadItem) {
       var song = App.modManager.songs[item.hash];
       if (song != null) {
         Navigator.push(
@@ -43,18 +46,49 @@ class PendingDownloadsState extends State<PendingDownloadsWidget> {
           ),
         );
       }
+    } else if (item.status == ItemDownloadStatus.done &&
+        item is PlaylistDownloadItem) {
+      var playlist = App.modManager.playlists[item.playlistFileName];
+      if (playlist != null) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => PlaylistDetailPage(playlist: playlist),
+          ),
+        );
+      }
     }
   }
 
-  Widget _buildEntry(BuildContext context, int index) {
-    var item = App.downloadManager.downloadItems[index];
+  Widget _imageForItem(DownloadItem item) {
+    if (item.urlIcon != null) {
+      return CachedNetworkImage(
+        imageUrl: item.urlIcon!,
+        placeholder: (context, url) => const Icon(Icons.music_note),
+        errorWidget: (context, url, error) => const Icon(Icons.error),
+      );
+    } else if (item.downloadedIcon != null) {
+      return Image.memory(item.downloadedIcon!);
+    } else {
+      return const Icon(Icons.music_note);
+    }
+  }
+
+  Widget? _buildEntry(BuildContext context, int index) {
+    DownloadItem item;
+    try {
+      item = App.downloadManager.downloadItems[index];
+    } on RangeError {
+      // This can happen if the list is modified while we are building it
+      return null;
+    }
 
     var message = "";
 
-    if (item.status == ItemDownloadStatus.peding) {
-      // message not shown
+    if (item.status == ItemDownloadStatus.pending) {
+      message = item.statusMessage;
     } else if (item.status == ItemDownloadStatus.error) {
-      message = "Error";
+      message = "Error: ${item.statusMessage}";
       if (item.webSource != null) {
         message += " (tap to open download page)";
       }
@@ -63,14 +97,10 @@ class PendingDownloadsState extends State<PendingDownloadsWidget> {
     }
 
     return ListTile(
-        leading: CachedNetworkImage(
-          imageUrl: item.urlIcon,
-          placeholder: (context, url) => const Icon(Icons.music_note),
-          errorWidget: (context, url, error) => const Icon(Icons.error),
-        ),
+        leading: _imageForItem(item),
         title: Text(item.name),
-        subtitle: item.status == ItemDownloadStatus.peding
-            ? const LinearProgressIndicator()
+        subtitle: item.status == ItemDownloadStatus.pending
+            ? Column(children: [Text(message), const LinearProgressIndicator()])
             : Text(message),
         onTap: () => _tappedItem(item));
   }
@@ -118,6 +148,11 @@ class PendingDownloadsStandalonePage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Downloads'),
+        actions: [
+          IconButton(
+              onPressed: App.downloadManager.clearCompleted,
+              icon: const Icon(Icons.playlist_remove))
+        ],
       ),
       body: Center(
         child: PendingDownloadsWidget(

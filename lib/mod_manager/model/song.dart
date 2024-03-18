@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:typed_data';
 import 'dart:convert';
 
@@ -95,10 +96,11 @@ class BeatSaberSongInfo {
 }
 
 class PlayListSong {
+  final String? key;
   final String hash;
   final String songName;
 
-  PlayListSong(this.hash, this.songName);
+  PlayListSong(this.hash, this.songName, {this.key});
 
   factory PlayListSong.fromSong(Song song) {
     if (song.hash == null) {
@@ -116,12 +118,14 @@ class PlayListSong {
     return PlayListSong(
       json['hash'] as String,
       json['songName'] as String,
+      key: json['key'] as String?,
     );
   }
 
   Map<String, dynamic> toJson() => {
         'hash': hash,
         'songName': songName,
+        'key': key,
       };
 }
 
@@ -131,9 +135,12 @@ class Playlist {
   String? imageString;
   String playlistTitle = "new playlist";
   String playlistAuthor = "unknown";
+  String? playlistDescription;
   List<PlayListSong> songs = [];
 
   Uint8List? imageBytes;
+
+  Map<String, dynamic>? customData;
 
   Playlist();
 
@@ -151,9 +158,12 @@ class Playlist {
 
   factory Playlist.fromJson(Map<String, dynamic> json) {
     var p = Playlist()
-      ..playlistTitle = json['playlistTitle'] as String
-      ..playlistAuthor = json['playlistAuthor'] as String
-      ..imageString = json['imageString'] as String?
+      ..playlistTitle = json['playlistTitle'] as String? ?? "unknown name"
+      ..playlistAuthor = json['playlistAuthor'] as String? ?? "unknown"
+      ..playlistDescription = json['playlistDescription'] as String?
+      // api.beatsaver.com uses image rather than imageString
+      ..imageString = json['imageString'] as String? ?? json['image'] as String?
+      ..customData = json['customData'] as Map<String, dynamic>?
       ..songs = (json['songs'] as List)
           .map((e) => PlayListSong.fromJson(e as Map<String, dynamic>))
           .toList();
@@ -169,6 +179,8 @@ class Playlist {
         'playlistTitle': playlistTitle,
         'playlistAuthor': playlistAuthor,
         'imageString': imageString,
+        'customData': customData,
+        'playlistDescription': playlistDescription,
         'songs': songs.map((e) => e.toJson()).toList(),
       };
 }

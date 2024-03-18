@@ -9,14 +9,29 @@ import 'package:permission_handler/permission_handler.dart';
 
 class OptionsPageState extends State<OptionsPage> {
   final TextEditingController _idController = TextEditingController();
+  final TextEditingController _urlController = TextEditingController();
 
-  void _downloadById(BuildContext context) async {
+  void _downloadById() async {
     var id = _idController.text;
     if (id.isEmpty) {
       return;
     }
 
     await DownloadUtil.downloadById(id, null);
+  }
+
+  void _downloadPlaylist() async {
+    var url = _urlController.text;
+    if (url.isEmpty) {
+      return;
+    }
+
+    var name = await GuiUtil.textInputDialog(context, "Enter playlist name");
+    if (name == null || name.isEmpty) {
+      return;
+    }
+
+    await DownloadUtil.downloadPlaylist(url, name, null, true);
   }
 
   static Future<bool> requestFileAccess() async {
@@ -159,7 +174,28 @@ class OptionsPageState extends State<OptionsPage> {
         ),
         const SizedBox(width: 10),
         ElevatedButton(
-          onPressed: () => _downloadById(context),
+          onPressed: _downloadById,
+          child: const Text("Download"),
+        )
+      ],
+    );
+  }
+
+  Widget _downloadPlaylistByUrlTest() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        const Text("Download playlist by url"),
+        const SizedBox(width: 10),
+        SizedBox(
+          width: 100,
+          child: TextField(
+            controller: _urlController,
+          ),
+        ),
+        const SizedBox(width: 10),
+        ElevatedButton(
+          onPressed: _downloadPlaylist,
           child: const Text("Download"),
         )
       ],
@@ -191,6 +227,7 @@ class OptionsPageState extends State<OptionsPage> {
             _hashCacheOptions(),
             const SizedBox(height: 20),
             _downloadByIdTest(),
+            _downloadPlaylistByUrlTest(),
             _credits(),
           ],
         ),
