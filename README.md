@@ -15,7 +15,7 @@ This is a simple song manager for the Quest version of Beat Saber.
 
 ## Getting Started
 
-1) Download the APK and install it on your Quest
+1) [Download the APK](https://github.com/exelix11/QuestSongManager/releases/latest) and install it on your Quest
 2) Start the app, allow file access and let it scan your songs
 3) Enjoy!
 
