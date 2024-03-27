@@ -206,7 +206,7 @@ class OptionsPageState extends State<OptionsPage> {
     return const Column(children: [
       SizedBox(height: 60),
       Text("Quest Song Manager, by exelix11"),
-      Text("Release 1.0"),
+      Text("Release 1.1"),
       Text("https://github.com/exelix11/QuestSongManager"),
     ]);
   }
