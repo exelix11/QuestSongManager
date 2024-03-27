@@ -1,3 +1,4 @@
+import 'dart:ffi';
 import 'dart:io';
 
 import 'package:bsaberquest/download_manager/gui/bookmarks_manager.dart';
@@ -10,6 +11,8 @@ import 'package:permission_handler/permission_handler.dart';
 class OptionsPageState extends State<OptionsPage> {
   final TextEditingController _idController = TextEditingController();
   final TextEditingController _urlController = TextEditingController();
+
+  bool _showTestOptions = false;
 
   void _downloadById() async {
     var id = _idController.text;
@@ -106,7 +109,7 @@ class OptionsPageState extends State<OptionsPage> {
           App.showToast("Hash cache has been disabled");
           setState(() {});
         },
-        child: const Text("Remove hash cache"),
+        child: const Text("Disable hash cache"),
       );
     } else {
       button = ElevatedButton(
@@ -204,11 +207,38 @@ class OptionsPageState extends State<OptionsPage> {
 
   Widget _credits() {
     return const Column(children: [
-      SizedBox(height: 60),
       Text("Quest Song Manager, by exelix11"),
       Text("Release 1.1"),
       Text("https://github.com/exelix11/QuestSongManager"),
     ]);
+  }
+
+  void _setShowTestOptions(bool value) {
+    setState(() {
+      _showTestOptions = value;
+    });
+  }
+
+  Widget _buildTestOptions() {
+    if (!_showTestOptions) {
+      return IconButton(
+          onPressed: () => _setShowTestOptions(true),
+          icon: const Text("Show advanced options"));
+    } else {
+      return Column(
+        children: [
+          IconButton(
+              onPressed: () => _setShowTestOptions(false),
+              icon: const Text("Advanced/Test options")),
+          const SizedBox(height: 20),
+          _hashCacheOptions(),
+          const SizedBox(height: 20),
+          _downloadByIdTest(),
+          _downloadPlaylistByUrlTest(),
+          const SizedBox(height: 20),
+        ],
+      );
+    }
   }
 
   @override
@@ -224,10 +254,8 @@ class OptionsPageState extends State<OptionsPage> {
             const SizedBox(height: 20),
             _utilOptions(),
             const SizedBox(height: 20),
-            _hashCacheOptions(),
+            _buildTestOptions(),
             const SizedBox(height: 20),
-            _downloadByIdTest(),
-            _downloadPlaylistByUrlTest(),
             _credits(),
           ],
         ),
