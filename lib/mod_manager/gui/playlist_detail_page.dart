@@ -80,6 +80,32 @@ class PlaylistDetailPageState extends State<PlaylistDetailPage> {
     );
   }
 
+  Widget _buildHeader() {
+    return Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+      // Limit the image size so it doesn't take up the whole screen
+      SizedBox(
+          width: 150,
+          height: 150,
+          child: PlaylistWidget.playlistIcon(widget.playlist)),
+      Column(
+        children: [
+          Text(widget.playlist.fileName),
+          Text("${widget.playlist.songs.length} songs"),
+          // Add a group of buttons to add to playlist or delete
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              ElevatedButton(
+                onPressed: _deletePlaylist,
+                child: const Text('Delete this playlist'),
+              ),
+            ],
+          ),
+        ],
+      )
+    ]);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -89,23 +115,7 @@ class PlaylistDetailPageState extends State<PlaylistDetailPage> {
       body: Center(
         child: Column(
           children: [
-            // Limit the image size so it doesn't take up the whole screen
-            SizedBox(
-                width: 200,
-                height: 200,
-                child: PlaylistWidget.playlistIcon(widget.playlist)),
-            Text(widget.playlist.fileName),
-            Text("${widget.playlist.songs.length} songs"),
-            // Add a group of buttons to add to playlist or delete
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                ElevatedButton(
-                  onPressed: _deletePlaylist,
-                  child: const Text('Delete this playlist'),
-                ),
-              ],
-            ),
+            _buildHeader(),
             Expanded(
               child: ListView.builder(
                 itemCount: widget.playlist.songs.length,

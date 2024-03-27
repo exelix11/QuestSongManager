@@ -98,7 +98,7 @@ class PlaylistWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListTile(
-        leading: playlistIcon(playlist),
+        leading: SizedBox(width: 50, height: 50, child: playlistIcon(playlist)),
         title: Text(playlist.playlistTitle),
         trailing: extraIcon,
         subtitle: Text("${playlist.songs.length} songs\n${playlist.fileName}"),
