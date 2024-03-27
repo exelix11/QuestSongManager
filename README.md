@@ -5,11 +5,12 @@ This is a simple song manager for the Quest version of Beat Saber.
 ## Features
 
 - Manage songs and playlists
-- Download songs from sources that support the `beatsaver://` protocol, examples are
+- Download songs and playlists from websites that support the `beatsaver://` and `bsplaylist://` protocols, examples are
 	- https://bsaber.com/
 	- https://beatsaver.com/
 - Download songs directly to playlists
 - Add your own sources to the browser bookmarks
+- Find songs that are not in any playlist
 - Super fast startup
 - Open source :)
 

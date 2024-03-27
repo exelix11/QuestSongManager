@@ -1,4 +1,3 @@
-import 'dart:ffi';
 import 'dart:io';
 
 import 'package:bsaberquest/download_manager/gui/bookmarks_manager.dart';
@@ -208,7 +207,7 @@ class OptionsPageState extends State<OptionsPage> {
   Widget _credits() {
     return const Column(children: [
       Text("Quest Song Manager, by exelix11"),
-      Text("Release 1.1"),
+      Text("Release 1.2"),
       Text("https://github.com/exelix11/QuestSongManager"),
     ]);
   }
