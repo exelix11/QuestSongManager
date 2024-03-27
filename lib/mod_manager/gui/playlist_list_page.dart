@@ -4,6 +4,7 @@ import 'package:bsaberquest/gui_util.dart';
 import 'package:bsaberquest/main.dart';
 import 'package:bsaberquest/mod_manager/gui/playlist_detail_page.dart';
 import 'package:bsaberquest/mod_manager/gui/simple_widgets.dart';
+import 'package:bsaberquest/mod_manager/gui/songs_in_no_playlist_page.dart';
 import 'package:bsaberquest/mod_manager/model/song.dart';
 import 'package:flutter/material.dart';
 
@@ -55,17 +56,37 @@ class PlaylistListPageState extends State<PlaylistListPage> {
     }
   }
 
+  void _onSongsInNoPlaylistTap() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const SongsInNoPlaylistPage(),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
         appBar: AppBar(
           title: Row(children: [
             const Text('Playlists'),
-            const SizedBox(width: 8),
-            IconButton(
-              icon: const Icon(Icons.add),
-              onPressed: () => _onNewplaylistTap(),
-            ),
+            Expanded(child: Container()),
+            PopupMenuButton(
+              itemBuilder: (BuildContext context) {
+                return [
+                  PopupMenuItem(
+                    onTap: _onNewplaylistTap,
+                    child: const Text('New playlist'),
+                  ),
+                  PopupMenuItem(
+                    onTap: _onSongsInNoPlaylistTap,
+                    child:
+                        const Text('Find songs that are not in any playlist'),
+                  ),
+                ];
+              },
+            )
           ]),
         ),
         body: ListView.builder(

@@ -84,7 +84,7 @@ class MainPageState extends State<MainPage> {
         ),
         body: const TabBarView(
           children: [
-            SongListPage(),
+            SongsListPage(),
             PlaylistListPage(),
             DownloadsTab(),
             OptionsPage()
