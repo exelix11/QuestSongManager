@@ -2,6 +2,10 @@
 
 This is a simple song manager for the Quest version of Beat Saber.
 
+### Beat saber 1.35 support
+
+It seems latest version of beat saber changed the songs path, latest release of this app does not support it yet. A fix is on its way.
+
 ## Features
 
 - Manage songs and playlists
