@@ -11,6 +11,7 @@ class BeatSaberVersionDetector {
   static const bool dev_simulate_v_1_35 = true;
 
   static BeatSaberVersion? cachedResult;
+  static String? detectedVersion;
 
   BeatSaberVersionDetector._();
 
@@ -26,6 +27,8 @@ class BeatSaberVersionDetector {
   static Future<BeatSaberVersion> _getBeatSaberVersion() async {
     // To test on desktop hardcode the value we should return
     if (!Platform.isAndroid) {
+      detectedVersion = "fake for development";
+
       return dev_simulate_v_1_35
           ? BeatSaberVersion.v_1_35_OrNewer
           : BeatSaberVersion.olderThan_v_1_35;
@@ -41,6 +44,8 @@ class BeatSaberVersionDetector {
       }
 
       var app = apps.first;
+      detectedVersion = app.versionName;
+
       if (app.versionCode >= V_1_35_versionCode) {
         return BeatSaberVersion.v_1_35_OrNewer;
       }

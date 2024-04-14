@@ -5,6 +5,7 @@ import 'package:bsaberquest/download_manager/gui/util.dart';
 import 'package:bsaberquest/gui_util.dart';
 import 'package:bsaberquest/main.dart';
 import 'package:bsaberquest/mod_manager/mod_manager.dart';
+import 'package:bsaberquest/mod_manager/version_detector.dart';
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 
@@ -152,10 +153,17 @@ class OptionsPageState extends State<OptionsPage> {
   }
 
   void _openInstallLocationOptions() async {
-    await Navigator.of(context)
-        .push(MaterialPageRoute(builder: (context) => InstallLocationPage()));
+    // Initialize version cache in case it was not done yet
+    await BeatSaberVersionDetector.getBeatSaberVersion();
 
-    setState(() {});
+    var pref = await App.preferences.getPreferredCustomSongFolder();
+
+    if (mounted) {
+      await Navigator.of(context).push(
+          MaterialPageRoute(builder: (context) => InstallLocationPage(pref)));
+
+      setState(() {});
+    }
   }
 
   Widget _installLocationOptions() {
