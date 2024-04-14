@@ -63,7 +63,7 @@ class BrowserPageViewState extends State<BrowserPageView> {
       var startFrom = widget.initialUrl;
 
       if (startFrom == null || startFrom.isEmpty) {
-        startFrom = value.getHomepage()?.url ?? 'https://bsaber.com/';
+        startFrom = value.getHomepage()?.url ?? 'https://beatsaver.com/';
       }
 
       _navigateTo(startFrom);
