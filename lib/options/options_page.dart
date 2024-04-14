@@ -237,7 +237,7 @@ class OptionsPageState extends State<OptionsPage> {
   Widget _credits() {
     return const Column(children: [
       Text("Quest Song Manager, by exelix11"),
-      Text("Release 1.2"),
+      Text("Release 1.3"),
       Text("https://github.com/exelix11/QuestSongManager"),
     ]);
   }
