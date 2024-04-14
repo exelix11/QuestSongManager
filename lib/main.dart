@@ -4,6 +4,7 @@ import 'package:bsaberquest/download_manager/downloader.dart';
 import 'package:bsaberquest/main_page.dart';
 import 'package:bsaberquest/options/preferences.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 
 import 'mod_manager/mod_manager.dart';
 
@@ -26,9 +27,11 @@ class App extends StatelessWidget {
 
   // A plain msgbox-like function, as god intended
   static void showToast(String message) {
-    App._scaffoldMessengerKey.currentState?.showSnackBar(SnackBar(
-      content: Text(message),
-    ));
+    SchedulerBinding.instance.addPostFrameCallback((_) {
+      App._scaffoldMessengerKey.currentState?.showSnackBar(SnackBar(
+        content: Text(message),
+      ));
+    });
   }
 
   const App({super.key});
