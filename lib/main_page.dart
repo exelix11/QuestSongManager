@@ -7,6 +7,8 @@ import 'package:bsaberquest/mod_manager/gui/playlist_list_page.dart';
 import 'package:bsaberquest/mod_manager/gui/song_list_page.dart';
 import 'package:flutter/material.dart';
 
+import 'options/install_location_options.dart';
+
 class MainPageState extends State<MainPage> {
   late Future _init;
   String _hintText = "";
@@ -27,6 +29,14 @@ class MainPageState extends State<MainPage> {
           ? "During the first start the app caches all the song hashses, future starts will be faster"
           : "Consider enabling hash caches to speed up the app start up times";
     });
+
+    try {
+      var preferred = await App.preferences.getPreferredCustomSongFolder();
+      await InstallLocationOptions.setLocation(preferred);
+    } catch (e) {
+      App.showToast('Failed to set install location: $e');
+      // This is not a critical error, we can continue
+    }
 
     try {
       await App.modManager.reloadIfNeeded();

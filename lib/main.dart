@@ -12,6 +12,7 @@ void main() {
 }
 
 class App extends StatelessWidget {
+  // Hardcoded path for local PC development and testing
   static final ModManager modManager = ModManager(Platform.isAndroid
       ? "/sdcard/ModData/com.beatgames.beatsaber"
       : "/home/user/bsaberquest/sd/ModData/com.beatgames.beatsaber");
@@ -19,8 +20,6 @@ class App extends StatelessWidget {
   static final DownloadManager downloadManager = DownloadManager();
 
   static final PreferencesManager preferences = PreferencesManager();
-
-  static String? appInitError;
 
   static final GlobalKey<ScaffoldMessengerState> _scaffoldMessengerKey =
       GlobalKey<ScaffoldMessengerState>();

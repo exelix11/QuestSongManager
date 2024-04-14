@@ -2,7 +2,9 @@ import 'dart:io';
 
 import 'package:bsaberquest/gui_util.dart';
 import 'package:bsaberquest/main.dart';
+import 'package:bsaberquest/mod_manager/mod_manager.dart';
 import 'package:bsaberquest/mod_manager/model/song.dart';
+import 'package:bsaberquest/mod_manager/version_detector.dart';
 import 'package:flutter/material.dart';
 
 import 'playlist_picker_page.dart';
@@ -63,6 +65,25 @@ class SongDetailPage extends StatelessWidget {
     return name;
   }
 
+  Widget _beatSaberVersionWarn() {
+    // For new beat saber versions no need to show a warning
+    if (BeatSaberVersionDetector.cachedResult ==
+        BeatSaberVersion.v_1_35_OrNewer) {
+      return const SizedBox(height: 30);
+    }
+
+    // No warning for the old location or if we failed to get it
+    var location = App.modManager.getLocationForSong(song);
+    if (location != CustomLevelLocation.songCore) {
+      return const SizedBox(height: 30);
+    }
+
+    return const Padding(
+        padding: EdgeInsets.all(20),
+        child: Text(
+            "This song is installed in the 'SongCore' folder, Beat Saber versions older than 1.35 will not be able to load it."));
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -81,10 +102,10 @@ class SongDetailPage extends StatelessWidget {
             const SizedBox(height: 20),
             Text("Author: ${_nameOrUnknown(song.meta.songSubName)}"),
             Text("Mapper: ${_nameOrUnknown(song.meta.levelAuthorName)}"),
-            const SizedBox(height: 50),
+            _beatSaberVersionWarn(),
             Text("Path on disk: ${song.folderPath}"),
             Text("Song hash: ${_nameOrUnknown(song.hash)}"),
-            const SizedBox(height: 50),
+            const SizedBox(height: 40),
             // Add a group of buttons to add to playlist or delete
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,

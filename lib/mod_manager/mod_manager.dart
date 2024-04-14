@@ -9,14 +9,34 @@ import 'package:path/path.dart' as dart_path;
 
 import 'model/song.dart';
 
+enum CustomLevelLocation {
+  // "legacy", used in old versions of songLoader but compatible with all versions
+  songLoader,
+  // New starting from mods for beat saber 1.35
+  songCore
+}
+
 class ModManager {
-  final String _customLevelsPath = "Mods/SongLoader/CustomLevels";
+  // These are currently both supported but only SongLoader works on older beatsaber versions ( < 1.35)
+  // https://github.com/raineio/Quest-SongCore/blob/main/include/config.hpp
+  final String _songCoreLevelsPath = "Mods/SongCore/CustomLevels";
+  final String _songLoaderlevelsPath = "Mods/SongLoader/CustomLevels";
+
   final String _playlistsPath = "Mods/PlaylistManager/Playlists";
   final String _hashCacheFileName = ".bsq_hash_cache";
 
   final String modDataPath;
 
   bool _isInitialized = false;
+
+  CustomLevelLocation preferredInstallLocation = CustomLevelLocation.songLoader;
+
+  String locationToPath(CustomLevelLocation loc) =>
+      loc == CustomLevelLocation.songLoader
+          ? _songLoaderlevelsPath
+          : _songCoreLevelsPath;
+
+  String get _levelInstallLocation => locationToPath(preferredInstallLocation);
 
   // Indexed by hash
   Map<String, Song> songs = {};
@@ -61,15 +81,11 @@ class ModManager {
     }
   }
 
-  Future reloadFromDisk() async {
-    songs.clear();
-    playlists.clear();
-
-    var invalidCounter = 0;
-
-    var customLevelsDir = Directory("$modDataPath/$_customLevelsPath");
+  Future<int> _loadFrominstallLocation(
+      CustomLevelLocation loc, int invalidCounter) async {
+    var customLevelsDir = Directory("$modDataPath/${locationToPath(loc)}");
     if (!await customLevelsDir.exists()) {
-      await customLevelsDir.create(recursive: true);
+      return invalidCounter;
     }
 
     for (var entity in customLevelsDir.listSync()) {
@@ -97,6 +113,21 @@ class ModManager {
         }
       }
     }
+
+    return invalidCounter;
+  }
+
+  Future reloadFromDisk() async {
+    songs.clear();
+    playlists.clear();
+
+    var invalid = 0;
+
+    invalid +=
+        await _loadFrominstallLocation(CustomLevelLocation.songLoader, invalid);
+
+    invalid +=
+        await _loadFrominstallLocation(CustomLevelLocation.songCore, invalid);
 
     var playlistsDir = Directory("$modDataPath/$_playlistsPath");
     if (!await playlistsDir.exists()) {
@@ -206,9 +237,17 @@ class ModManager {
     return songs.containsKey(hash);
   }
 
+  Future _ensureInstallLocationExists() async {
+    var dir = Directory("$modDataPath/$_levelInstallLocation");
+    if (!await dir.exists()) {
+      await dir.create(recursive: true);
+    }
+  }
+
   Future<Song> installSong(
       Map<String, Uint8List> unpackedFiles, String? expectedHash) async {
     await reloadIfNeeded();
+    await _ensureInstallLocationExists();
 
     var info = unpackedFiles["info.dat"];
     info ??= unpackedFiles["Info.dat"];
@@ -237,7 +276,7 @@ class ModManager {
       throw Exception("Song with hash $hash already exists");
     }
 
-    var directory = Directory("$modDataPath/$_customLevelsPath/$hash");
+    var directory = Directory("$modDataPath/$_levelInstallLocation/$hash");
     if (await directory.exists()) {
       throw Exception("Song with hash $hash already exists on disk");
     }
@@ -420,5 +459,16 @@ class ModManager {
     playlists.remove(playlist.fileName);
 
     playlistObservable.sink.add(null);
+  }
+
+  CustomLevelLocation? getLocationForSong(Song song) {
+    if (song.folderPath.startsWith("$modDataPath/$_songLoaderlevelsPath")) {
+      return CustomLevelLocation.songLoader;
+    } else if (song.folderPath
+        .startsWith("$modDataPath/$_songCoreLevelsPath")) {
+      return CustomLevelLocation.songCore;
+    }
+
+    return null;
   }
 }

@@ -37,14 +37,15 @@ dependencies:
   cupertino_icons: ^1.0.6
   crypto: ^3.0.1
   path: ^1.8.0
-  http: ^0.13.3
+  http: ^1.2.1
   archive: ^3.1.2
   webview_flutter: ^4.7.0
-  permission_handler: ^8.1.6
+  permission_handler: ^11.3.1
   convert: ^3.1.1
   shared_preferences: ^2.0.8
   cached_network_image: ^3.1.0
   webview_flutter_android: ^3.15.0
+  installed_apps: ^1.5.0
 
 dev_dependencies:
   flutter_test:

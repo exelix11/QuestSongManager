@@ -25,7 +25,7 @@ class PreferencesManager {
   BrowserPreferences _getDefaults() {
     return BrowserPreferences()
       ..bookmarks = [
-        WebBookmark('bsaber.com', 'https://bsaber.com/'),
+        WebBookmark('bsaber.info', 'https://bsaber.info/'),
         WebBookmark('beatsaver.com', 'https://beatsaver.com/'),
       ];
   }
@@ -53,7 +53,30 @@ class PreferencesManager {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     prefs.setString("web_preferences", jsonEncode(settings.toJson()));
   }
+
+  Future setPreferredCustomSongFolder(PreferredCustomSongFolder folder) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    prefs.setString("preferred_custom_song_folder", folder.toString());
+  }
+
+  Future<PreferredCustomSongFolder> getPreferredCustomSongFolder() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? folder = prefs.getString("preferred_custom_song_folder");
+
+    if (folder == null) {
+      return PreferredCustomSongFolder.auto;
+    }
+
+    try {
+      return PreferredCustomSongFolder.values
+          .firstWhere((element) => element.toString() == folder);
+    } catch (e) {
+      return PreferredCustomSongFolder.auto;
+    }
+  }
 }
+
+enum PreferredCustomSongFolder { auto, songLoader, songCore }
 
 class BrowserPreferences {
   List<WebBookmark> bookmarks = [];

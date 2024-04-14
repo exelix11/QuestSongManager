@@ -4,8 +4,11 @@ import 'package:bsaberquest/download_manager/gui/bookmarks_manager.dart';
 import 'package:bsaberquest/download_manager/gui/util.dart';
 import 'package:bsaberquest/gui_util.dart';
 import 'package:bsaberquest/main.dart';
+import 'package:bsaberquest/mod_manager/mod_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
+
+import 'options/install_location_options.dart';
 
 class OptionsPageState extends State<OptionsPage> {
   final TextEditingController _idController = TextEditingController();
@@ -148,6 +151,25 @@ class OptionsPageState extends State<OptionsPage> {
     ]);
   }
 
+  void _openInstallLocationOptions() async {
+    await Navigator.of(context)
+        .push(MaterialPageRoute(builder: (context) => InstallLocationPage()));
+
+    setState(() {});
+  }
+
+  Widget _installLocationOptions() {
+    return Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+      App.modManager.preferredInstallLocation == CustomLevelLocation.songCore
+          ? const Text("Songs will be installed to the new 'SongCore' folder")
+          : const Text(
+              "Songs will be installed to the legacy 'SongLoader' folder"),
+      const SizedBox(width: 10),
+      ElevatedButton(
+          onPressed: _openInstallLocationOptions, child: const Text("Change"))
+    ]);
+  }
+
   void _reloadSongs() async {
     try {
       await App.modManager.reloadFromDisk();
@@ -252,6 +274,8 @@ class OptionsPageState extends State<OptionsPage> {
             _permissionCheckWidget(),
             const SizedBox(height: 20),
             _utilOptions(),
+            const SizedBox(height: 20),
+            _installLocationOptions(),
             const SizedBox(height: 20),
             _buildTestOptions(),
             const SizedBox(height: 20),
