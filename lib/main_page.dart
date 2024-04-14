@@ -1,7 +1,7 @@
 import 'dart:io';
 
 import 'package:bsaberquest/download_manager/gui/downloads_tab.dart';
-import 'package:bsaberquest/options_page.dart';
+import 'package:bsaberquest/options/options_page.dart';
 import 'package:bsaberquest/main.dart';
 import 'package:bsaberquest/mod_manager/gui/playlist_list_page.dart';
 import 'package:bsaberquest/mod_manager/gui/song_list_page.dart';

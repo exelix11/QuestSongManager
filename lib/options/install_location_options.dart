@@ -1,7 +1,7 @@
 import 'package:bsaberquest/main.dart';
 import 'package:bsaberquest/mod_manager/mod_manager.dart';
 import 'package:bsaberquest/mod_manager/version_detector.dart';
-import 'package:bsaberquest/preferences.dart';
+import 'package:bsaberquest/options/preferences.dart';
 import 'package:flutter/material.dart';
 
 class InstallLocationOptions {

@@ -1,6 +1,6 @@
 import 'package:bsaberquest/gui_util.dart';
 import 'package:bsaberquest/main.dart';
-import 'package:bsaberquest/preferences.dart';
+import 'package:bsaberquest/options/preferences.dart';
 import 'package:flutter/material.dart';
 
 class BookmarksManagerState extends State<BookmarksManager> {

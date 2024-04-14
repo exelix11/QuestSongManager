@@ -8,7 +8,7 @@ import 'package:bsaberquest/mod_manager/mod_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 
-import 'options/install_location_options.dart';
+import 'install_location_options.dart';
 
 class OptionsPageState extends State<OptionsPage> {
   final TextEditingController _idController = TextEditingController();

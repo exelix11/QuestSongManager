@@ -2,7 +2,7 @@ import 'dart:io';
 
 import 'package:bsaberquest/download_manager/downloader.dart';
 import 'package:bsaberquest/main_page.dart';
-import 'package:bsaberquest/preferences.dart';
+import 'package:bsaberquest/options/preferences.dart';
 import 'package:flutter/material.dart';
 
 import 'mod_manager/mod_manager.dart';
