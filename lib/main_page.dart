@@ -1,12 +1,14 @@
 import 'dart:io';
 
 import 'package:bsaberquest/download_manager/gui/downloads_tab.dart';
+import 'package:bsaberquest/mod_manager/mod_manager.dart';
 import 'package:bsaberquest/options/options_page.dart';
 import 'package:bsaberquest/main.dart';
 import 'package:bsaberquest/mod_manager/gui/playlist_list_page.dart';
 import 'package:bsaberquest/mod_manager/gui/song_list_page.dart';
 import 'package:flutter/material.dart';
 
+import 'options/game_path_picker_page.dart';
 import 'options/install_location_options.dart';
 
 class MainPageState extends State<MainPage> {
@@ -19,7 +21,38 @@ class MainPageState extends State<MainPage> {
     super.initState();
   }
 
+  Future _getGameRootPath() async {
+    var gamePath = await App.preferences.getGameRootPath();
+    if (gamePath == null) {
+      // On quest we know the path
+      if (Platform.isAndroid) {
+        gamePath = "/sdcard/ModData/com.beatgames.beatsaber";
+        await App.preferences.setGameRootPath(gamePath);
+      } else // On PC open the picker
+      {
+        // Open page
+        if (mounted) {
+          await Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (context) => const GamePathPickerPage()));
+        } else {
+          throw Exception("Failed to open game path picker");
+        }
+
+        gamePath = await App.preferences.getGameRootPath();
+        if (gamePath == null) {
+          throw Exception("Game path not set");
+        }
+      }
+    }
+    return gamePath;
+  }
+
   Future _initialize() async {
+    var gamePath = await _getGameRootPath();
+    App.modManager = ModManager(gamePath);
+
     var opt = await App.preferences.useHashCache();
     App.modManager.useFastHashCache = opt;
 

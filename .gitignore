@@ -9,7 +9,8 @@
 .history
 .svn/
 migrate_working_dir/
-sd/
+test_pc_root/
+test_sd_root/
 
 # IntelliJ related
 *.iml

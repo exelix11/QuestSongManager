@@ -166,9 +166,10 @@ class OptionsPageState extends State<OptionsPage> {
     }
   }
 
-  Widget _installLocationOptions() {
+  Widget _questInstallLocationOptions() {
     return Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-      App.modManager.preferredInstallLocation == CustomLevelLocation.songCore
+      (App.modManager.paths as QuestPaths).preferredInstallLocation ==
+              CustomLevelLocation.songCore
           ? const Text("Songs will be installed to the new 'SongCore' folder")
           : const Text(
               "Songs will be installed to the legacy 'SongLoader' folder"),
@@ -176,6 +177,18 @@ class OptionsPageState extends State<OptionsPage> {
       ElevatedButton(
           onPressed: _openInstallLocationOptions, child: const Text("Change"))
     ]);
+  }
+
+  Widget _pcInstallLocationOptions() {
+    return const SizedBox(width: 10);
+  }
+
+  Widget _installLocationOptions() {
+    if (Platform.isAndroid) {
+      return _questInstallLocationOptions();
+    } else {
+      return _pcInstallLocationOptions();
+    }
   }
 
   void _reloadSongs() async {

@@ -13,10 +13,7 @@ void main() {
 }
 
 class App extends StatelessWidget {
-  // Hardcoded path for local PC development and testing
-  static final ModManager modManager = ModManager(Platform.isAndroid
-      ? "/sdcard/ModData/com.beatgames.beatsaber"
-      : "/home/user/bsaberquest/sd/ModData/com.beatgames.beatsaber");
+  static late ModManager modManager;
 
   static final DownloadManager downloadManager = DownloadManager();
 
@@ -41,7 +38,7 @@ class App extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       scaffoldMessengerKey: _scaffoldMessengerKey,
-      title: 'Flutter Demo',
+      title: 'QuestSongManager',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,

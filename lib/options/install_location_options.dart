@@ -8,6 +8,16 @@ class InstallLocationOptions {
   InstallLocationOptions._();
 
   static Future setLocation(PreferredCustomSongFolder folder) async {
+    // This only applies to quest currently
+    if (App.modManager.paths is! QuestPaths) {
+      return;
+    }
+
+    var paths = App.modManager.paths as QuestPaths?;
+    if (paths == null) {
+      return;
+    }
+
     if (folder == PreferredCustomSongFolder.auto) {
       var version = await BeatSaberVersionDetector.getBeatSaberVersion();
 
@@ -15,18 +25,16 @@ class InstallLocationOptions {
         // In case detection fails, default to the most compatible location
         case BeatSaberVersion.unknown:
         case BeatSaberVersion.olderThan_v_1_35:
-          App.modManager.preferredInstallLocation =
-              CustomLevelLocation.songLoader;
+          paths.preferredInstallLocation = CustomLevelLocation.songLoader;
           break;
         case BeatSaberVersion.v_1_35_OrNewer:
-          App.modManager.preferredInstallLocation =
-              CustomLevelLocation.songCore;
+          paths.preferredInstallLocation = CustomLevelLocation.songCore;
           break;
         default:
-          throw Exception('Unsupported Beat Saber version: $version');
+          throw Exception('Unsupported enum value: $version');
       }
     } else {
-      App.modManager.preferredInstallLocation =
+      paths.preferredInstallLocation =
           folder == PreferredCustomSongFolder.songLoader
               ? CustomLevelLocation.songLoader
               : CustomLevelLocation.songCore;

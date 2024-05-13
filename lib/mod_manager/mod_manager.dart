@@ -16,27 +16,49 @@ enum CustomLevelLocation {
   songCore
 }
 
-class ModManager {
+abstract class PathProvider {
+  List<String> get songPaths;
+  List<String> get playlistPaths;
+
+  String get installSongPath => songPaths[0];
+  String get installPlaylistPath => playlistPaths[0];
+}
+
+class QuestPaths extends PathProvider {
   // These are currently both supported but only SongLoader works on older beatsaber versions ( < 1.35)
   // https://github.com/raineio/Quest-SongCore/blob/main/include/config.hpp
-  final String _songCoreLevelsPath = "Mods/SongCore/CustomLevels";
   final String _songLoaderlevelsPath = "Mods/SongLoader/CustomLevels";
+  final String _songCoreLevelsPath = "Mods/SongCore/CustomLevels";
 
-  final String _playlistsPath = "Mods/PlaylistManager/Playlists";
-  final String _hashCacheFileName = ".bsq_hash_cache";
+  @override
+  List<String> get songPaths => [_songCoreLevelsPath, _songLoaderlevelsPath];
 
-  final String modDataPath;
+  @override
+  List<String> get playlistPaths => ["Mods/PlaylistManager/Playlists"];
 
-  bool _isInitialized = false;
+  CustomLevelLocation preferredInstallLocation = CustomLevelLocation.songCore;
 
-  CustomLevelLocation preferredInstallLocation = CustomLevelLocation.songLoader;
-
-  String locationToPath(CustomLevelLocation loc) =>
-      loc == CustomLevelLocation.songLoader
+  @override
+  String get installSongPath =>
+      preferredInstallLocation == CustomLevelLocation.songLoader
           ? _songLoaderlevelsPath
           : _songCoreLevelsPath;
+}
 
-  String get _levelInstallLocation => locationToPath(preferredInstallLocation);
+class PcPaths extends PathProvider {
+  @override
+  List<String> get songPaths => ["Beat Saber_Data/CustomLevels"];
+
+  @override
+  List<String> get playlistPaths => ["Playlists"];
+}
+
+class ModManager {
+  final String _hashCacheFileName = ".bsq_hash_cache";
+  final PathProvider paths;
+  final String gameRoot;
+
+  bool _isInitialized = false;
 
   // Indexed by hash
   Map<String, Song> songs = {};
@@ -48,7 +70,8 @@ class ModManager {
   final StreamController songListObservable = StreamController.broadcast();
   final StreamController playlistObservable = StreamController.broadcast();
 
-  ModManager(this.modDataPath);
+  ModManager(this.gameRoot)
+      : paths = Platform.isAndroid ? QuestPaths() : PcPaths();
 
   Future<Song> _loadSongFile(File file) async {
     var info = await file.readAsString();
@@ -82,8 +105,8 @@ class ModManager {
   }
 
   Future<int> _loadFrominstallLocation(
-      CustomLevelLocation loc, int invalidCounter) async {
-    var customLevelsDir = Directory("$modDataPath/${locationToPath(loc)}");
+      String location, int invalidCounter) async {
+    var customLevelsDir = Directory("$gameRoot/$location");
     if (!await customLevelsDir.exists()) {
       return invalidCounter;
     }
@@ -117,19 +140,8 @@ class ModManager {
     return invalidCounter;
   }
 
-  Future reloadFromDisk() async {
-    songs.clear();
-    playlists.clear();
-
-    var invalid = 0;
-
-    invalid +=
-        await _loadFrominstallLocation(CustomLevelLocation.songLoader, invalid);
-
-    invalid +=
-        await _loadFrominstallLocation(CustomLevelLocation.songCore, invalid);
-
-    var playlistsDir = Directory("$modDataPath/$_playlistsPath");
+  Future _loadPlaylistsFromLocation(String location) async {
+    var playlistsDir = Directory("$gameRoot/$location");
     if (!await playlistsDir.exists()) {
       await playlistsDir.create(recursive: true);
     }
@@ -143,6 +155,21 @@ class ModManager {
           print("Error loading playlist: $e");
         }
       }
+    }
+  }
+
+  Future reloadFromDisk() async {
+    songs.clear();
+    playlists.clear();
+
+    var invalid = 0;
+
+    for (var path in paths.songPaths) {
+      invalid += await _loadFrominstallLocation(path, invalid);
+    }
+
+    for (var path in paths.playlistPaths) {
+      await _loadPlaylistsFromLocation(path);
     }
 
     _isInitialized = true;
@@ -238,7 +265,14 @@ class ModManager {
   }
 
   Future _ensureInstallLocationExists() async {
-    var dir = Directory("$modDataPath/$_levelInstallLocation");
+    var dir = Directory("$gameRoot/${paths.installSongPath}");
+    if (!await dir.exists()) {
+      await dir.create(recursive: true);
+    }
+  }
+
+  Future _ensurePlaylistLocationExists() async {
+    var dir = Directory("$gameRoot/${paths.installPlaylistPath}");
     if (!await dir.exists()) {
       await dir.create(recursive: true);
     }
@@ -276,7 +310,7 @@ class ModManager {
       throw Exception("Song with hash $hash already exists");
     }
 
-    var directory = Directory("$modDataPath/$_levelInstallLocation/$hash");
+    var directory = Directory("$gameRoot/${paths.installSongPath}/$hash");
     if (await directory.exists()) {
       throw Exception("Song with hash $hash already exists on disk");
     }
@@ -342,13 +376,15 @@ class ModManager {
   // Apply changes to a playlist and save it to disk but don't notify the UI
   Future _internalApplyPlaylistChanges(Playlist playlist) async {
     await reloadIfNeeded();
+    await _ensurePlaylistLocationExists();
 
     if (!playlists.containsKey(playlist.fileName)) {
       throw Exception(
           "Playlist with name ${playlist.playlistTitle} does not exist");
     }
 
-    var file = File("$modDataPath/$_playlistsPath/${playlist.fileName}");
+    var file =
+        File("$gameRoot/${paths.installPlaylistPath}/${playlist.fileName}");
     await file.writeAsString(jsonEncode(playlist.toJson()));
   }
 
@@ -393,7 +429,7 @@ class ModManager {
       return false;
     }
 
-    var file = File("$modDataPath/$_playlistsPath/$filename");
+    var file = File("$gameRoot/${paths.installPlaylistPath}/$filename");
     if (await file.exists()) {
       return false;
     }
@@ -403,6 +439,7 @@ class ModManager {
 
   Future addPlaylist(Playlist playlist) async {
     await reloadIfNeeded();
+    await _ensurePlaylistLocationExists();
 
     var name = playlist.playlistTitle;
 
@@ -416,7 +453,7 @@ class ModManager {
       throw Exception("Playlist with name $name already exists");
     }
 
-    var file = File("$modDataPath/$_playlistsPath/$filename");
+    var file = File("$gameRoot/${paths.installPlaylistPath}/$filename");
     if (await file.exists()) {
       throw Exception("Playlist file with name $name already exists");
     }
@@ -448,7 +485,8 @@ class ModManager {
           "Playlist with name ${playlist.playlistTitle} does not exist");
     }
 
-    var file = File("$modDataPath/$_playlistsPath/${playlist.fileName}");
+    var file =
+        File("$gameRoot/${paths.installPlaylistPath}/${playlist.fileName}");
     if (!await file.exists()) {
       throw Exception(
           "Playlist file with name ${playlist.playlistTitle} does not exist");
@@ -462,13 +500,13 @@ class ModManager {
   }
 
   CustomLevelLocation? getLocationForSong(Song song) {
-    if (song.folderPath.startsWith("$modDataPath/$_songLoaderlevelsPath")) {
-      return CustomLevelLocation.songLoader;
-    } else if (song.folderPath
-        .startsWith("$modDataPath/$_songCoreLevelsPath")) {
-      return CustomLevelLocation.songCore;
-    }
+    return CustomLevelLocation.songCore;
+    // if (song.folderPath.startsWith("$gameRoot/$_songLoaderlevelsPath")) {
+    //   return CustomLevelLocation.songLoader;
+    // } else if (song.folderPath.startsWith("$gameRoot/$_songCoreLevelsPath")) {
+    //   return CustomLevelLocation.songCore;
+    // }
 
-    return null;
+    // return null;
   }
 }

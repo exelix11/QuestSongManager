@@ -74,6 +74,19 @@ class PreferencesManager {
       return PreferredCustomSongFolder.auto;
     }
   }
+
+  Future<String?> getGameRootPath() async {
+    var prefs = await SharedPreferences.getInstance();
+    var path = prefs.getString("game_root_path");
+    if (path == null) return null;
+    if (path.isEmpty) return null;
+    return path;
+  }
+
+  Future setGameRootPath(String path) async {
+    var prefs = await SharedPreferences.getInstance();
+    prefs.setString("game_root_path", path);
+  }
 }
 
 enum PreferredCustomSongFolder { auto, songLoader, songCore }
