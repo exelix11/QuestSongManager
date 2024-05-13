@@ -63,6 +63,18 @@ class DownloadsTabState extends State<DownloadsTab> {
     }
   }
 
+  Widget _pcDownloadTextInfo() {
+    return const Text(
+        "The in-app browser is not supported on PC. Download songs from the browser.");
+  }
+
+  Widget _questOpenBrowser() {
+    return ElevatedButton(
+      onPressed: () => _openBrowser(null),
+      child: const Text('Launch browser'),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -78,10 +90,7 @@ class DownloadsTabState extends State<DownloadsTab> {
           child: Column(children: [
             _playlistSelectWidget(context),
             const SizedBox(height: 10),
-            ElevatedButton(
-              onPressed: () => _openBrowser(null),
-              child: const Text('Launch browser'),
-            ),
+            App.isQuest ? _questOpenBrowser() : _pcDownloadTextInfo(),
             const SizedBox(height: 20),
             Expanded(
                 child: PendingDownloadsWidget(

@@ -1,8 +1,8 @@
 // ignore_for_file: constant_identifier_names, non_constant_identifier_names
 
 import 'dart:async';
-import 'dart:io';
 
+import 'package:bsaberquest/main.dart';
 import 'package:installed_apps/installed_apps.dart';
 
 class BeatSaberVersionDetector {
@@ -25,8 +25,13 @@ class BeatSaberVersionDetector {
   }
 
   static Future<BeatSaberVersion> _getBeatSaberVersion() async {
-    // To test on desktop hardcode the value we should return
-    if (!Platform.isAndroid) {
+    // On PC we don't care
+    if (!App.isQuest) {
+      throw Exception("Beat saber version detection is only for quest");
+    }
+
+    // If we are simulating the quest on PC
+    if (App.isDev) {
       detectedVersion = "fake for development";
 
       return dev_simulate_v_1_35

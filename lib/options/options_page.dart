@@ -9,7 +9,8 @@ import 'package:bsaberquest/mod_manager/version_detector.dart';
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 
-import 'install_location_options.dart';
+import 'game_path_picker_page.dart';
+import 'quest_install_location_options.dart';
 
 class OptionsPageState extends State<OptionsPage> {
   final TextEditingController _idController = TextEditingController();
@@ -153,6 +154,8 @@ class OptionsPageState extends State<OptionsPage> {
   }
 
   void _openInstallLocationOptions() async {
+    if (!App.isQuest) throw Exception("This should not be called on PC");
+
     // Initialize version cache in case it was not done yet
     await BeatSaberVersionDetector.getBeatSaberVersion();
 
@@ -179,12 +182,23 @@ class OptionsPageState extends State<OptionsPage> {
     ]);
   }
 
+  void _openGamePathPicker() async {
+    await Navigator.of(context).push(
+        MaterialPageRoute(builder: (context) => const GamePathPickerPage()));
+
+    App.showToast("Restart the app to apply the changes");
+  }
+
   Widget _pcInstallLocationOptions() {
-    return const SizedBox(width: 10);
+    return Column(children: [
+      Text("Current game location: ${App.modManager.gameRoot}"),
+      ElevatedButton(
+          onPressed: _openGamePathPicker, child: const Text("Change"))
+    ]);
   }
 
   Widget _installLocationOptions() {
-    if (Platform.isAndroid) {
+    if (App.isQuest) {
       return _questInstallLocationOptions();
     } else {
       return _pcInstallLocationOptions();

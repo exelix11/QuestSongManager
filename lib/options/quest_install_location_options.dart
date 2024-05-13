@@ -4,13 +4,12 @@ import 'package:bsaberquest/mod_manager/version_detector.dart';
 import 'package:bsaberquest/options/preferences.dart';
 import 'package:flutter/material.dart';
 
-class InstallLocationOptions {
-  InstallLocationOptions._();
+class QuestInstallLocationOptions {
+  QuestInstallLocationOptions._();
 
   static Future setLocation(PreferredCustomSongFolder folder) async {
-    // This only applies to quest currently
     if (App.modManager.paths is! QuestPaths) {
-      return;
+      throw Exception('Install location options only apply to Quest');
     }
 
     var paths = App.modManager.paths as QuestPaths?;
@@ -55,7 +54,7 @@ class InstallLocationPage extends StatelessWidget {
     _applying = true;
 
     try {
-      await InstallLocationOptions.setLocation(folder);
+      await QuestInstallLocationOptions.setLocation(folder);
       await App.preferences.setPreferredCustomSongFolder(folder);
       App.showToast('Default install location modified.');
 

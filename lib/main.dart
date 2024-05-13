@@ -13,6 +13,11 @@ void main() {
 }
 
 class App extends StatelessWidget {
+  static const bool _devSimulateQuest = false;
+
+  static final bool isDev = _devSimulateQuest && !Platform.isAndroid;
+  static final bool isQuest = Platform.isAndroid || _devSimulateQuest;
+
   static late ModManager modManager;
 
   static final DownloadManager downloadManager = DownloadManager();

@@ -9,7 +9,7 @@ import 'package:bsaberquest/mod_manager/gui/song_list_page.dart';
 import 'package:flutter/material.dart';
 
 import 'options/game_path_picker_page.dart';
-import 'options/install_location_options.dart';
+import 'options/quest_install_location_options.dart';
 
 class MainPageState extends State<MainPage> {
   late Future _init;
@@ -22,28 +22,31 @@ class MainPageState extends State<MainPage> {
   }
 
   Future _getGameRootPath() async {
+    // For dev when simulating a quest use this path
+    if (App.isQuest && App.isDev) {
+      return "/home/user/bsaberquest/test_sd_root";
+    }
+
+    // On a quest use the default path
+    if (App.isQuest) {
+      return "/sdcard/ModData/com.beatgames.beatsaber";
+    }
+
+    // On PC we must use the path provided by the user
     var gamePath = await App.preferences.getGameRootPath();
     if (gamePath == null) {
-      // On quest we know the path
-      if (Platform.isAndroid) {
-        gamePath = "/sdcard/ModData/com.beatgames.beatsaber";
-        await App.preferences.setGameRootPath(gamePath);
-      } else // On PC open the picker
-      {
-        // Open page
-        if (mounted) {
-          await Navigator.push(
-              context,
-              MaterialPageRoute(
-                  builder: (context) => const GamePathPickerPage()));
-        } else {
-          throw Exception("Failed to open game path picker");
-        }
+      if (mounted) {
+        await Navigator.push(
+            context,
+            MaterialPageRoute(
+                builder: (context) => const GamePathPickerPage()));
+      } else {
+        throw Exception("Failed to open game path picker");
+      }
 
-        gamePath = await App.preferences.getGameRootPath();
-        if (gamePath == null) {
-          throw Exception("Game path not set");
-        }
+      gamePath = await App.preferences.getGameRootPath();
+      if (gamePath == null) {
+        throw Exception("Game path not set");
       }
     }
     return gamePath;
@@ -63,12 +66,14 @@ class MainPageState extends State<MainPage> {
           : "Consider enabling hash caches to speed up the app start up times";
     });
 
-    try {
-      var preferred = await App.preferences.getPreferredCustomSongFolder();
-      await InstallLocationOptions.setLocation(preferred);
-    } catch (e) {
-      App.showToast('Failed to set install location: $e');
-      // This is not a critical error, we can continue
+    if (App.isQuest) {
+      try {
+        var preferred = await App.preferences.getPreferredCustomSongFolder();
+        await QuestInstallLocationOptions.setLocation(preferred);
+      } catch (e) {
+        App.showToast('Failed to set install location: $e');
+        // This is not a critical error, we can continue
+      }
     }
 
     try {

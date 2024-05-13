@@ -26,6 +26,10 @@ class GamePathPickerPage extends StatelessWidget {
       body: Center(
         child: Column(
           children: [
+            const Text(
+                "Please select the root directory of your Beat Saber installation"),
+            const Text(
+                "It is the folder that contains the main beatsaber.exe file"),
             const SizedBox(height: 20),
             ElevatedButton(
                 onPressed: () => _pickPath(context),

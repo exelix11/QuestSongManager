@@ -66,6 +66,9 @@ class SongDetailPage extends StatelessWidget {
   }
 
   Widget _beatSaberVersionWarn() {
+    // On PC this warning is not needed
+    if (!App.isQuest) return const SizedBox(height: 30);
+
     // For new beat saber versions no need to show a warning
     if (BeatSaberVersionDetector.cachedResult ==
         BeatSaberVersion.v_1_35_OrNewer) {
