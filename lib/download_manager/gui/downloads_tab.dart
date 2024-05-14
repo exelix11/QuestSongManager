@@ -5,8 +5,9 @@ import 'package:bsaberquest/download_manager/gui/pending_downloads_widget.dart';
 import 'package:bsaberquest/main.dart';
 import 'package:bsaberquest/mod_manager/gui/playlist_picker_page.dart';
 import 'package:bsaberquest/mod_manager/gui/simple_widgets.dart';
-import 'package:bsaberquest/mod_manager/model/song.dart';
 import 'package:flutter/material.dart';
+
+import '../../mod_manager/model/playlist.dart';
 
 class DownloadsTabState extends State<DownloadsTab> {
   void _openBrowser(String? url) {

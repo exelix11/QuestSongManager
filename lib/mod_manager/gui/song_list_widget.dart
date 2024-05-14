@@ -6,6 +6,8 @@ import 'package:bsaberquest/mod_manager/gui/song_detail_page.dart';
 import 'package:bsaberquest/mod_manager/model/song.dart';
 import 'package:flutter/material.dart';
 
+import '../model/playlist.dart';
+
 class SongListWidgetController {
   Map<String, Song>? _initialSongs;
   SongListWidgetController(this._initialSongs);

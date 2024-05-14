@@ -5,8 +5,9 @@ import 'package:bsaberquest/main.dart';
 import 'package:bsaberquest/mod_manager/gui/playlist_detail_page.dart';
 import 'package:bsaberquest/mod_manager/gui/simple_widgets.dart';
 import 'package:bsaberquest/mod_manager/gui/songs_in_no_playlist_page.dart';
-import 'package:bsaberquest/mod_manager/model/song.dart';
 import 'package:flutter/material.dart';
+
+import '../model/playlist.dart';
 
 class PlaylistListPageState extends State<PlaylistListPage> {
   late StreamSubscription _playlistSubscription;

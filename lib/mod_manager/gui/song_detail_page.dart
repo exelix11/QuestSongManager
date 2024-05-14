@@ -7,6 +7,7 @@ import 'package:bsaberquest/mod_manager/model/song.dart';
 import 'package:bsaberquest/mod_manager/version_detector.dart';
 import 'package:flutter/material.dart';
 
+import '../model/playlist.dart';
 import 'playlist_picker_page.dart';
 
 class SongDetailPage extends StatelessWidget {

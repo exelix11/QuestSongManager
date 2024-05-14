@@ -7,6 +7,7 @@ import 'package:convert/convert.dart';
 import 'package:crypto/crypto.dart' as crypto;
 import 'package:path/path.dart' as dart_path;
 
+import 'model/playlist.dart';
 import 'model/song.dart';
 
 enum CustomLevelLocation {

@@ -8,6 +8,8 @@ import 'package:bsaberquest/mod_manager/model/song.dart';
 import 'package:flutter/material.dart';
 import 'package:path/path.dart';
 
+import '../model/playlist.dart';
+
 class PlaylistDetailPageState extends State<PlaylistDetailPage> {
   late StreamSubscription _playlistSubscription;
   late StreamSubscription _songListSubscription;

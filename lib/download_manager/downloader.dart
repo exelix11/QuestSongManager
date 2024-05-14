@@ -8,6 +8,8 @@ import 'package:bsaberquest/mod_manager/model/song.dart';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
+import '../mod_manager/model/playlist.dart';
+
 class DownloadManager {
   Playlist? downloadToPlaylist;
 

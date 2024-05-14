@@ -1,7 +1,8 @@
 import 'package:bsaberquest/main.dart';
 import 'package:bsaberquest/mod_manager/gui/simple_widgets.dart';
-import 'package:bsaberquest/mod_manager/model/song.dart';
 import 'package:flutter/material.dart';
+
+import '../model/playlist.dart';
 
 class PlaylistPickerPage extends StatefulWidget {
   const PlaylistPickerPage({super.key});
