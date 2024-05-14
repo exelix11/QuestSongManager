@@ -387,6 +387,9 @@ class ModManager {
     var file =
         File("$gameRoot/${paths.installPlaylistPath}/${playlist.fileName}");
     await file.writeAsString(jsonEncode(playlist.toJson()));
+
+    // Since we wrote the playlist file from scratch, we can assume it's up to date
+    playlist.imageCompatibilityIssue = false;
   }
 
   Future deleteSongs(List<Song> songs) async {
@@ -471,6 +474,14 @@ class ModManager {
     await addPlaylist(playlist);
 
     return playlist;
+  }
+
+  Future applyMultiplePlaylistChanges(List<Playlist> playlists) async {
+    for (var p in playlists) {
+      await _internalApplyPlaylistChanges(p);
+    }
+    // Fire the event only once
+    playlistObservable.sink.add(null);
   }
 
   Future applyPlaylistChanges(Playlist playlist) async {

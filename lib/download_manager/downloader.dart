@@ -59,8 +59,10 @@ class DownloadManager {
       var playlist = Playlist.fromJson(jsonDecode(res.body));
       // Force playlist name
       playlist.playlistTitle = playlistName;
+      // Since this is a playlist we are downloading from the internet if there's the image issue it will be automatically fixed so force the warning to false
+      playlist.imageCompatibilityIssue = false;
 
-      item.name = "[playlist] ${playlist.playlistTitle}";
+      item.name = "[Playlist] ${playlist.playlistTitle}";
       item.downloadedIcon = playlist.imageBytes;
       _updateItemState(item);
 
@@ -68,16 +70,21 @@ class DownloadManager {
       item.playlistFileName = playlist.fileName;
 
       if (downloadSongs) {
-        item.statusMessage = "Downloading songs";
-        _updateItemState(item);
-
         var keys =
             playlist.songs.map((e) => e.key).where((x) => x != null).toList();
 
+        item.statusMessage = "Downloading songs (0/${keys.length})";
+        _updateItemState(item);
+
         List<Future<DownloadResult>> futures = [];
+        var count = 0;
         for (var key in keys) {
           // No need to specify a playlist name here, as we already have one with all the songs
           futures.add(startMapDownload(key!, webSource, null).future);
+          count++;
+
+          item.statusMessage = "Downloading songs ($count/${keys.length})";
+          _updateItemState(item);
 
           if (futures.length >= 3) {
             await Future.wait(futures);
@@ -91,7 +98,7 @@ class DownloadManager {
         futures.clear();
       }
 
-      return DownloadResult.ok("Downloaded");
+      return DownloadResult.ok("Download complete");
     });
 
     return item;

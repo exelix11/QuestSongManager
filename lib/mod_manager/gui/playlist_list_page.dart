@@ -12,12 +12,26 @@ import '../model/playlist.dart';
 class PlaylistListPageState extends State<PlaylistListPage> {
   late StreamSubscription _playlistSubscription;
   late StreamSubscription _songListSubscription;
+  bool showPlaylistIconFormatWarning = false;
+  bool ignorePlaylistIconFormatWarning = false;
+
+  void _checkPlaylistIconFormatWarningStae() {
+    if (ignorePlaylistIconFormatWarning) {
+      showPlaylistIconFormatWarning = false;
+      return;
+    }
+
+    showPlaylistIconFormatWarning =
+        App.modManager.playlists.values.any((x) => x.imageCompatibilityIssue);
+  }
 
   @override
   void initState() {
     _playlistSubscription =
         App.modManager.playlistObservable.stream.listen((_) {
-      setState(() {});
+      setState(() {
+        _checkPlaylistIconFormatWarningStae();
+      });
     });
 
     _songListSubscription =
@@ -25,6 +39,7 @@ class PlaylistListPageState extends State<PlaylistListPage> {
       setState(() {});
     });
 
+    _checkPlaylistIconFormatWarningStae();
     super.initState();
   }
 
@@ -66,6 +81,47 @@ class PlaylistListPageState extends State<PlaylistListPage> {
     );
   }
 
+  Widget _songsListView() => ListView.builder(
+        itemCount: App.modManager.playlists.length,
+        itemBuilder: (context, index) {
+          var playlist = App.modManager.playlists.values.elementAt(index);
+          return PlaylistWidget(playlist: playlist, onTap: _onPlaylistTap);
+        },
+      );
+
+  String playlistIconWarningText() => App.isQuest
+      ? "(for example they were taken from the PC version of the game)"
+      : "(for example they were taken from the Quest version of the game)";
+
+  void _fixPlaylistIcons() async {
+    var list = App.modManager.playlists.values
+        .where((x) => x.imageCompatibilityIssue)
+        .toList();
+
+    await App.modManager.applyMultiplePlaylistChanges(list);
+  }
+
+  void _ignorePlaylistIcons() {
+    setState(() {
+      showPlaylistIconFormatWarning = false;
+      ignorePlaylistIconFormatWarning = true;
+    });
+  }
+
+  Widget _bodyContent() => showPlaylistIconFormatWarning
+      ? Column(children: [
+          Text(
+              'Some playlists have wrong icon data which will prevent the game from displaying them ${playlistIconWarningText()}.'),
+          Row(children: [
+            ElevatedButton(
+                onPressed: _fixPlaylistIcons, child: const Text('Fix now')),
+            ElevatedButton(
+                onPressed: _ignorePlaylistIcons, child: const Text('Ignore')),
+          ]),
+          Expanded(child: _songsListView())
+        ])
+      : _songsListView();
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -90,13 +146,7 @@ class PlaylistListPageState extends State<PlaylistListPage> {
             )
           ]),
         ),
-        body: ListView.builder(
-          itemCount: App.modManager.playlists.length,
-          itemBuilder: (context, index) {
-            var playlist = App.modManager.playlists.values.elementAt(index);
-            return PlaylistWidget(playlist: playlist, onTap: _onPlaylistTap);
-          },
-        ));
+        body: _bodyContent());
   }
 }
 
