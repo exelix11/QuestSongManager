@@ -7,11 +7,10 @@ import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:webview_flutter_android/webview_flutter_android.dart';
 
+import '../../rpc/schema_parser.dart';
+
 class BrowserPageViewState extends State<BrowserPageView> {
   late WebViewController controller;
-
-  final RegExp _playlistUrlRegex =
-      RegExp(r'^https://api.beatsaver.com/playlists/id/(\d+)/download$');
 
   List<WebBookmark> bookmarks = [];
 
@@ -30,16 +29,15 @@ class BrowserPageViewState extends State<BrowserPageView> {
           onPageFinished: (String url) {},
           onWebResourceError: (WebResourceError error) {},
           onNavigationRequest: (NavigationRequest request) async {
-            if (request.url.startsWith('beatsaver://')) {
-              _downloadSongById(request.url.split('beatsaver://').last);
-              return NavigationDecision.prevent;
-            } else if (request.url.startsWith('bsplaylist://playlist/')) {
-              _downloadPlaylistByUrl(
-                  request.url.split('bsplaylist://playlist/').last);
-              return NavigationDecision.prevent;
-            } else if (_playlistUrlRegex.hasMatch(request.url)) {
-              _downloadPlaylistByUrl(request.url);
-              return NavigationDecision.prevent;
+            var parse = BsSchemaParser.parse(request.url);
+            if (parse != null) {
+              if (parse.isSongDownload) {
+                _downloadSongById(parse.args[0]);
+                return NavigationDecision.prevent;
+              } else if (parse.isPlaylistDownload) {
+                _downloadPlaylistByUrl(parse.args[0]);
+                return NavigationDecision.prevent;
+              }
             } else if (request.url.endsWith(".zip")) {
               App.showToast(
                   "Download by zip is not currently supported, use the beatsaver:// url");

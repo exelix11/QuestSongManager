@@ -1,6 +1,8 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:bsaberquest/download_manager/gui/downloads_tab.dart';
+import 'package:bsaberquest/download_manager/gui/util.dart';
 import 'package:bsaberquest/mod_manager/mod_manager.dart';
 import 'package:bsaberquest/options/options_page.dart';
 import 'package:bsaberquest/main.dart';
@@ -10,15 +12,23 @@ import 'package:flutter/material.dart';
 
 import 'options/game_path_picker_page.dart';
 import 'options/quest_install_location_options.dart';
+import 'rpc/rpc_manager.dart';
 
 class MainPageState extends State<MainPage> {
   late Future _init;
   String _hintText = "";
+  StreamSubscription<RpcCommand>? _rpcSubscription;
 
   @override
   void initState() {
     _init = _initialize();
     super.initState();
+  }
+
+  @override
+  void dispose() {
+    _rpcSubscription?.cancel();
+    super.dispose();
   }
 
   Future _getGameRootPath() async {
@@ -79,21 +89,40 @@ class MainPageState extends State<MainPage> {
     try {
       await App.modManager.reloadIfNeeded();
     } catch (e) {
-      if (e is FileSystemException && e.osError?.errorCode == 13) {
-        if (!await App.preferences.isFirstLaunchPermissionRequested()) {
-          if (await OptionsPageState.requestFileAccess()) {
-            setState(() {
-              _init = _initialize();
-            });
-            return;
-          }
-        }
+      if (await _androidCheckErrorFilePermissions(e)) return;
+      App.showToast("Initialization error: $e");
+      return;
+    }
 
-        App.showToast(
-            "Failed to access the storage, please enable the storage permission in the settings");
-      } else {
-        App.showToast("Error during initialization: $e");
+    // If everything went well try to process pending messages
+    if (App.rpc != null) {
+      _rpcSubscription = App.rpc!.subscribeEvents(_processRpcCommand);
+    }
+  }
+
+  Future<bool> _androidCheckErrorFilePermissions(dynamic e) async {
+    if (!App.isQuest) return false;
+
+    if (e is FileSystemException && e.osError?.errorCode == 13) {
+      if (!await App.preferences.isFirstLaunchPermissionRequested()) {
+        if (await OptionsPageState.requestFileAccess()) {
+          setState(() {
+            _init = _initialize();
+          });
+          // Ignore the error and  try again
+          return true;
+        }
       }
+    }
+
+    return false;
+  }
+
+  void _processRpcCommand(RpcCommand cmd) async {
+    if (cmd.isSongDownload) {
+      DownloadUtil.downloadById(cmd.args[0], null);
+    } else if (cmd.isPlaylistDownload) {
+      DownloadUtil.downloadPlaylist(cmd.args[0], "playlist", null, true);
     }
   }
 
@@ -121,14 +150,12 @@ class MainPageState extends State<MainPage> {
       length: 4,
       child: Scaffold(
         appBar: AppBar(
-          title: const TabBar(
-            tabs: [
-              Tab(icon: Icon(Icons.music_note)),
-              Tab(icon: Icon(Icons.list)),
-              Tab(icon: Icon(Icons.wifi)),
-              Tab(icon: Icon(Icons.settings)),
-            ],
-          ),
+          title: const TabBar(tabs: [
+            Tab(icon: Icon(Icons.music_note)),
+            Tab(icon: Icon(Icons.list)),
+            Tab(icon: Icon(Icons.wifi)),
+            Tab(icon: Icon(Icons.settings)),
+          ]),
         ),
         body: const TabBarView(
           children: [

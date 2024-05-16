@@ -3,12 +3,29 @@ import 'dart:io';
 import 'package:bsaberquest/download_manager/downloader.dart';
 import 'package:bsaberquest/main_page.dart';
 import 'package:bsaberquest/options/preferences.dart';
+import 'package:bsaberquest/rpc/rpc_manager.dart';
+import 'package:bsaberquest/rpc/schema_parser.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 
 import 'mod_manager/mod_manager.dart';
 
-void main() {
+Future main(List<String> arguments) async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  if (Platform.isWindows) {
+    App.rpc = RpcManager();
+    var res = await App.rpc!.initialize();
+
+    for (var cmd in arguments
+        .map((e) => BsSchemaParser.parse(e))
+        .where((x) => x != null)) {
+      await App.rpc!.sendCommand(cmd!);
+    }
+
+    if (res == InitResult.child) exit(0);
+  }
+
   runApp(const App());
 }
 
@@ -19,6 +36,8 @@ class App extends StatelessWidget {
   static final bool isQuest = Platform.isAndroid || _devSimulateQuest;
 
   static late ModManager modManager;
+
+  static RpcManager? rpc;
 
   static final DownloadManager downloadManager = DownloadManager();
 

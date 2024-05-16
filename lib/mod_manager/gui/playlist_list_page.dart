@@ -112,12 +112,15 @@ class PlaylistListPageState extends State<PlaylistListPage> {
       ? Column(children: [
           Text(
               'Some playlists have wrong icon data which will prevent the game from displaying them ${playlistIconWarningText()}.'),
-          Row(children: [
-            ElevatedButton(
-                onPressed: _fixPlaylistIcons, child: const Text('Fix now')),
-            ElevatedButton(
-                onPressed: _ignorePlaylistIcons, child: const Text('Ignore')),
-          ]),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              ElevatedButton(
+                  onPressed: _fixPlaylistIcons, child: const Text('Fix now')),
+              ElevatedButton(
+                  onPressed: _ignorePlaylistIcons, child: const Text('Ignore')),
+            ],
+          ),
           Expanded(child: _songsListView())
         ])
       : _songsListView();
