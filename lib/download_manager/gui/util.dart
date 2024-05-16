@@ -1,24 +1,18 @@
+import 'package:bsaberquest/download_manager/gui/playlist_download_page.dart';
 import 'package:bsaberquest/main.dart';
+import 'package:flutter/material.dart';
 
 class DownloadUtil {
-  static Future downloadPlaylist(String jsonUrl, String playlistName,
-      String? webSource, bool downloadSongs) async {
-    try {
-      if (!await App.modManager.isPlaylistNameFree(playlistName)) {
-        App.showToast("Playlist name already exists");
-        return;
-      }
-
-      App.showToast("Starting download...");
-
-      var res = await App.downloadManager
-          .startPlaylistDownload(
-              jsonUrl, playlistName, webSource, downloadSongs)
-          .future;
-
-      App.showToast(res.message);
-    } catch (e) {
-      App.showToast("Failed to download: $e");
+  static Future downloadPlaylist(
+      BuildContext context, String jsonUrl, String? webSource) async {
+    if (context.mounted) {
+      await Navigator.push(
+          context,
+          MaterialPageRoute(
+              builder: (context) =>
+                  PlaylistDownloadPage(jsonUrl, webSource: webSource)));
+    } else {
+      App.showToast("Failed to open playlist download page");
     }
   }
 

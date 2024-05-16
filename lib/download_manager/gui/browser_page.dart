@@ -98,18 +98,9 @@ class BrowserPageViewState extends State<BrowserPageView> {
       var url = downloadPlaylist;
       downloadPlaylist = null;
 
-      var defaultName = await controller.getTitle();
-
       if (!context.mounted) return;
 
-      var name = await GuiUtil.textInputDialog(
-          context, "Enter the name of the playlist",
-          defaultValue: defaultName);
-      if (name == null || name.isEmpty) {
-        return;
-      }
-
-      DownloadUtil.downloadPlaylist(url!, name, downloadPageSource, true);
+      DownloadUtil.downloadPlaylist(context, url!, downloadPageSource);
     }
   }
 

@@ -425,6 +425,17 @@ class ModManager {
     return filename;
   }
 
+  Future<Playlist?> getPlaylistByName(String name) async {
+    await reloadIfNeeded();
+
+    var filename = _playlistNameToFileName(name);
+    if (!playlists.containsKey(filename)) {
+      return null;
+    }
+
+    return playlists[filename];
+  }
+
   Future<bool> isPlaylistNameFree(String name) async {
     await reloadIfNeeded();
 
@@ -433,6 +444,7 @@ class ModManager {
       return false;
     }
 
+    // Maybe the file exists but we did not load it (eg exception during load)
     var file = File("$gameRoot/${paths.installPlaylistPath}/$filename");
     if (await file.exists()) {
       return false;

@@ -34,12 +34,7 @@ class OptionsPageState extends State<OptionsPage> {
       return;
     }
 
-    var name = await GuiUtil.textInputDialog(context, "Enter playlist name");
-    if (name == null || name.isEmpty) {
-      return;
-    }
-
-    await DownloadUtil.downloadPlaylist(url, name, null, true);
+    await DownloadUtil.downloadPlaylist(context, url, null);
   }
 
   static Future<bool> requestFileAccess() async {

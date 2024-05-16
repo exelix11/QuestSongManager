@@ -122,7 +122,7 @@ class MainPageState extends State<MainPage> {
     if (cmd.isSongDownload) {
       DownloadUtil.downloadById(cmd.args[0], null);
     } else if (cmd.isPlaylistDownload) {
-      DownloadUtil.downloadPlaylist(cmd.args[0], "playlist", null, true);
+      DownloadUtil.downloadPlaylist(context, cmd.args[0], null);
     }
   }
 

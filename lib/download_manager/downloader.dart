@@ -1,10 +1,12 @@
 import 'dart:async';
+import 'dart:collection';
 import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:archive/archive.dart';
 import 'package:bsaberquest/main.dart';
 import 'package:bsaberquest/mod_manager/model/song.dart';
+import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
@@ -45,58 +47,60 @@ class DownloadManager {
     _updateItemState(item);
   }
 
-  DownloadItem startPlaylistDownload(String jsonUrl, String playlistName,
-      String? webSource, bool downloadSongs) {
-    var item = PlaylistDownloadItem(playlistName, webSource);
-    item.statusMessage = "Downloading metadata";
+  Future<Playlist> downloadPlaylist(String jsonUrl) async {
+    var res = await http.get(Uri.parse(jsonUrl));
+    if (res.statusCode != 200) {
+      throw Exception("Failed to get playlist info (${res.statusCode})");
+    }
+
+    return Playlist.fromJson(jsonDecode(res.body));
+  }
+
+  DownloadItem startPlaylistDownload(
+      Playlist playlist, Set<String>? songsToDownload, String? webSource) {
+    var item =
+        PlaylistDownloadItem("[Playlist] ${playlist.playlistTitle}", webSource);
+
+    item.statusMessage = "Storing metadata";
+    item.downloadedIcon = playlist.imageBytes;
 
     _beginBackgroundOperation(item, () async {
-      var res = await http.get(Uri.parse(jsonUrl));
-      if (res.statusCode != 200) {
-        throw Exception("Failed to get playlist info (${res.statusCode})");
-      }
-
-      var playlist = Playlist.fromJson(jsonDecode(res.body));
-      // Force playlist name
-      playlist.playlistTitle = playlistName;
       // Since this is a playlist we are downloading from the internet if there's the image issue it will be automatically fixed so force the warning to false
       playlist.imageCompatibilityIssue = false;
-
-      item.name = "[Playlist] ${playlist.playlistTitle}";
-      item.downloadedIcon = playlist.imageBytes;
-      _updateItemState(item);
-
       await App.modManager.addPlaylist(playlist);
       item.playlistFileName = playlist.fileName;
 
-      if (downloadSongs) {
-        var keys =
-            playlist.songs.map((e) => e.key).where((x) => x != null).toList();
+      // If not specified, download all
+      songsToDownload ??= playlist.songs.map((e) => e.hash).toSet();
 
-        item.statusMessage = "Downloading songs (0/${keys.length})";
+      item.statusMessage = "Downloading songs (0/${songsToDownload!.length})";
+      _updateItemState(item);
+
+      List<Future<DownloadResult>> futures = [];
+      var count = 0;
+      for (var song in playlist.songs) {
+        if (!songsToDownload!.contains(song.hash) || song.key == null) {
+          continue;
+        }
+
+        futures.add(startMapDownload(song.key!, webSource, null).future);
+        count++;
+
+        item.statusMessage =
+            "Downloading songs ($count/${songsToDownload!.length})";
         _updateItemState(item);
 
-        List<Future<DownloadResult>> futures = [];
-        var count = 0;
-        for (var key in keys) {
-          // No need to specify a playlist name here, as we already have one with all the songs
-          futures.add(startMapDownload(key!, webSource, null).future);
-          count++;
-
-          item.statusMessage = "Downloading songs ($count/${keys.length})";
-          _updateItemState(item);
-
-          if (futures.length >= 3) {
-            await Future.wait(futures);
-            futures.clear();
-          }
-        }
-
-        if (futures.isNotEmpty) {
+        if (futures.length >= 3) {
           await Future.wait(futures);
+          futures.clear();
         }
-        futures.clear();
       }
+
+      if (futures.isNotEmpty) {
+        await Future.wait(futures);
+      }
+
+      futures.clear();
 
       return DownloadResult.ok("Download complete");
     });
