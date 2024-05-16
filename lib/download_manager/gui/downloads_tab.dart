@@ -5,6 +5,7 @@ import 'package:bsaberquest/download_manager/gui/pending_downloads_widget.dart';
 import 'package:bsaberquest/main.dart';
 import 'package:bsaberquest/mod_manager/gui/playlist_picker_page.dart';
 import 'package:bsaberquest/mod_manager/gui/simple_widgets.dart';
+import 'package:bsaberquest/rpc/rpc_manager.dart';
 import 'package:flutter/material.dart';
 
 import '../../mod_manager/model/playlist.dart';
@@ -64,9 +65,26 @@ class DownloadsTabState extends State<DownloadsTab> {
     }
   }
 
+  void _installRpcHandler() async {
+    try {
+      await RpcManager.installRpcHandler();
+      App.showToast("Installed");
+    } catch (e) {
+      App.showToast("Error: $e");
+    }
+  }
+
   Widget _pcDownloadTextInfo() {
-    return const Text(
-        "The in-app browser is not supported on PC. Download songs from the browser.");
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        const Text(
+            "The in-app browser is not supported on PC. Download songs from the browser using the beatsaber:// protocol."),
+        ElevatedButton(
+            onPressed: _installRpcHandler,
+            child: const Text("Install the protocol handler"))
+      ],
+    );
   }
 
   Widget _questOpenBrowser() {

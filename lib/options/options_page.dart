@@ -17,6 +17,7 @@ class OptionsPageState extends State<OptionsPage> {
   final TextEditingController _urlController = TextEditingController();
 
   bool _showTestOptions = false;
+  bool _pathChangedRestart = false;
 
   void _downloadById() async {
     var id = _idController.text;
@@ -183,17 +184,33 @@ class OptionsPageState extends State<OptionsPage> {
   }
 
   void _openGamePathPicker() async {
+    var path = await App.preferences.getGameRootPath();
+
+    if (!mounted) throw Exception("Failed to open the path picker");
+
     await Navigator.of(context).push(
         MaterialPageRoute(builder: (context) => const GamePathPickerPage()));
 
-    App.showToast("Restart the app to apply the changes");
+    var newPath = await App.preferences.getGameRootPath();
+    if (path != newPath) {
+      setState(() {
+        _pathChangedRestart = true;
+      });
+    }
   }
 
   Widget _pcInstallLocationOptions() {
     return Column(children: [
       Text("Current game location: ${App.modManager.gameRoot}"),
       ElevatedButton(
-          onPressed: _openGamePathPicker, child: const Text("Change"))
+          onPressed: _openGamePathPicker, child: const Text("Change")),
+      _pathChangedRestart
+          ? const Text(
+              "The path has been changed, restart the app to use the new path.")
+          : const SizedBox(
+              width: 1,
+              height: 1,
+            )
     ]);
   }
 

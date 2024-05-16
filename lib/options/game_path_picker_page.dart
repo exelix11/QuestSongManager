@@ -11,7 +11,8 @@ class GamePathPickerPage extends StatelessWidget {
 
     // Do something with the selected directory
     App.preferences.setGameRootPath(selectedDirectory);
-    App.showToast("Game path set to: $selectedDirectory");
+    App.showToast(
+        "Game path set to: $selectedDirectory\nRestart the app to apply the change");
     if (context.mounted) {
       Navigator.pop(context);
     }

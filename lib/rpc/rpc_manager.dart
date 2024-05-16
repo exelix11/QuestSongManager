@@ -3,6 +3,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:ffi';
+import 'dart:io';
 import 'package:ffi/ffi.dart';
 import 'package:flutter/services.dart';
 
@@ -51,6 +52,40 @@ class RpcManager {
 
   RpcManager() {
     _rpcCallback = NativeCallable<NativeRpcCallback>.listener(_onMessage);
+  }
+
+  static Future installRpcHandler() async {
+    var exepath = Platform.resolvedExecutable;
+    if (!File(exepath).existsSync()) {
+      throw Exception("The main executable could not be found");
+    }
+
+    exepath = exepath.replaceAll("\\", "\\\\");
+
+    String reg = "";
+    reg += r'Windows Registry Editor Version 5.00' "\r\n";
+    reg += r'[HKEY_CURRENT_USER\SOFTWARE\Classes\bsplaylist]' "\r\n";
+    reg += r'"URL Protocol"=""' "\r\n";
+    reg += r'[HKEY_CURRENT_USER\SOFTWARE\Classes\bsplaylist\shell]' "\r\n";
+    reg += r'[HKEY_CURRENT_USER\SOFTWARE\Classes\bsplaylist\shell\open]' "\r\n";
+    reg += r'[HKEY_CURRENT_USER\SOFTWARE\Classes\bsplaylist\shell\open\command]'
+        "\r\n";
+    // ignore: prefer_interpolation_to_compose_strings
+    reg += r'@="\"' + exepath + r'\" \"%1\""' "\r\n";
+    reg += r'Windows Registry Editor Version 5.00' "\r\n";
+    reg += r'[HKEY_CURRENT_USER\SOFTWARE\Classes\beatsaver]' "\r\n";
+    reg += r'"URL Protocol"=""' "\r\n";
+    reg += r'[HKEY_CURRENT_USER\SOFTWARE\Classes\beatsaver\shell]' "\r\n";
+    reg += r'[HKEY_CURRENT_USER\SOFTWARE\Classes\beatsaver\shell\open]' "\r\n";
+    reg += r'[HKEY_CURRENT_USER\SOFTWARE\Classes\beatsaver\shell\open\command]'
+        "\r\n";
+    // ignore: prefer_interpolation_to_compose_strings
+    reg += r'@="\"' + exepath + r'\" \"%1\""' "\r\n";
+
+    var rpc = File("rpc_registration.reg");
+    await rpc.writeAsString(reg);
+
+    Process.run("cmd.exe", ["/k", rpc.absolute.path]);
   }
 
   Future<InitResult> initialize() async {
