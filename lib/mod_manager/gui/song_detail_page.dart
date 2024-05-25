@@ -4,6 +4,7 @@ import 'package:bsaberquest/gui_util.dart';
 import 'package:bsaberquest/main.dart';
 import 'package:bsaberquest/mod_manager/mod_manager.dart';
 import 'package:bsaberquest/mod_manager/model/song.dart';
+import 'package:bsaberquest/mod_manager/platform_helper.dart';
 import 'package:bsaberquest/mod_manager/version_detector.dart';
 import 'package:flutter/material.dart';
 
@@ -66,6 +67,10 @@ class SongDetailPage extends StatelessWidget {
     return name;
   }
 
+  void _openFolder() {
+    PlatformHelper.openSongPath(song);
+  }
+
   Widget _beatSaberVersionWarn() {
     // On PC this warning is not needed
     if (!App.isQuest) return const SizedBox(height: 30);
@@ -126,6 +131,11 @@ class SongDetailPage extends StatelessWidget {
                   onPressed: () => _deleteSong(context),
                   child: const Text('Delete'),
                 ),
+                if (!App.isQuest)
+                  ElevatedButton(
+                    onPressed: () => _openFolder(),
+                    child: const Text('Open folder'),
+                  ),
               ],
             ),
           ],
