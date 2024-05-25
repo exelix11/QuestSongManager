@@ -274,10 +274,11 @@ class OptionsPageState extends State<OptionsPage> {
   }
 
   Widget _credits() {
-    return const Column(children: [
-      Text("Quest Song Manager, by exelix11"),
-      Text("Release 1.3"),
-      Text("https://github.com/exelix11/QuestSongManager"),
+    return Column(children: [
+      const Text("Quest Song Manager, by exelix11"),
+      const Text("Release 1.4"),
+      const Text("https://github.com/exelix11/QuestSongManager"),
+      if (!App.isQuest) const Text("(PC Version, rename pending.)"),
     ]);
   }
 
