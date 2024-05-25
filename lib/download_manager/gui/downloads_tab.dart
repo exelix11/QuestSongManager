@@ -65,10 +65,19 @@ class DownloadsTabState extends State<DownloadsTab> {
     }
   }
 
+  void _removeRpcHandler() async {
+    try {
+      await RpcManager.removeRpcHandler();
+      App.showToast("Operation requested");
+    } catch (e) {
+      App.showToast("Error: $e");
+    }
+  }
+
   void _installRpcHandler() async {
     try {
       await RpcManager.installRpcHandler();
-      App.showToast("Installed");
+      App.showToast("Installation requested");
     } catch (e) {
       App.showToast("Error: $e");
     }
@@ -80,9 +89,17 @@ class DownloadsTabState extends State<DownloadsTab> {
       children: [
         const Text(
             "The in-app browser is not supported on PC. Download songs from the browser using the beatsaber:// protocol."),
-        ElevatedButton(
-            onPressed: _installRpcHandler,
-            child: const Text("Install the protocol handler"))
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            ElevatedButton(
+                onPressed: _installRpcHandler,
+                child: const Text("Install the protocol handler")),
+            ElevatedButton(
+                onPressed: _removeRpcHandler,
+                child: const Text("Remove the protocol handler")),
+          ],
+        )
       ],
     );
   }

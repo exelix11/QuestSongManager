@@ -54,6 +54,21 @@ class RpcManager {
     _rpcCallback = NativeCallable<NativeRpcCallback>.listener(_onMessage);
   }
 
+  static Future _registerRegFile(String name, String content) async {
+    var rpc = File(name);
+    await rpc.writeAsString(content);
+
+    Process.run("cmd.exe", ["/k", rpc.absolute.path]);
+  }
+
+  static Future removeRpcHandler() async {
+    String reg = "";
+    reg += r'Windows Registry Editor Version 5.00' "\r\n";
+    reg += r'[-HKEY_CURRENT_USER\SOFTWARE\Classes\bsplaylist]' "\r\n";
+
+    await _registerRegFile("rpc_remove.reg", reg);
+  }
+
   static Future installRpcHandler() async {
     var exepath = Platform.resolvedExecutable;
     if (!File(exepath).existsSync()) {
@@ -82,10 +97,7 @@ class RpcManager {
     // ignore: prefer_interpolation_to_compose_strings
     reg += r'@="\"' + exepath + r'\" \"%1\""' "\r\n";
 
-    var rpc = File("rpc_registration.reg");
-    await rpc.writeAsString(reg);
-
-    Process.run("cmd.exe", ["/k", rpc.absolute.path]);
+    await _registerRegFile("rpc_registration.reg", reg);
   }
 
   Future<InitResult> initialize() async {
