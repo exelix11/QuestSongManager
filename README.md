@@ -1,6 +1,7 @@
 # Quest Song Manager
 
 This is a simple song manager for the Quest version of Beat Saber.
+Starting with 1.4 an experimental build for Windows is also available.
 
 ## Features
 
