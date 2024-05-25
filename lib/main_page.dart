@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:bsaberquest/download_manager/gui/downloads_tab.dart';
 import 'package:bsaberquest/download_manager/gui/util.dart';
+import 'package:bsaberquest/gui_util.dart';
 import 'package:bsaberquest/mod_manager/mod_manager.dart';
 import 'package:bsaberquest/options/options_page.dart';
 import 'package:bsaberquest/main.dart';
@@ -31,7 +32,7 @@ class MainPageState extends State<MainPage> {
     super.dispose();
   }
 
-  Future _getGameRootPath() async {
+  Future<String?> _getGameRootPath() async {
     // For dev when simulating a quest use this path
     if (App.isQuest && App.isDev) {
       return "/home/user/bsaberquest/test_sd_root";
@@ -49,21 +50,26 @@ class MainPageState extends State<MainPage> {
         await Navigator.push(
             context,
             MaterialPageRoute(
-                builder: (context) => const GamePathPickerPage()));
+                builder: (context) => const GamePathPickerPage(false)));
       } else {
         throw Exception("Failed to open game path picker");
       }
 
       gamePath = await App.preferences.getGameRootPath();
-      if (gamePath == null) {
-        throw Exception("Game path not set");
-      }
     }
     return gamePath;
   }
 
   Future _initialize() async {
     var gamePath = await _getGameRootPath();
+    if (gamePath == null) {
+      if (mounted) {
+        await GuiUtil.longTextDialog(
+            context, "Error", "Failed to get the game path");
+      }
+      exit(0);
+    }
+
     App.modManager = ModManager(gamePath);
 
     var opt = await App.preferences.useHashCache();

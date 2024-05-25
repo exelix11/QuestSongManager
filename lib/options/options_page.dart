@@ -143,9 +143,10 @@ class OptionsPageState extends State<OptionsPage> {
           onPressed: _reloadSongs,
           child: const Text("Reload songs and playlists")),
       const SizedBox(width: 10),
-      ElevatedButton(
-          onPressed: _openBookmarksManager,
-          child: const Text("Manage browser bookmarks"))
+      if (App.isQuest)
+        ElevatedButton(
+            onPressed: _openBookmarksManager,
+            child: const Text("Manage browser bookmarks"))
     ]);
   }
 
@@ -183,8 +184,8 @@ class OptionsPageState extends State<OptionsPage> {
 
     if (!mounted) throw Exception("Failed to open the path picker");
 
-    await Navigator.of(context).push(
-        MaterialPageRoute(builder: (context) => const GamePathPickerPage()));
+    await Navigator.of(context).push(MaterialPageRoute(
+        builder: (context) => const GamePathPickerPage(true)));
 
     var newPath = await App.preferences.getGameRootPath();
     if (path != newPath) {

@@ -3,7 +3,9 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 
 class GamePathPickerPage extends StatelessWidget {
-  const GamePathPickerPage({super.key});
+  final bool canGoBack;
+
+  const GamePathPickerPage(this.canGoBack, {super.key});
 
   void _pickPath(BuildContext context) async {
     String? selectedDirectory = await FilePicker.platform.getDirectoryPath();
@@ -22,8 +24,8 @@ class GamePathPickerPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Select game path'),
-      ),
+          title: const Text('Select game path'),
+          automaticallyImplyLeading: canGoBack),
       body: Center(
         child: Column(
           children: [
