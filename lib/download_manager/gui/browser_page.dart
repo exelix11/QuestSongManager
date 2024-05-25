@@ -1,6 +1,5 @@
 import 'package:bsaberquest/download_manager/gui/pending_downloads_widget.dart';
 import 'package:bsaberquest/download_manager/gui/util.dart';
-import 'package:bsaberquest/gui_util.dart';
 import 'package:bsaberquest/main.dart';
 import 'package:bsaberquest/options/preferences.dart';
 import 'package:flutter/material.dart';
