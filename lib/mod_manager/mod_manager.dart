@@ -258,7 +258,7 @@ class ModManager {
     }
 
     hash.close();
-    return sink.events.single.toString();
+    return sink.events.single.toString().toLowerCase();
   }
 
   bool hasSong(String hash) {

@@ -3,7 +3,14 @@ class Song {
   final String infoFileName;
   final BeatSaberSongInfo meta;
   final bool isValid;
-  String? hash;
+
+  String? _hash;
+
+  String? get hash => _hash;
+
+  set hash(String? value) {
+    _hash = value?.toLowerCase();
+  }
 
   String prettyMetaInfo() {
     var info = "";

@@ -25,7 +25,7 @@ class PlayListSong {
 
   factory PlayListSong.fromJson(Map<String, dynamic> json) {
     return PlayListSong(
-      json['hash'] as String,
+      (json['hash'] as String).toLowerCase(),
       json['songName'] as String,
       key: json['key'] as String?,
     );
