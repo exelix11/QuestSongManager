@@ -6,16 +6,18 @@ import 'package:bsaberquest/mod_manager/gui/playlist_detail_page.dart';
 import 'package:bsaberquest/mod_manager/gui/simple_widgets.dart';
 import 'package:bsaberquest/mod_manager/gui/songs_in_no_playlist_page.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 
 import '../model/playlist.dart';
 
 class PlaylistListPageState extends State<PlaylistListPage> {
   late StreamSubscription _playlistSubscription;
   late StreamSubscription _songListSubscription;
+  bool showPlaylistErrorList = false;
   bool showPlaylistIconFormatWarning = false;
   bool ignorePlaylistIconFormatWarning = false;
 
-  void _checkPlaylistIconFormatWarningStae() {
+  void _checkUiConditionState() {
     if (ignorePlaylistIconFormatWarning) {
       showPlaylistIconFormatWarning = false;
       return;
@@ -23,6 +25,8 @@ class PlaylistListPageState extends State<PlaylistListPage> {
 
     showPlaylistIconFormatWarning =
         App.modManager.playlists.values.any((x) => x.imageCompatibilityIssue);
+
+    showPlaylistErrorList = App.modManager.errorPlaylists.isNotEmpty;
   }
 
   @override
@@ -30,7 +34,7 @@ class PlaylistListPageState extends State<PlaylistListPage> {
     _playlistSubscription =
         App.modManager.playlistObservable.stream.listen((_) {
       setState(() {
-        _checkPlaylistIconFormatWarningStae();
+        _checkUiConditionState();
       });
     });
 
@@ -39,7 +43,7 @@ class PlaylistListPageState extends State<PlaylistListPage> {
       setState(() {});
     });
 
-    _checkPlaylistIconFormatWarningStae();
+    _checkUiConditionState();
     super.initState();
   }
 
@@ -108,22 +112,45 @@ class PlaylistListPageState extends State<PlaylistListPage> {
     });
   }
 
-  Widget _bodyContent() => showPlaylistIconFormatWarning
-      ? Column(children: [
-          Text(
-              'Some playlists have wrong icon data which will prevent the game from displaying them ${playlistIconWarningText()}.'),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              ElevatedButton(
-                  onPressed: _fixPlaylistIcons, child: const Text('Fix now')),
-              ElevatedButton(
-                  onPressed: _ignorePlaylistIcons, child: const Text('Ignore')),
-            ],
-          ),
-          Expanded(child: _songsListView())
-        ])
-      : _songsListView();
+  List<Widget> _iconFormatIssueWidget() => [
+        Text(
+            'Some playlists have wrong icon data which will prevent the game from displaying them ${playlistIconWarningText()}.'),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            ElevatedButton(
+                onPressed: _fixPlaylistIcons, child: const Text('Fix now')),
+            ElevatedButton(
+                onPressed: _ignorePlaylistIcons, child: const Text('Ignore')),
+          ],
+        )
+      ];
+
+  void _openPlaylistErrorDetails() async {
+    var errors = "";
+    for (var error in App.modManager.errorPlaylists.values) {
+      errors += "Failed to load ${error.fileName}:\n${error.error}\n\n";
+    }
+    await GuiUtil.longTextDialog(context, 'Playlist loading errors', errors);
+  }
+
+  Widget _playlistErrors() => Column(
+        children: [
+          const Text(
+              'Some playlists failed to load. This can be caused by a corrupted file or a missing song file.'),
+          ElevatedButton(
+              onPressed: _openPlaylistErrorDetails,
+              child: const Text('Details'))
+        ],
+      );
+
+  Widget _bodyContent() {
+    return Column(children: [
+      if (showPlaylistIconFormatWarning) ..._iconFormatIssueWidget(),
+      if (showPlaylistErrorList) _playlistErrors(),
+      Expanded(child: _songsListView())
+    ]);
+  }
 
   @override
   Widget build(BuildContext context) {

@@ -65,6 +65,8 @@ class ModManager {
   Map<String, Song> songs = {};
   // Indexed by file name
   Map<String, Playlist> playlists = {};
+  // Indexed by file name
+  Map<String, ErrorPlaylist> errorPlaylists = {};
 
   bool useFastHashCache = true;
 
@@ -148,12 +150,20 @@ class ModManager {
     }
 
     for (var entity in playlistsDir.listSync()) {
-      if (entity is File && entity.path.endsWith(".json")) {
+      if (entity is File) {
+        // Only use lwPath here and not to store the file for platforms where file casing matters
+        var lwPath = entity.path.toLowerCase();
+        if (!lwPath.endsWith(".json") && !lwPath.endsWith(".bplist")) {
+          continue;
+        }
+
+        Playlist playlist;
         try {
-          var playlist = await _loadPlaylistFile(entity);
+          playlist = await _loadPlaylistFile(entity);
           playlists[playlist.fileName] = playlist;
         } catch (e) {
-          print("Error loading playlist: $e");
+          var name = dart_path.basename(entity.path);
+          errorPlaylists[name] = ErrorPlaylist(name, name, e.toString());
         }
       }
     }
@@ -162,6 +172,7 @@ class ModManager {
   Future reloadFromDisk() async {
     songs.clear();
     playlists.clear();
+    errorPlaylists.clear();
 
     var invalid = 0;
 
@@ -186,7 +197,7 @@ class ModManager {
 
         if (hash.length == 40) {
           print("Loaded cached hash for ${song.meta.songName}");
-          return hash;
+          return hash.toLowerCase();
         }
       }
     }

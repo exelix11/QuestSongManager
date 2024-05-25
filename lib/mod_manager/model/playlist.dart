@@ -118,3 +118,11 @@ class Playlist {
     return obj;
   }
 }
+
+class ErrorPlaylist {
+  final String error;
+  final String fileName;
+  final String displayName;
+
+  ErrorPlaylist(this.displayName, this.fileName, this.error);
+}
