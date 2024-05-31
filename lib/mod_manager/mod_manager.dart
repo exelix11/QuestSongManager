@@ -48,10 +48,16 @@ class QuestPaths extends PathProvider {
 
 class PcPaths extends PathProvider {
   @override
-  List<String> get songPaths => ["Beat Saber_Data/CustomLevels"];
+  List<String> get songPaths => [
+        "Beat Saber_Data/CustomLevels",
+        "Beat Saber_Data/CustomMultiplayerLevels"
+      ];
 
   @override
   List<String> get playlistPaths => ["Playlists"];
+
+  @override
+  String get installSongPath => songPaths[0];
 }
 
 class ModManager {
