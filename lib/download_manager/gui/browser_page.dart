@@ -52,19 +52,19 @@ class BrowserPageViewState extends State<BrowserPageView> {
       androidparams.setMediaPlaybackRequiresUserGesture(false);
     }
 
-    PreferencesManager().getWebBookmarks().then((value) {
-      setState(() {
-        bookmarks = value.bookmarks;
-      });
+    var value = App.preferences.getWebBookmarks();
 
-      var startFrom = widget.initialUrl;
-
-      if (startFrom == null || startFrom.isEmpty) {
-        startFrom = value.getHomepage()?.url ?? 'https://beatsaver.com/';
-      }
-
-      _navigateTo(startFrom);
+    setState(() {
+      bookmarks = value.bookmarks;
     });
+
+    var startFrom = widget.initialUrl;
+
+    if (startFrom == null || startFrom.isEmpty) {
+      startFrom = value.getHomepage()?.url ?? 'https://beatsaver.com/';
+    }
+
+    _navigateTo(startFrom);
 
     super.initState();
   }

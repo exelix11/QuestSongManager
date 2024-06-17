@@ -105,7 +105,7 @@ class OptionsPageState extends State<OptionsPage> {
         onPressed: () async {
           await App.modManager.removeCachedHashes();
           App.modManager.useFastHashCache = false;
-          await App.preferences.setUseHashCache(false);
+          App.preferences.setUseHashCache(false);
           App.showToast("Hash cache has been disabled");
           setState(() {});
         },
@@ -113,8 +113,8 @@ class OptionsPageState extends State<OptionsPage> {
       );
     } else {
       button = ElevatedButton(
-        onPressed: () async {
-          await App.preferences.setUseHashCache(true);
+        onPressed: () {
+          App.preferences.setUseHashCache(true);
           App.showToast("Restart the app to apply changes");
           setState(() {});
         },
@@ -156,7 +156,7 @@ class OptionsPageState extends State<OptionsPage> {
     // Initialize version cache in case it was not done yet
     await BeatSaberVersionDetector.getBeatSaberVersion();
 
-    var pref = await App.preferences.getPreferredCustomSongFolder();
+    var pref = App.preferences.getPreferredCustomSongFolder();
 
     if (mounted) {
       await Navigator.of(context).push(
@@ -180,14 +180,12 @@ class OptionsPageState extends State<OptionsPage> {
   }
 
   void _openGamePathPicker() async {
-    var path = await App.preferences.getGameRootPath();
-
-    if (!mounted) throw Exception("Failed to open the path picker");
+    var path = App.preferences.getGameRootPath();
 
     await Navigator.of(context).push(MaterialPageRoute(
         builder: (context) => const GamePathPickerPage(true)));
 
-    var newPath = await App.preferences.getGameRootPath();
+    var newPath = App.preferences.getGameRootPath();
     if (path != newPath) {
       setState(() {
         _pathChangedRestart = true;

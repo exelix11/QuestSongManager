@@ -11,6 +11,17 @@ import 'package:flutter/material.dart';
 import '../../mod_manager/model/playlist.dart';
 
 class DownloadsTabState extends State<DownloadsTab> {
+  bool _playlistIsPersistent = false;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _playlistIsPersistent = App.preferences.getAutoDownloadPlaylist() != null &&
+        App.preferences.getAutoDownloadPlaylist() ==
+            App.downloadManager.downloadToPlaylist?.fileName;
+  }
+
   void _openBrowser(String? url) {
     if (Platform.isAndroid) {
       Navigator.push(
@@ -42,7 +53,23 @@ class DownloadsTabState extends State<DownloadsTab> {
 
   void _clearPlaylist() {
     App.downloadManager.downloadToPlaylist = null;
-    setState(() {});
+    _playlistDownloadSetPersistent(false);
+  }
+
+  void _playlistDownloadSetPersistent(bool? value) {
+    value ??= false;
+
+    if (value) {
+      App.preferences.setAutoDownloadPlaylist(
+        App.downloadManager.downloadToPlaylist?.fileName,
+      );
+    } else {
+      App.preferences.setAutoDownloadPlaylist(null);
+    }
+
+    setState(() {
+      _playlistIsPersistent = value!;
+    });
   }
 
   Widget _playlistSelectWidget(BuildContext context) {
@@ -59,7 +86,16 @@ class DownloadsTabState extends State<DownloadsTab> {
               extraIcon: IconButton(
                 icon: const Icon(Icons.close),
                 onPressed: _clearPlaylist,
-              ))
+              )),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Checkbox(
+                  value: _playlistIsPersistent,
+                  onChanged: _playlistDownloadSetPersistent),
+              const Text("Remember playlist selection"),
+            ],
+          )
         ],
       );
     }

@@ -3,23 +3,26 @@ import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class PreferencesManager {
-  Future<bool> isFirstLaunchPermissionRequested() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    var res = prefs.getBool('first_launch_permission_requested') ?? false;
+  late SharedPreferences _prefs;
+
+  Future init() async {
+    _prefs = await SharedPreferences.getInstance();
+  }
+
+  bool isFirstLaunchPermissionRequested() {
+    var res = _prefs.getBool('first_launch_permission_requested') ?? false;
     if (!res) {
-      prefs.setBool('first_launch_permission_requested', true);
+      _prefs.setBool('first_launch_permission_requested', true);
     }
     return res;
   }
 
-  Future<bool> useHashCache() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    return prefs.getBool('use_hash_cache') ?? true;
+  bool useHashCache() {
+    return _prefs.getBool('use_hash_cache') ?? true;
   }
 
-  Future setUseHashCache(bool value) async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    prefs.setBool('use_hash_cache', value);
+  void setUseHashCache(bool value) async {
+    _prefs.setBool('use_hash_cache', value);
   }
 
   BrowserPreferences _getDefaults() {
@@ -30,13 +33,12 @@ class PreferencesManager {
       ];
   }
 
-  Future resetWebBookmarks() async {
-    await setWebBookmarks(_getDefaults());
+  void resetWebBookmarks() {
+    setWebBookmarks(_getDefaults());
   }
 
-  Future<BrowserPreferences> getWebBookmarks() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    String? bookmarks = prefs.getString('web_preferences');
+  BrowserPreferences getWebBookmarks() {
+    String? bookmarks = _prefs.getString('web_preferences');
 
     if (bookmarks == null) {
       return _getDefaults();
@@ -49,19 +51,16 @@ class PreferencesManager {
     }
   }
 
-  Future setWebBookmarks(BrowserPreferences settings) async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    prefs.setString("web_preferences", jsonEncode(settings.toJson()));
+  void setWebBookmarks(BrowserPreferences settings) {
+    _prefs.setString("web_preferences", jsonEncode(settings.toJson()));
   }
 
-  Future setPreferredCustomSongFolder(PreferredCustomSongFolder folder) async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    prefs.setString("preferred_custom_song_folder", folder.toString());
+  void setPreferredCustomSongFolder(PreferredCustomSongFolder folder) {
+    _prefs.setString("preferred_custom_song_folder", folder.toString());
   }
 
-  Future<PreferredCustomSongFolder> getPreferredCustomSongFolder() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    String? folder = prefs.getString("preferred_custom_song_folder");
+  PreferredCustomSongFolder getPreferredCustomSongFolder() {
+    String? folder = _prefs.getString("preferred_custom_song_folder");
 
     if (folder == null) {
       return PreferredCustomSongFolder.auto;
@@ -75,17 +74,26 @@ class PreferencesManager {
     }
   }
 
-  Future<String?> getGameRootPath() async {
-    var prefs = await SharedPreferences.getInstance();
-    var path = prefs.getString("game_root_path");
+  String? getGameRootPath() {
+    var path = _prefs.getString("game_root_path");
     if (path == null) return null;
     if (path.isEmpty) return null;
     return path;
   }
 
-  Future setGameRootPath(String path) async {
-    var prefs = await SharedPreferences.getInstance();
-    prefs.setString("game_root_path", path);
+  void setGameRootPath(String path) {
+    _prefs.setString("game_root_path", path);
+  }
+
+  void setAutoDownloadPlaylist(String? name) {
+    _prefs.setString("auto_download_playlist", name ?? "");
+  }
+
+  String? getAutoDownloadPlaylist() {
+    var path = _prefs.getString("auto_download_playlist");
+    if (path == null) return null;
+    if (path.isEmpty) return null;
+    return path;
   }
 }
 

@@ -12,6 +12,8 @@ import 'package:flutter/scheduler.dart';
 import 'mod_manager/mod_manager.dart';
 
 Future main(List<String> arguments) async {
+  await App.preferences.init();
+
   WidgetsFlutterBinding.ensureInitialized();
 
   if (Platform.isWindows) {

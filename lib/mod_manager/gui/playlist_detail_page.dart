@@ -2,14 +2,12 @@ import 'dart:async';
 import 'dart:collection';
 
 import 'package:bsaberquest/download_manager/beat_saver_api.dart';
-import 'package:bsaberquest/download_manager/gui/util.dart';
 import 'package:bsaberquest/gui_util.dart';
 import 'package:bsaberquest/main.dart';
 import 'package:bsaberquest/mod_manager/gui/simple_widgets.dart';
 import 'package:bsaberquest/mod_manager/gui/song_detail_page.dart';
 import 'package:bsaberquest/mod_manager/model/song.dart';
 import 'package:flutter/material.dart';
-import 'package:path/path.dart';
 
 import '../model/playlist.dart';
 
@@ -81,18 +79,20 @@ class PlaylistDetailPageState extends State<PlaylistDetailPage> {
       return;
     }
 
-    for (var map in info) {
-      var download = App.downloadManager.downloadMapByMetadata(map, null, null);
-      var res = await download.future;
-      if (res.error) {
-        App.showToast("Failed to download song: ${res.message}");
-        _setIsDownloadingAll(false);
-        return;
-      }
+    var pending = info
+        .map((e) => App.downloadManager.downloadMapByMetadata(e, null, null))
+        .map((e) => e.future)
+        .toList();
+
+    var res = await Future.wait(pending);
+
+    if (res.any((e) => e.error)) {
+      App.showToast("Failed to download some songs");
+    } else {
+      App.showToast("Download completed");
     }
 
     _setIsDownloadingAll(false);
-    App.showToast("Download completed");
   }
 
   void _tryDownloadMissingSong(String hash) async {

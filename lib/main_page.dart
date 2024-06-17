@@ -44,18 +44,14 @@ class MainPageState extends State<MainPage> {
     }
 
     // On PC we must use the path provided by the user
-    var gamePath = await App.preferences.getGameRootPath();
+    var gamePath = App.preferences.getGameRootPath();
     if (gamePath == null) {
-      if (mounted) {
-        await Navigator.push(
-            context,
-            MaterialPageRoute(
-                builder: (context) => const GamePathPickerPage(false)));
-      } else {
-        throw Exception("Failed to open game path picker");
-      }
+      await Navigator.push(
+          context,
+          MaterialPageRoute(
+              builder: (context) => const GamePathPickerPage(false)));
 
-      gamePath = await App.preferences.getGameRootPath();
+      gamePath = App.preferences.getGameRootPath();
     }
     return gamePath;
   }
@@ -71,9 +67,7 @@ class MainPageState extends State<MainPage> {
     }
 
     App.modManager = ModManager(gamePath);
-
-    var opt = await App.preferences.useHashCache();
-    App.modManager.useFastHashCache = opt;
+    App.modManager.useFastHashCache = App.preferences.useHashCache();
 
     // Redraw the UI to update in case loading opt was slow
     setState(() {
@@ -84,7 +78,7 @@ class MainPageState extends State<MainPage> {
 
     if (App.isQuest) {
       try {
-        var preferred = await App.preferences.getPreferredCustomSongFolder();
+        var preferred = App.preferences.getPreferredCustomSongFolder();
         await QuestInstallLocationOptions.setLocation(preferred);
       } catch (e) {
         App.showToast('Failed to set install location: $e');
@@ -100,6 +94,17 @@ class MainPageState extends State<MainPage> {
       return;
     }
 
+    // Try to apply preferences
+    {
+      var autoDownload = App.preferences.getAutoDownloadPlaylist();
+      if (autoDownload != null) {
+        var playlist = App.modManager.playlists[autoDownload];
+        if (playlist != null) {
+          App.downloadManager.downloadToPlaylist = playlist;
+        }
+      }
+    }
+
     // If everything went well try to process pending messages
     if (App.rpc != null) {
       _rpcSubscription = App.rpc!.subscribeEvents(_processRpcCommand);
@@ -110,7 +115,7 @@ class MainPageState extends State<MainPage> {
     if (!App.isQuest) return false;
 
     if (e is FileSystemException && e.osError?.errorCode == 13) {
-      if (!await App.preferences.isFirstLaunchPermissionRequested()) {
+      if (!App.preferences.isFirstLaunchPermissionRequested()) {
         if (await OptionsPageState.requestFileAccess()) {
           setState(() {
             _init = _initialize();

@@ -5,6 +5,7 @@ import 'package:bsaberquest/main.dart';
 import 'package:bsaberquest/mod_manager/gui/playlist_detail_page.dart';
 import 'package:bsaberquest/mod_manager/gui/song_detail_page.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 
@@ -75,11 +76,19 @@ class PendingDownloadsState extends State<PendingDownloadsWidget> {
   }
 
   Widget? _buildEntry(BuildContext context, int index) {
-    DownloadItem item;
+    DownloadItem? item;
+
     try {
-      item = App.downloadManager.downloadItems[index];
-    } on RangeError {
-      // This can happen if the list is modified while we are building it
+      var pendingLen = App.downloadManager.pendingItems.length;
+      if (index < pendingLen) {
+        item = App.downloadManager.pendingItems[index];
+      } else if (index - pendingLen <
+          App.downloadManager.completedItems.length) {
+        item = App.downloadManager.completedItems[index - pendingLen];
+      } else {
+        return null;
+      }
+    } catch (e) {
       return null;
     }
 
@@ -102,17 +111,32 @@ class PendingDownloadsState extends State<PendingDownloadsWidget> {
         subtitle: item.status == ItemDownloadStatus.pending
             ? Column(children: [Text(message), const LinearProgressIndicator()])
             : Text(message),
-        onTap: () => _tappedItem(item));
+        onTap: () => _tappedItem(item!));
+  }
+
+  void _cancelPendingQueue() {
+    App.downloadManager.cancelQueue();
   }
 
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
-        const Text("Downloads queue:"),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Text("Downloads queue"),
+            if (App.downloadManager.downloadQueue.isNotEmpty)
+              Padding(
+                  padding: const EdgeInsets.only(left: 5),
+                  child: IconButton(
+                      icon: Text(
+                          "Cancel ${App.downloadManager.downloadQueue.length} pending items"),
+                      onPressed: _cancelPendingQueue))
+          ],
+        ),
         Expanded(
           child: ListView.builder(
-            itemCount: App.downloadManager.downloadItems.length,
             itemBuilder: _buildEntry,
           ),
         ),

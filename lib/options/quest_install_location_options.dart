@@ -55,7 +55,7 @@ class InstallLocationPage extends StatelessWidget {
 
     try {
       await QuestInstallLocationOptions.setLocation(folder);
-      await App.preferences.setPreferredCustomSongFolder(folder);
+      App.preferences.setPreferredCustomSongFolder(folder);
       App.showToast('Default install location modified.');
 
       if (ctx.mounted) {

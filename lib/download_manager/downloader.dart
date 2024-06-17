@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:collection';
 import 'dart:convert';
 import 'dart:typed_data';
 
@@ -11,19 +12,32 @@ import 'package:http/http.dart' as http;
 
 import '../mod_manager/model/playlist.dart';
 
+class _QueuedItem {
+  final DownloadItem item;
+  final Future<DownloadResult> Function() action;
+
+  _QueuedItem(this.item, this.action);
+}
+
 class DownloadManager {
   Playlist? downloadToPlaylist;
+  int maxConcurrentDownloads = 4;
 
-  List<DownloadItem> downloadItems = [];
+  final Queue<_QueuedItem> downloadQueue = Queue();
+
+  final List<DownloadItem> pendingItems = [];
+  final List<DownloadItem> completedItems = [];
 
   StreamController<DownloadItem?> downloadItemsObservable =
       StreamController<DownloadItem?>.broadcast();
 
   void clearCompleted() {
-    downloadItems.removeWhere((element) =>
-        element.status == ItemDownloadStatus.done ||
-        element.status == ItemDownloadStatus.error);
+    completedItems.clear();
+    downloadItemsObservable.add(null);
+  }
 
+  void cancelQueue() {
+    downloadQueue.clear();
     downloadItemsObservable.add(null);
   }
 
@@ -32,18 +46,46 @@ class DownloadManager {
   }
 
   void _beginBackgroundOperation(
-      DownloadItem item, Future<DownloadResult> Function() future) async {
-    item.future = future().catchError(
+      DownloadItem item, Future<DownloadResult> Function() action,
+      {bool skipQueue = false}) async {
+    if (skipQueue) {
+      _processBackgroundOperation(_QueuedItem(item, action));
+    } else {
+      downloadQueue.add(_QueuedItem(item, action));
+      _tryRunNextInQueue();
+    }
+  }
+
+  void _tryRunNextInQueue() {
+    if (pendingItems.length < maxConcurrentDownloads) {
+      if (downloadQueue.isNotEmpty) {
+        var item = downloadQueue.removeLast();
+        _processBackgroundOperation(item);
+      }
+    }
+  }
+
+  void _processBackgroundOperation(_QueuedItem queue) async {
+    var item = queue.item;
+
+    var future = queue.action().catchError(
         (error, stackTrace) => DownloadResult.error(error.toString()));
 
-    downloadItems.insert(0, item);
+    pendingItems.insert(0, item);
     _updateItemState(item);
 
-    var result = await item.future;
+    var result = await future;
     item.statusMessage = result.message;
     item.status =
         result.error ? ItemDownloadStatus.error : ItemDownloadStatus.done;
+
+    pendingItems.remove(item);
+    completedItems.insert(0, item);
+
+    item._completer.complete(result);
     _updateItemState(item);
+
+    _tryRunNextInQueue();
   }
 
   Future<Playlist> downloadPlaylist(String jsonUrl) async {
@@ -63,7 +105,10 @@ class DownloadManager {
     item.statusMessage = "Storing metadata";
     item.downloadedIcon = playlist.imageBytes;
 
-    _beginBackgroundOperation(item, () async {
+    // We skip the queue because it depends on elements that depend on the queue
+    // If we start 10 playlists at the same time, the queue will be full and the playlist will not be able to download the songs
+    // The songs themselves are each their own download item so they will be queued
+    _beginBackgroundOperation(skipQueue: true, item, () async {
       // Since this is a playlist we are downloading from the internet if there's the image issue it will be automatically fixed so force the warning to false
       playlist.imageCompatibilityIssue = false;
       await App.modManager.addPlaylist(playlist);
@@ -72,27 +117,16 @@ class DownloadManager {
       // If not specified, download all
       songsToDownload ??= playlist.songs.map((e) => e.hash).toSet();
 
-      item.statusMessage = "Downloading songs (0/${songsToDownload!.length})";
+      item.statusMessage = "Downloading songs";
       _updateItemState(item);
 
       List<Future<DownloadResult>> futures = [];
-      var count = 0;
       for (var song in playlist.songs) {
         if (!songsToDownload!.contains(song.hash) || song.key == null) {
           continue;
         }
 
         futures.add(downloadMapByID(song.key!, webSource, null).future);
-        count++;
-
-        item.statusMessage =
-            "Downloading songs ($count/${songsToDownload!.length})";
-        _updateItemState(item);
-
-        if (futures.length >= 3) {
-          await Future.wait(futures);
-          futures.clear();
-        }
       }
 
       if (futures.isNotEmpty) {
@@ -232,6 +266,9 @@ enum ItemDownloadStatus { pending, done, error }
 
 class DownloadItem {
   final String? webSource;
+  final Completer<DownloadResult> _completer = Completer();
+
+  Future<DownloadResult> get future => _completer.future;
 
   String name;
   String statusMessage = "loading";
@@ -239,7 +276,6 @@ class DownloadItem {
   String? urlIcon;
   Uint8List? downloadedIcon;
 
-  late Future<DownloadResult> future;
   ItemDownloadStatus status = ItemDownloadStatus.pending;
 
   DownloadItem(this.name, this.webSource, {this.urlIcon, this.downloadedIcon});
