@@ -17,11 +17,11 @@ class PreferencesManager {
     return res;
   }
 
-  bool useHashCache() {
+  bool get useHashCache {
     return _prefs.getBool('use_hash_cache') ?? true;
   }
 
-  void setUseHashCache(bool value) async {
+  set useHashCache(bool value) {
     _prefs.setBool('use_hash_cache', value);
   }
 
@@ -34,10 +34,10 @@ class PreferencesManager {
   }
 
   void resetWebBookmarks() {
-    setWebBookmarks(_getDefaults());
+    webBookmarks = _getDefaults();
   }
 
-  BrowserPreferences getWebBookmarks() {
+  BrowserPreferences get webBookmarks {
     String? bookmarks = _prefs.getString('web_preferences');
 
     if (bookmarks == null) {
@@ -51,15 +51,15 @@ class PreferencesManager {
     }
   }
 
-  void setWebBookmarks(BrowserPreferences settings) {
+  set webBookmarks(BrowserPreferences settings) {
     _prefs.setString("web_preferences", jsonEncode(settings.toJson()));
   }
 
-  void setPreferredCustomSongFolder(PreferredCustomSongFolder folder) {
+  set preferredCustomSongFolder(PreferredCustomSongFolder folder) {
     _prefs.setString("preferred_custom_song_folder", folder.toString());
   }
 
-  PreferredCustomSongFolder getPreferredCustomSongFolder() {
+  PreferredCustomSongFolder get preferredCustomSongFolder {
     String? folder = _prefs.getString("preferred_custom_song_folder");
 
     if (folder == null) {
@@ -74,26 +74,34 @@ class PreferencesManager {
     }
   }
 
-  String? getGameRootPath() {
+  String? get gameRootPath {
     var path = _prefs.getString("game_root_path");
     if (path == null) return null;
     if (path.isEmpty) return null;
     return path;
   }
 
-  void setGameRootPath(String path) {
-    _prefs.setString("game_root_path", path);
+  set gameRootPath(String? path) {
+    _prefs.setString("game_root_path", path ?? "");
   }
 
-  void setAutoDownloadPlaylist(String? name) {
+  set autoDownloadPlaylist(String? name) {
     _prefs.setString("auto_download_playlist", name ?? "");
   }
 
-  String? getAutoDownloadPlaylist() {
+  String? get autoDownloadPlaylist {
     var path = _prefs.getString("auto_download_playlist");
     if (path == null) return null;
     if (path.isEmpty) return null;
     return path;
+  }
+
+  bool get removeFromPlaylistOnSongDelete {
+    return _prefs.getBool("auto_remove_songs_on_delete") ?? false;
+  }
+
+  set removeFromPlaylistOnSongDelete(bool value) {
+    _prefs.setBool("auto_remove_songs_on_delete", value);
   }
 }
 

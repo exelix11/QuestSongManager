@@ -44,20 +44,23 @@ class OptionsPageState extends State<OptionsPage> {
     return false;
   }
 
-  Widget _permissionCheckWidget() {
+  List<Widget> _permissionCheckWidget() {
     if (Platform.isAndroid) {
-      return ElevatedButton(
-          child: const Text('Request file access permission'),
-          onPressed: () async {
-            if (await requestFileAccess()) {
-              _reloadSongs();
-            } else {
-              App.showToast("Permission denied");
-            }
-          });
+      return [
+        ElevatedButton(
+            child: const Text('Request file access permission'),
+            onPressed: () async {
+              if (await requestFileAccess()) {
+                _reloadSongs();
+              } else {
+                App.showToast("Permission denied");
+              }
+            }),
+        const SizedBox(height: 20),
+      ];
     }
 
-    return const SizedBox();
+    return [];
   }
 
   Future<int> _doRehashAllSongs() async {
@@ -105,7 +108,7 @@ class OptionsPageState extends State<OptionsPage> {
         onPressed: () async {
           await App.modManager.removeCachedHashes();
           App.modManager.useFastHashCache = false;
-          App.preferences.setUseHashCache(false);
+          App.preferences.useHashCache = false;
           App.showToast("Hash cache has been disabled");
           setState(() {});
         },
@@ -114,7 +117,7 @@ class OptionsPageState extends State<OptionsPage> {
     } else {
       button = ElevatedButton(
         onPressed: () {
-          App.preferences.setUseHashCache(true);
+          App.preferences.useHashCache = true;
           App.showToast("Restart the app to apply changes");
           setState(() {});
         },
@@ -137,18 +140,33 @@ class OptionsPageState extends State<OptionsPage> {
     );
   }
 
-  Widget _utilOptions() {
-    return Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-      ElevatedButton(
-          onPressed: _reloadSongs,
-          child: const Text("Reload songs and playlists")),
-      const SizedBox(width: 10),
-      if (App.isQuest)
-        ElevatedButton(
-            onPressed: _openBookmarksManager,
-            child: const Text("Manage browser bookmarks"))
-    ]);
+  void _removeFromPlaylistOnSongDeleteChange(bool? value) {
+    setState(() {
+      App.preferences.removeFromPlaylistOnSongDelete = value ?? false;
+    });
   }
+
+  List<Widget> _utilOptions() => [
+        Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+          ElevatedButton(
+              onPressed: _reloadSongs,
+              child: const Text("Reload songs and playlists")),
+          const SizedBox(width: 10),
+          if (App.isQuest)
+            ElevatedButton(
+                onPressed: _openBookmarksManager,
+                child: const Text("Manage browser bookmarks"))
+        ]),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Checkbox(
+                value: App.preferences.removeFromPlaylistOnSongDelete,
+                onChanged: _removeFromPlaylistOnSongDeleteChange),
+            const Text("When deleting a song, remove it from all playlists")
+          ],
+        )
+      ];
 
   void _openInstallLocationOptions() async {
     if (!App.isQuest) throw Exception("This should not be called on PC");
@@ -156,7 +174,7 @@ class OptionsPageState extends State<OptionsPage> {
     // Initialize version cache in case it was not done yet
     await BeatSaberVersionDetector.getBeatSaberVersion();
 
-    var pref = App.preferences.getPreferredCustomSongFolder();
+    var pref = App.preferences.preferredCustomSongFolder;
 
     if (mounted) {
       await Navigator.of(context).push(
@@ -180,12 +198,12 @@ class OptionsPageState extends State<OptionsPage> {
   }
 
   void _openGamePathPicker() async {
-    var path = App.preferences.getGameRootPath();
+    var path = App.preferences.gameRootPath;
 
     await Navigator.of(context).push(MaterialPageRoute(
         builder: (context) => const GamePathPickerPage(true)));
 
-    var newPath = App.preferences.getGameRootPath();
+    var newPath = App.preferences.gameRootPath;
     if (path != newPath) {
       setState(() {
         _pathChangedRestart = true;
@@ -315,12 +333,12 @@ class OptionsPageState extends State<OptionsPage> {
       appBar: AppBar(
         title: const Text('Options'),
       ),
-      body: Center(
+      body: SingleChildScrollView(
         child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            _permissionCheckWidget(),
-            const SizedBox(height: 20),
-            _utilOptions(),
+            ..._permissionCheckWidget(),
+            ..._utilOptions(),
             const SizedBox(height: 20),
             _installLocationOptions(),
             const SizedBox(height: 20),

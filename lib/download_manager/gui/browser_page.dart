@@ -52,7 +52,7 @@ class BrowserPageViewState extends State<BrowserPageView> {
       androidparams.setMediaPlaybackRequiresUserGesture(false);
     }
 
-    var value = App.preferences.getWebBookmarks();
+    var value = App.preferences.webBookmarks;
 
     setState(() {
       bookmarks = value.bookmarks;

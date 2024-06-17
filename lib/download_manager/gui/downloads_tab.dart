@@ -17,8 +17,8 @@ class DownloadsTabState extends State<DownloadsTab> {
   void initState() {
     super.initState();
 
-    _playlistIsPersistent = App.preferences.getAutoDownloadPlaylist() != null &&
-        App.preferences.getAutoDownloadPlaylist() ==
+    _playlistIsPersistent = App.preferences.autoDownloadPlaylist != null &&
+        App.preferences.autoDownloadPlaylist ==
             App.downloadManager.downloadToPlaylist?.fileName;
   }
 
@@ -60,11 +60,10 @@ class DownloadsTabState extends State<DownloadsTab> {
     value ??= false;
 
     if (value) {
-      App.preferences.setAutoDownloadPlaylist(
-        App.downloadManager.downloadToPlaylist?.fileName,
-      );
+      App.preferences.autoDownloadPlaylist =
+          App.downloadManager.downloadToPlaylist?.fileName;
     } else {
-      App.preferences.setAutoDownloadPlaylist(null);
+      App.preferences.autoDownloadPlaylist = null;
     }
 
     setState(() {

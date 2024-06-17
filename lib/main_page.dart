@@ -44,14 +44,14 @@ class MainPageState extends State<MainPage> {
     }
 
     // On PC we must use the path provided by the user
-    var gamePath = App.preferences.getGameRootPath();
+    var gamePath = App.preferences.gameRootPath;
     if (gamePath == null) {
       await Navigator.push(
           context,
           MaterialPageRoute(
               builder: (context) => const GamePathPickerPage(false)));
 
-      gamePath = App.preferences.getGameRootPath();
+      gamePath = App.preferences.gameRootPath;
     }
     return gamePath;
   }
@@ -67,7 +67,7 @@ class MainPageState extends State<MainPage> {
     }
 
     App.modManager = ModManager(gamePath);
-    App.modManager.useFastHashCache = App.preferences.useHashCache();
+    App.modManager.useFastHashCache = App.preferences.useHashCache;
 
     // Redraw the UI to update in case loading opt was slow
     setState(() {
@@ -78,7 +78,7 @@ class MainPageState extends State<MainPage> {
 
     if (App.isQuest) {
       try {
-        var preferred = App.preferences.getPreferredCustomSongFolder();
+        var preferred = App.preferences.preferredCustomSongFolder;
         await QuestInstallLocationOptions.setLocation(preferred);
       } catch (e) {
         App.showToast('Failed to set install location: $e');
@@ -96,7 +96,7 @@ class MainPageState extends State<MainPage> {
 
     // Try to apply preferences
     {
-      var autoDownload = App.preferences.getAutoDownloadPlaylist();
+      var autoDownload = App.preferences.autoDownloadPlaylist;
       if (autoDownload != null) {
         var playlist = App.modManager.playlists[autoDownload];
         if (playlist != null) {

@@ -8,7 +8,7 @@ class BookmarksManagerState extends State<BookmarksManager> {
   int homeIndex = 0;
 
   void _reloadBookmarks() {
-    prefs = App.preferences.getWebBookmarks();
+    prefs = App.preferences.webBookmarks;
     _updateState();
   }
 
@@ -43,7 +43,7 @@ class BookmarksManagerState extends State<BookmarksManager> {
                   icon: const Icon(Icons.home),
                   onPressed: () {
                     prefs.homepage = bookmark.url;
-                    App.preferences.setWebBookmarks(prefs);
+                    App.preferences.webBookmarks = prefs;
                     _updateState();
                   },
                 ),
@@ -51,7 +51,7 @@ class BookmarksManagerState extends State<BookmarksManager> {
             icon: const Icon(Icons.delete),
             onPressed: () async {
               prefs.bookmarks.removeAt(index);
-              App.preferences.setWebBookmarks(prefs);
+              App.preferences.webBookmarks = prefs;
               _updateState();
             },
           )
@@ -79,7 +79,7 @@ class BookmarksManagerState extends State<BookmarksManager> {
     var newBookmark = WebBookmark(name, url);
     prefs.bookmarks.add(newBookmark);
 
-    App.preferences.setWebBookmarks(prefs);
+    App.preferences.webBookmarks = prefs;
 
     _updateState();
   }

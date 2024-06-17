@@ -381,10 +381,13 @@ class ModManager {
     songs.remove(song.hash);
 
     Set<Playlist> affectedPlaylists = {};
-    for (var playlist in playlists.values) {
-      if (playlist.songs.any((element) => element.hash == song.hash)) {
-        affectedPlaylists.add(playlist);
-        playlist.songs.removeWhere((element) => element.hash == song.hash);
+
+    if (App.preferences.removeFromPlaylistOnSongDelete) {
+      for (var playlist in playlists.values) {
+        if (playlist.songs.any((element) => element.hash == song.hash)) {
+          affectedPlaylists.add(playlist);
+          playlist.songs.removeWhere((element) => element.hash == song.hash);
+        }
       }
     }
 
