@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:bsaberquest/main.dart';
 import 'package:convert/convert.dart';
 import 'package:crypto/crypto.dart' as crypto;
 import 'package:path/path.dart' as dart_path;
@@ -79,8 +80,7 @@ class ModManager {
   final StreamController songListObservable = StreamController.broadcast();
   final StreamController playlistObservable = StreamController.broadcast();
 
-  ModManager(this.gameRoot)
-      : paths = Platform.isAndroid ? QuestPaths() : PcPaths();
+  ModManager(this.gameRoot) : paths = App.isQuest ? QuestPaths() : PcPaths();
 
   Future<Song> _loadSongFile(File file) async {
     var info = await file.readAsString();

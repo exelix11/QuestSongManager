@@ -79,6 +79,58 @@ class SongWidget extends StatelessWidget {
   }
 }
 
+class UnknownSongWidget extends StatelessWidget {
+  final String songName;
+  final String hash;
+  final bool isDownloading;
+
+  final Function(String hash)? onDelete;
+  final Function(String hash)? onDownload;
+
+  const UnknownSongWidget(
+      {super.key,
+      required this.songName,
+      required this.hash,
+      this.onDelete,
+      this.onDownload,
+      this.isDownloading = false});
+
+  Widget? _buidTrailing() {
+    if (onDelete == null && onDownload == null) {
+      return null;
+    }
+
+    List<Widget> buttons = [];
+
+    if (onDelete != null) {
+      buttons.add(IconButton(
+          onPressed: () => onDelete!(hash), icon: const Icon(Icons.delete)));
+    }
+
+    if (onDownload != null && !isDownloading) {
+      buttons.add(IconButton(
+          onPressed: () => onDownload!(hash),
+          icon: const Icon(Icons.download)));
+    }
+
+    if (isDownloading) {
+      buttons.add(const CircularProgressIndicator());
+    }
+
+    return Wrap(children: buttons);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      leading: const Icon(Icons.music_note),
+      title: Text(songName),
+      subtitle: Text("Unknown song ($hash})"),
+      trailing: _buidTrailing(),
+    );
+  }
+}
+
 class PlaylistWidget extends StatelessWidget {
   const PlaylistWidget(
       {super.key, required this.playlist, this.onTap, this.extraIcon});

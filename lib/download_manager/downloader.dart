@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:archive/archive.dart';
+import 'package:bsaberquest/download_manager/beat_saver_api.dart';
 import 'package:bsaberquest/main.dart';
 import 'package:bsaberquest/mod_manager/model/song.dart';
 import 'package:flutter/foundation.dart';
@@ -81,7 +82,7 @@ class DownloadManager {
           continue;
         }
 
-        futures.add(startMapDownload(song.key!, webSource, null).future);
+        futures.add(downloadMapByID(song.key!, webSource, null).future);
         count++;
 
         item.statusMessage =
@@ -108,49 +109,57 @@ class DownloadManager {
 
   DownloadItem startMapDownloadWithGlobalPlaylist(
       String id, String? webSource) {
-    return startMapDownload(id, webSource, downloadToPlaylist?.fileName);
+    return downloadMapByID(id, webSource, downloadToPlaylist?.fileName);
   }
 
-  DownloadItem startMapDownload(
+  void _itemFromBeatSaver(SongDownloadItem item, BeatSaverMapInfo map) {
+    item.name = map.name;
+    item.urlIcon = map.versions.first.coverUrl;
+    item.hash = map.versions.first.hash;
+    item.statusMessage = "Downloading song";
+    _updateItemState(item);
+  }
+
+  DownloadItem downloadMapByMetadata(
+      BeatSaverMapInfo info, String? webSource, String? playlistName) {
+    var item =
+        SongDownloadItem(info.name, webSource, downloadToPlaylist?.fileName);
+    item.statusMessage = "Downloading metadata";
+
+    _beginBackgroundOperation(item, () async {
+      _itemFromBeatSaver(item, info);
+      return await _downloadAndAddMap(
+          item.hash!, info.versions.first.downloadUrl, playlistName);
+    });
+
+    return item;
+  }
+
+  DownloadItem downloadMapByHash(
+      String hash, String? webSource, String? playlistName) {
+    var item = SongDownloadItem(hash, webSource, downloadToPlaylist?.fileName);
+    item.statusMessage = "Downloading metadata";
+
+    _beginBackgroundOperation(item, () async {
+      var map = await App.beatSaverClient.getMapByHash(hash);
+      _itemFromBeatSaver(item, map);
+      return await _downloadAndAddMap(
+          item.hash!, map.versions.first.downloadUrl, playlistName);
+    });
+
+    return item;
+  }
+
+  DownloadItem downloadMapByID(
       String id, String? webSource, String? playlistName) {
     var item = SongDownloadItem(id, webSource, downloadToPlaylist?.fileName);
     item.statusMessage = "Downloading metadata";
 
     _beginBackgroundOperation(item, () async {
-      var res =
-          await http.get(Uri.parse("https://api.beatsaver.com/maps/id/$id"));
-      if (res.statusCode != 200) {
-        throw Exception("Failed to get map info (${res.statusCode})");
-      }
-
-      var map = Map<String, dynamic>.from(jsonDecode(res.body));
-      var name = map["name"] as String?;
-      var versions = map["versions"] as List<dynamic>;
-
-      if (versions.length > 1) {
-        // TODO: figure out order
-        App.showToast(
-            "WARNING: Song $name has ${versions.length}, downloading latest is not implemented");
-      }
-
-      var downloadUrl = versions[0]["downloadURL"] as String?;
-      var urlIcon = versions[0]["coverURL"] as String?;
-      var hash = versions[0]["hash"] as String?;
-
-      if (name == null ||
-          downloadUrl == null ||
-          urlIcon == null ||
-          hash == null) {
-        throw Exception("Failed to get map info");
-      }
-
-      item.name = name;
-      item.urlIcon = urlIcon;
-      item.hash = hash;
-      item.statusMessage = "Downloading song";
-      _updateItemState(item);
-
-      return await _downloadAndAddMap(hash, downloadUrl, playlistName);
+      var map = await App.beatSaverClient.getMapById(id);
+      _itemFromBeatSaver(item, map);
+      return await _downloadAndAddMap(
+          item.hash!, map.versions.first.downloadUrl, playlistName);
     });
 
     return item;

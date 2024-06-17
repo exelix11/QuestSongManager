@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:bsaberquest/download_manager/beat_saver_api.dart';
 import 'package:bsaberquest/download_manager/downloader.dart';
 import 'package:bsaberquest/main_page.dart';
 import 'package:bsaberquest/options/preferences.dart';
@@ -31,6 +32,7 @@ Future main(List<String> arguments) async {
 
 class App extends StatelessWidget {
   static const bool _devSimulateQuest = false;
+  static const String versionName = "1.4-dev";
 
   static final bool isDev = _devSimulateQuest && !Platform.isAndroid;
   static final bool isQuest = Platform.isAndroid || _devSimulateQuest;
@@ -42,6 +44,8 @@ class App extends StatelessWidget {
   static final DownloadManager downloadManager = DownloadManager();
 
   static final PreferencesManager preferences = PreferencesManager();
+
+  static final BeatSaverClient beatSaverClient = BeatSaverClient();
 
   static final GlobalKey<ScaffoldMessengerState> _scaffoldMessengerKey =
       GlobalKey<ScaffoldMessengerState>();

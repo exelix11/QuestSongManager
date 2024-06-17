@@ -1,5 +1,8 @@
 import 'dart:async';
+import 'dart:collection';
 
+import 'package:bsaberquest/download_manager/beat_saver_api.dart';
+import 'package:bsaberquest/download_manager/gui/util.dart';
 import 'package:bsaberquest/gui_util.dart';
 import 'package:bsaberquest/main.dart';
 import 'package:bsaberquest/mod_manager/gui/simple_widgets.dart';
@@ -13,21 +16,34 @@ import '../model/playlist.dart';
 class PlaylistDetailPageState extends State<PlaylistDetailPage> {
   late StreamSubscription _playlistSubscription;
   late StreamSubscription _songListSubscription;
-  bool _stateChanged = false;
+  final HashSet<String> _downloadingSongs = HashSet();
+
+  bool _savePlaylistOnLeave = false;
+  bool _hasMissingSongs = false;
+  bool _isDownloadingAll = false;
 
   @override
   void initState() {
     _playlistSubscription =
         App.modManager.playlistObservable.stream.listen((_) {
-      setState(() {});
+      _updateState();
     });
 
     _songListSubscription =
         App.modManager.songListObservable.stream.listen((_) {
-      setState(() {});
+      _updateState();
     });
 
     super.initState();
+
+    _updateState();
+  }
+
+  void _updateState() {
+    setState(() {
+      _hasMissingSongs = widget.playlist.songs
+          .any((song) => !App.modManager.songs.containsKey(song.hash));
+    });
   }
 
   @override
@@ -35,12 +51,65 @@ class PlaylistDetailPageState extends State<PlaylistDetailPage> {
     _playlistSubscription.cancel();
     _songListSubscription.cancel();
 
-    if (_stateChanged) {
+    if (_savePlaylistOnLeave) {
       // Apply the changes to the playlist only when we are finished with our changes
       App.modManager.applyPlaylistChanges(widget.playlist);
     }
 
     super.dispose();
+  }
+
+  void _setIsDownloadingAll(bool isDownloading) {
+    setState(() {
+      _isDownloadingAll = isDownloading;
+    });
+  }
+
+  Future _downlaodAllMissingSongs() async {
+    _setIsDownloadingAll(true);
+    var hashes = widget.playlist.songs
+        .where((song) => !App.modManager.songs.containsKey(song.hash))
+        .map((e) => e.hash)
+        .toList();
+
+    List<BeatSaverMapInfo> info = [];
+    try {
+      info = await App.beatSaverClient.getMapsByHashes(hashes);
+    } catch (e) {
+      App.showToast("Failed to download songs: $e");
+      _setIsDownloadingAll(false);
+      return;
+    }
+
+    for (var map in info) {
+      var download = App.downloadManager.downloadMapByMetadata(map, null, null);
+      var res = await download.future;
+      if (res.error) {
+        App.showToast("Failed to download song: ${res.message}");
+        _setIsDownloadingAll(false);
+        return;
+      }
+    }
+
+    _setIsDownloadingAll(false);
+    App.showToast("Download completed");
+  }
+
+  void _tryDownloadMissingSong(String hash) async {
+    if (_downloadingSongs.contains(hash)) return;
+
+    setState(() {
+      _downloadingSongs.add(hash);
+    });
+
+    var download = App.downloadManager.downloadMapByHash(hash, null, null);
+    var res = await download.future;
+
+    setState(() {
+      _downloadingSongs.remove(hash);
+    });
+
+    App.showToast(res.message);
   }
 
   Future _removeSongByHash(String hash) async {
@@ -56,7 +125,7 @@ class PlaylistDetailPageState extends State<PlaylistDetailPage> {
       widget.playlist.songs.remove(song);
     }
 
-    _stateChanged = true;
+    _savePlaylistOnLeave = true;
     setState(() {});
   }
 
@@ -101,12 +170,24 @@ class PlaylistDetailPageState extends State<PlaylistDetailPage> {
                 onPressed: _deletePlaylist,
                 child: const Text('Delete this playlist'),
               ),
+              if (_hasMissingSongs)
+                if (_isDownloadingAll)
+                  const CircularProgressIndicator()
+                else
+                  ElevatedButton(
+                    onPressed: _downlaodAllMissingSongs,
+                    child: const Text('Download missing songs'),
+                  ),
             ],
           ),
         ],
       )
     ]);
   }
+
+  IconButton _songDeleteButton(PlayListSong song) => IconButton(
+      onPressed: () => _removeSongByHash(song.hash),
+      icon: const Icon(Icons.delete));
 
   @override
   Widget build(BuildContext context) {
@@ -123,21 +204,20 @@ class PlaylistDetailPageState extends State<PlaylistDetailPage> {
                 itemCount: widget.playlist.songs.length,
                 itemBuilder: (context, index) {
                   var song = widget.playlist.songs[index];
-                  var delete = IconButton(
-                      onPressed: () => _removeSongByHash(song.hash),
-                      icon: const Icon(Icons.delete));
                   if (App.modManager.songs.containsKey(song.hash)) {
                     return SongWidget(
                       song: App.modManager.songs[song.hash]!,
-                      extraIcon: delete,
+                      extraIcon: _songDeleteButton(song),
                       onTap: (song) => _songDetails(context, song),
                     );
                   } else {
-                    return ListTile(
-                      leading: const Icon(Icons.music_note),
-                      title: Text(song.songName),
-                      subtitle: Text("Unknown song (${basename(song.hash)})"),
-                      trailing: delete,
+                    return UnknownSongWidget(
+                      hash: song.hash,
+                      songName: song.songName,
+                      onDelete: _removeSongByHash,
+                      onDownload:
+                          _isDownloadingAll ? null : _tryDownloadMissingSong,
+                      isDownloading: _downloadingSongs.contains(song.hash),
                     );
                   }
                 },
