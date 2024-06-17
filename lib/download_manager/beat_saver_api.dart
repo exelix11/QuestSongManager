@@ -14,6 +14,20 @@ class BeatSaverClient {
     return uri.host == "beatsaver.com" || uri.host == "api.beatsaver.com";
   }
 
+  Future<String> get(String url) {
+    if (!isBeatSaverUrl(url)) {
+      throw Exception("Invalid BeatSaver URL");
+    }
+
+    return http.get(Uri.parse(url), headers: _headers).then((res) {
+      if (res.statusCode != 200) {
+        throw Exception("The server returned an error (${res.statusCode})");
+      }
+
+      return res.body;
+    });
+  }
+
   Future<BeatSaverMapInfo> getMapById(String id) async {
     var res =
         await http.get(Uri.parse("$_baseUrl/maps/id/$id"), headers: _headers);

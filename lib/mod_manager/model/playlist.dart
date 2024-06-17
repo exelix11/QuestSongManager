@@ -51,7 +51,19 @@ class Playlist {
 
   Map<String, dynamic>? customData;
 
+  String? get syncUrl => customData?['syncURL'] as String?;
+
   Playlist();
+
+  void fromAnotherInstance(Playlist other) {
+    playlistTitle = other.playlistTitle;
+    playlistAuthor = other.playlistAuthor;
+    playlistDescription = other.playlistDescription;
+    songs = List.from(other.songs);
+    imageBytes = other.imageBytes;
+    imageCompatibilityIssue = other.imageCompatibilityIssue;
+    customData = other.customData;
+  }
 
   void add(Song song) {
     if (song.hash == null) {

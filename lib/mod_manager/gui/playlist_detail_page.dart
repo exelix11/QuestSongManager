@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:collection';
 
 import 'package:bsaberquest/download_manager/beat_saver_api.dart';
+import 'package:bsaberquest/download_manager/gui/playlist_download_page.dart';
 import 'package:bsaberquest/gui_util.dart';
 import 'package:bsaberquest/main.dart';
 import 'package:bsaberquest/mod_manager/gui/simple_widgets.dart';
@@ -151,6 +152,14 @@ class PlaylistDetailPageState extends State<PlaylistDetailPage> {
     );
   }
 
+  void _syncPlaylist() {
+    Navigator.push(
+        context,
+        MaterialPageRoute(
+            builder: (context) => PlaylistDownloadPage(widget.playlist.syncUrl!,
+                updateExisting: widget.playlist)));
+  }
+
   Widget _buildHeader() {
     return Row(mainAxisAlignment: MainAxisAlignment.center, children: [
       // Limit the image size so it doesn't take up the whole screen
@@ -178,6 +187,10 @@ class PlaylistDetailPageState extends State<PlaylistDetailPage> {
                     onPressed: _downlaodAllMissingSongs,
                     child: const Text('Download missing songs'),
                   ),
+              if (widget.playlist.syncUrl != null)
+                ElevatedButton(
+                    onPressed: _syncPlaylist,
+                    child: const Text('Sync playlist')),
             ],
           ),
         ],

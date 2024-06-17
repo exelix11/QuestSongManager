@@ -6,7 +6,6 @@ import 'package:bsaberquest/mod_manager/gui/playlist_detail_page.dart';
 import 'package:bsaberquest/mod_manager/gui/simple_widgets.dart';
 import 'package:bsaberquest/mod_manager/gui/songs_in_no_playlist_page.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 
 import '../model/playlist.dart';
 

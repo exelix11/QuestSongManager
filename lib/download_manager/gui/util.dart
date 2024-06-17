@@ -5,15 +5,11 @@ import 'package:flutter/material.dart';
 class DownloadUtil {
   static Future downloadPlaylist(
       BuildContext context, String jsonUrl, String? webSource) async {
-    if (context.mounted) {
-      await Navigator.push(
-          context,
-          MaterialPageRoute(
-              builder: (context) =>
-                  PlaylistDownloadPage(jsonUrl, webSource: webSource)));
-    } else {
-      App.showToast("Failed to open playlist download page");
-    }
+    await Navigator.push(
+        context,
+        MaterialPageRoute(
+            builder: (context) =>
+                PlaylistDownloadPage(jsonUrl, webSource: webSource)));
   }
 
   static Future downloadById(String id, String? webSource) async {

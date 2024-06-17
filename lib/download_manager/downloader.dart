@@ -23,7 +23,7 @@ class DownloadManager {
   Playlist? downloadToPlaylist;
   int maxConcurrentDownloads = 4;
 
-  final Queue<_QueuedItem> downloadQueue = Queue();
+  final Queue<_QueuedItem> _downloadQueue = Queue();
 
   final List<DownloadItem> pendingItems = [];
   final List<DownloadItem> completedItems = [];
@@ -36,8 +36,10 @@ class DownloadManager {
     downloadItemsObservable.add(null);
   }
 
+  int get pendingCount => pendingItems.length;
+
   void cancelQueue() {
-    downloadQueue.clear();
+    _downloadQueue.clear();
     downloadItemsObservable.add(null);
   }
 
@@ -51,15 +53,15 @@ class DownloadManager {
     if (skipQueue) {
       _processBackgroundOperation(_QueuedItem(item, action));
     } else {
-      downloadQueue.add(_QueuedItem(item, action));
+      _downloadQueue.add(_QueuedItem(item, action));
       _tryRunNextInQueue();
     }
   }
 
   void _tryRunNextInQueue() {
     if (pendingItems.length < maxConcurrentDownloads) {
-      if (downloadQueue.isNotEmpty) {
-        var item = downloadQueue.removeLast();
+      if (_downloadQueue.isNotEmpty) {
+        var item = _downloadQueue.removeLast();
         _processBackgroundOperation(item);
       }
     }
@@ -89,12 +91,19 @@ class DownloadManager {
   }
 
   Future<Playlist> downloadPlaylist(String jsonUrl) async {
-    var res = await http.get(Uri.parse(jsonUrl));
-    if (res.statusCode != 200) {
-      throw Exception("Failed to get playlist info (${res.statusCode})");
+    String body;
+
+    if (App.beatSaverClient.isBeatSaverUrl(jsonUrl)) {
+      body = await App.beatSaverClient.get(jsonUrl);
+    } else {
+      var res = await http.get(Uri.parse(jsonUrl));
+      if (res.statusCode != 200) {
+        throw Exception("Failed to get playlist info (${res.statusCode})");
+      }
+      body = res.body;
     }
 
-    return Playlist.fromJson(jsonDecode(res.body));
+    return Playlist.fromJson(jsonDecode(body));
   }
 
   DownloadItem startPlaylistDownload(

@@ -126,12 +126,12 @@ class PendingDownloadsState extends State<PendingDownloadsWidget> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             const Text("Downloads queue"),
-            if (App.downloadManager.downloadQueue.isNotEmpty)
+            if (App.downloadManager.pendingCount > 0)
               Padding(
                   padding: const EdgeInsets.only(left: 5),
                   child: IconButton(
                       icon: Text(
-                          "Cancel ${App.downloadManager.downloadQueue.length} pending items"),
+                          "Cancel ${App.downloadManager.pendingCount} pending items"),
                       onPressed: _cancelPendingQueue))
           ],
         ),
