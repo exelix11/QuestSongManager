@@ -64,7 +64,7 @@ class PlaylistDetailPageState extends State<PlaylistDetailPage> {
     });
   }
 
-  Future _downlaodAllMissingSongs() async {
+  void _downlaodAllMissingSongs() async {
     _setIsDownloadingAll(true);
     var hashes = widget.playlist.songs
         .where((song) => !App.modManager.songs.containsKey(song.hash))
@@ -130,8 +130,8 @@ class PlaylistDetailPageState extends State<PlaylistDetailPage> {
     setState(() {});
   }
 
-  Future _deletePlaylist() async {
-    var confirm = await GuiUtil.confirmChoice(this.context, 'Delete Playlist',
+  void _deletePlaylist() async {
+    var confirm = await GuiUtil.confirmChoice(context, 'Delete Playlist',
         'Are you sure you want to delete this playlist? The songs will not be deleted.');
 
     if (confirm == null || !confirm) {
@@ -140,7 +140,7 @@ class PlaylistDetailPageState extends State<PlaylistDetailPage> {
 
     await App.modManager.deletePlaylist(widget.playlist);
 
-    if (mounted) Navigator.pop(this.context);
+    if (mounted) Navigator.pop(context);
   }
 
   void _songDetails(BuildContext context, Song song) {
@@ -160,84 +160,100 @@ class PlaylistDetailPageState extends State<PlaylistDetailPage> {
                 updateExisting: widget.playlist)));
   }
 
-  Widget _buildHeader() {
-    return Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-      // Limit the image size so it doesn't take up the whole screen
-      SizedBox(
-          width: 150,
-          height: 150,
-          child: PlaylistWidget.playlistIcon(widget.playlist)),
-      Column(
-        children: [
-          Text(widget.playlist.fileName),
-          Text("${widget.playlist.songs.length} songs"),
-          // Add a group of buttons to add to playlist or delete
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              ElevatedButton(
-                onPressed: _deletePlaylist,
-                child: const Text('Delete this playlist'),
-              ),
-              if (_hasMissingSongs)
-                if (_isDownloadingAll)
-                  const CircularProgressIndicator()
-                else
-                  ElevatedButton(
-                    onPressed: _downlaodAllMissingSongs,
-                    child: const Text('Download missing songs'),
-                  ),
-              if (widget.playlist.syncUrl != null)
-                ElevatedButton(
-                    onPressed: _syncPlaylist,
-                    child: const Text('Sync playlist')),
-            ],
-          ),
-        ],
-      )
-    ]);
+  List<Widget> _buildMetadata() {
+    return [
+      Text(widget.playlist.fileName),
+      Text(widget.playlist.playlistAuthor),
+      Text("${widget.playlist.songs.length} songs"),
+      if (widget.playlist.syncUrl != null)
+        const Text("This playlist is linked to the cloud"),
+      if (widget.playlist.playlistDescription != null)
+        Text(widget.playlist.playlistDescription!),
+    ];
   }
 
   IconButton _songDeleteButton(PlayListSong song) => IconButton(
       onPressed: () => _removeSongByHash(song.hash),
       icon: const Icon(Icons.delete));
 
+  Widget _buildSong(PlayListSong song) {
+    if (App.modManager.songs.containsKey(song.hash)) {
+      return SongWidget(
+        song: App.modManager.songs[song.hash]!,
+        extraIcon: _songDeleteButton(song),
+        onTap: (song) => _songDetails(context, song),
+      );
+    } else {
+      return UnknownSongWidget(
+        hash: song.hash,
+        songName: song.songName,
+        onDelete: _removeSongByHash,
+        onDownload: _isDownloadingAll ? null : _tryDownloadMissingSong,
+        isDownloading: _downloadingSongs.contains(song.hash),
+      );
+    }
+  }
+
+  Widget _buildPopupMenu() {
+    return PopupMenuButton<Function()>(
+      onSelected: (Function() selection) {
+        selection();
+      },
+      itemBuilder: (BuildContext context) => [
+        if (_hasMissingSongs)
+          PopupMenuItem<Function()>(
+            value: _downlaodAllMissingSongs,
+            child: const Text('Download all missing songs'),
+          ),
+        if (widget.playlist.syncUrl != null)
+          PopupMenuItem<Function()>(
+            value: _syncPlaylist,
+            child: const Text('Sync playlist'),
+          ),
+        PopupMenuItem<Function()>(
+          value: _deletePlaylist,
+          child: const Text('Delete this playlist'),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.playlist.playlistTitle),
-      ),
-      body: Center(
-        child: Column(
-          children: [
-            _buildHeader(),
-            Expanded(
-              child: ListView.builder(
-                itemCount: widget.playlist.songs.length,
-                itemBuilder: (context, index) {
-                  var song = widget.playlist.songs[index];
-                  if (App.modManager.songs.containsKey(song.hash)) {
-                    return SongWidget(
-                      song: App.modManager.songs[song.hash]!,
-                      extraIcon: _songDeleteButton(song),
-                      onTap: (song) => _songDetails(context, song),
-                    );
-                  } else {
-                    return UnknownSongWidget(
-                      hash: song.hash,
-                      songName: song.songName,
-                      onDelete: _removeSongByHash,
-                      onDownload:
-                          _isDownloadingAll ? null : _tryDownloadMissingSong,
-                      isDownloading: _downloadingSongs.contains(song.hash),
-                    );
-                  }
-                },
-              ),
+      body: CustomScrollView(
+        slivers: [
+          SliverAppBar(
+              actions: [_buildPopupMenu()],
+              expandedHeight: 300.0,
+              pinned: true,
+              flexibleSpace: FlexibleSpaceBar(
+                background: PlaylistWidget.playlistIcon(widget.playlist),
+              )),
+          SliverList(
+              delegate: SliverChildListDelegate(
+            [
+              Center(
+                child: Padding(
+                  padding: const EdgeInsets.only(left: 10, right: 10),
+                  child: Column(children: [
+                    ..._buildMetadata(),
+                    const Divider(),
+                  ]),
+                ),
+              )
+            ],
+          )),
+          SliverList(
+            delegate: SliverChildBuilderDelegate(
+              (context, index) {
+                var song = widget.playlist.songs[index];
+                return _buildSong(song);
+              },
+              childCount: widget.playlist.songs.length,
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

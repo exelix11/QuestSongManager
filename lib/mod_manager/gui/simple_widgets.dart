@@ -145,7 +145,7 @@ class PlaylistWidget extends StatelessWidget {
     }
   }
 
-  static Widget? playlistIcon(Playlist playlist) => playlist.imageBytes != null
+  static Widget playlistIcon(Playlist playlist) => playlist.imageBytes != null
       ? Image.memory(playlist.imageBytes!)
       : const Icon(Icons.music_note);
 
