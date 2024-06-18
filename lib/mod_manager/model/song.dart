@@ -8,6 +8,10 @@ class Song {
 
   String? get hash => _hash;
 
+  String? get iconPath => !isValid || (meta.coverImageFilename?.isEmpty ?? true)
+      ? null
+      : "$folderPath/${meta.coverImageFilename}";
+
   set hash(String? value) {
     _hash = value?.toLowerCase();
   }

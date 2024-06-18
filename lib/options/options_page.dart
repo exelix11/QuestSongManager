@@ -3,7 +3,6 @@ import 'dart:io';
 
 import 'package:bsaberquest/download_manager/beat_saver_api.dart';
 import 'package:bsaberquest/download_manager/gui/bookmarks_manager.dart';
-import 'package:bsaberquest/download_manager/gui/util.dart';
 import 'package:bsaberquest/download_manager/oauth_config.dart';
 import 'package:bsaberquest/gui_util.dart';
 import 'package:bsaberquest/integrations/beatsaver_integration.dart';
@@ -336,14 +335,14 @@ class OptionsPageState extends State<OptionsPage> {
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final isLargeScreen = screenWidth > 600; // Change this value as needed
+    final padding = isLargeScreen ? 40.0 : 10.0;
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Options'),
       ),
       body: ListView(
-        padding:
-            isLargeScreen ? const EdgeInsets.all(40) : const EdgeInsets.all(10),
+        padding: EdgeInsets.only(left: padding, right: padding),
         children: [
           _credits(),
           const Divider(),

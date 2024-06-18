@@ -11,6 +11,12 @@ class BeatSaverLoginPagePcState extends State<BeatSaverLoginPagePc> {
   late Future _initFuture;
   bool _loginRequested = false;
 
+  final _controller = TextEditingController();
+
+  void _testLoginFromManualInput() {
+    App.beatSaverClient.finalizeOauthLogin(_controller.text);
+  }
+
   void _leavePage() {
     Navigator.of(context).pop();
   }
@@ -67,6 +73,11 @@ class BeatSaverLoginPagePcState extends State<BeatSaverLoginPagePc> {
         ElevatedButton(
           onPressed: _leavePage,
           child: const Text('Cancel'),
+        ),
+        TextField(controller: _controller),
+        ElevatedButton(
+          onPressed: _testLoginFromManualInput,
+          child: const Text('Finish login'),
         )
       ];
     } else {

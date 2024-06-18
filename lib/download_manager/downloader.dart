@@ -90,7 +90,7 @@ class DownloadManager {
     _tryRunNextInQueue();
   }
 
-  Future<Playlist> downloadPlaylist(String jsonUrl) async {
+  Future<Playlist> downloadPlaylistMetadata(String jsonUrl) async {
     String body;
 
     if (App.beatSaverClient.isBeatSaverUrl(jsonUrl)) {

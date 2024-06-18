@@ -1,3 +1,4 @@
+import 'package:bsaberquest/main.dart';
 import 'package:flutter/material.dart';
 
 class GuiUtil {
@@ -41,6 +42,10 @@ class GuiUtil {
             future: future,
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.done) {
+                if (snapshot.hasError) {
+                  App.showToast(snapshot.error.toString());
+                }
+
                 Navigator.of(context).pop(future);
               }
               return const Center(

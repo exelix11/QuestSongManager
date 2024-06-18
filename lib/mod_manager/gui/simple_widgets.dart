@@ -44,17 +44,21 @@ class SongWidget extends StatelessWidget {
     }
   }
 
-  Widget _songIcon() {
+  static Widget iconForSong(Song? song) {
+    if (song == null) {
+      return const Icon(Icons.music_note);
+    }
+
     if (!song.isValid) {
       return const Icon(Icons.warning);
     }
 
-    if (song.meta.coverImageFilename?.isEmpty ?? true) {
-      return const Icon(Icons.music_note);
+    var icon = song.iconPath;
+    if (icon != null) {
+      return Image.file(File(icon));
     }
 
-    return Image.file(
-        File("${song.folderPath}/${song.meta.coverImageFilename}"));
+    return const Icon(Icons.music_note);
   }
 
   Widget? _extraIconWidget() {
@@ -68,7 +72,7 @@ class SongWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListTile(
-      leading: _songIcon(),
+      leading: iconForSong(song),
       title: Text(song.meta.songName),
       trailing: _extraIconWidget(),
       subtitle: Text(song.prettyMetaInfo()),

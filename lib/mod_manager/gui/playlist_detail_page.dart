@@ -5,6 +5,7 @@ import 'package:bsaberquest/download_manager/beat_saver_api.dart';
 import 'package:bsaberquest/download_manager/gui/playlist_download_page.dart';
 import 'package:bsaberquest/gui_util.dart';
 import 'package:bsaberquest/main.dart';
+import 'package:bsaberquest/mod_manager/gui/playlist_sync_page.dart';
 import 'package:bsaberquest/mod_manager/gui/simple_widgets.dart';
 import 'package:bsaberquest/mod_manager/gui/song_detail_page.dart';
 import 'package:bsaberquest/mod_manager/model/song.dart';
@@ -66,6 +67,8 @@ class PlaylistDetailPageState extends State<PlaylistDetailPage> {
 
   void _downlaodAllMissingSongs() async {
     _setIsDownloadingAll(true);
+    App.showToast("Download started");
+
     var hashes = widget.playlist.songs
         .where((song) => !App.modManager.songs.containsKey(song.hash))
         .map((e) => e.hash)
@@ -152,12 +155,88 @@ class PlaylistDetailPageState extends State<PlaylistDetailPage> {
     );
   }
 
-  void _syncPlaylist() {
-    Navigator.push(
+  Future<Playlist> downloadLatestVersion() async {
+    var playlist = await App.downloadManager
+        .downloadPlaylistMetadata(widget.playlist.syncUrl!);
+    return playlist;
+  }
+
+  Future<bool> doGuiMerge(
+      String fromName, String toName, PlaylistSyncState state) async {
+    var res = await Navigator.push(
         context,
         MaterialPageRoute(
-            builder: (context) => PlaylistDownloadPage(widget.playlist.syncUrl!,
-                updateExisting: widget.playlist)));
+            builder: (context) => PlaylistSyncPage(
+                fromName: fromName, toName: toName, state: state))) as bool?;
+
+    if (res == true) {
+      PlaylistSyncHelper.performCustomMerge(state);
+      return true;
+    } else {
+      App.showToast("Operation cancelled");
+      return false;
+    }
+  }
+
+  Future _doDownloadPlaylist() async {
+    var remote = await downloadLatestVersion();
+
+    // merge from remote to local
+    var sync = PlaylistSyncState(remote, widget.playlist);
+
+    if (PlaylistSyncHelper.isNoChanges(sync)) {
+      App.showToast("No updates found");
+      return;
+    }
+
+    if (PlaylistSyncHelper.isSimpleMerge(sync)) {
+      PlaylistSyncHelper.performSimpleMerge(sync);
+    } else {
+      if (!await doGuiMerge("cloud", "this device", sync)) {
+        return;
+      }
+    }
+
+    App.modManager.applyPlaylistChanges(widget.playlist);
+    setState(() {});
+  }
+
+  Future _doUploadPlaylist() async {
+    var remote = await downloadLatestVersion();
+
+    // merge from local to remote
+    var sync = PlaylistSyncState(widget.playlist, remote);
+
+    if (PlaylistSyncHelper.isNoChanges(sync)) {
+      App.showToast("No updates found");
+      return;
+    }
+
+    if (PlaylistSyncHelper.isSimpleMerge(sync)) {
+      PlaylistSyncHelper.performSimpleMerge(sync);
+    } else {
+      if (!await doGuiMerge("this device", "cloud", sync)) {
+        return;
+      }
+    }
+
+    App.beatSaverClient.pushPlaylistChanges(remote);
+
+    // If everything went well, also update the local playlist
+    widget.playlist.songs.clear();
+    widget.playlist.songs.addAll(remote.songs);
+    App.modManager.applyPlaylistChanges(widget.playlist);
+    setState(() {});
+  }
+
+  void _downloadPlaylist() async {
+    await GuiUtil.loadingDialog(
+        context, "Downloading playlist information", _doDownloadPlaylist());
+  }
+
+  void _uploadPlaylist() async {
+    await GuiUtil.loadingDialog(
+        context, "Downloading playlist information", _doUploadPlaylist());
   }
 
   List<Widget> _buildMetadata() {
@@ -207,9 +286,18 @@ class PlaylistDetailPageState extends State<PlaylistDetailPage> {
           ),
         if (widget.playlist.syncUrl != null)
           PopupMenuItem<Function()>(
-            value: _syncPlaylist,
-            child: const Text('Sync playlist'),
+            value: _downloadPlaylist,
+            child: const Text('Download playlist updates'),
           ),
+
+        // Only allow this when the user is logged in and the playlist is a BeatSaver playlist
+        if (App.beatSaverClient.userInfo != null &&
+            App.beatSaverClient.isValidPlaylistForPush(widget.playlist))
+          PopupMenuItem<Function()>(
+            value: _uploadPlaylist,
+            child: const Text('Upload playlist changes'),
+          ),
+
         PopupMenuItem<Function()>(
           value: _deletePlaylist,
           child: const Text('Delete this playlist'),

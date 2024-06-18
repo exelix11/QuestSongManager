@@ -3,12 +3,17 @@ import 'dart:convert';
 
 import 'package:bsaberquest/download_manager/oauth_config.dart';
 import 'package:bsaberquest/main.dart';
+import 'package:bsaberquest/mod_manager/model/playlist.dart';
 import 'package:bsaberquest/options/preferences.dart';
+import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
 class BeatSaverClient {
   static const String _apiUri = "https://api.beatsaver.com";
   static const String _siteUri = "https://beatsaver.com";
+
+  final RegExp _playlistSyncUrl =
+      RegExp(r"^https?:\/\/api\.beatsaver\.com\/playlists\/id\/(\d+)\/");
 
   BeatSaverSession? _session;
   BeatSaverUserInfo? userInfo;
@@ -262,6 +267,115 @@ class BeatSaverClient {
     }
 
     return jsonDecode(res.body);
+  }
+
+  bool isValidPlaylistForPush(Playlist playlist) {
+    return _getPlaylistIdFromSyncUrl(playlist) != null;
+  }
+
+  String? _getPlaylistIdFromSyncUrl(Playlist playlist) {
+    if (playlist.syncUrl == null) {
+      return null;
+    }
+
+    var match = _playlistSyncUrl.firstMatch(playlist.syncUrl!);
+    if (match == null) {
+      return null;
+    }
+
+    return match.group(1)!;
+  }
+
+  Future<BeatSaverPlaylist> getPlaylist(String url) async {
+    var data = await get(url);
+    var json = Map<String, dynamic>.from(jsonDecode(data));
+    var playlist = Playlist.fromJson(json);
+
+    return BeatSaverPlaylist.fromPlaylist(
+        playlist, json["owner"]["id"].toString());
+  }
+
+  Future _playlistSongOperation(
+      String playlistId, bool add, List<String> hashes) async {
+    await _refreshSessionIfNeeded();
+
+    var head = Map<String, String>.from(_authHeaders);
+    head["Content-Type"] = "application/json";
+
+    for (int i = 0; i < hashes.length;) {
+      // Max 100 songs per request
+      var step = hashes.skip(i).take(100).toList();
+      i += step.length;
+
+      var message = {"hashes": step, "ignoreUnknown": true, "inPlaylist": add};
+
+      var res = await http.post(
+          Uri.parse("$_apiUri/playlists/id/$playlistId/batch"),
+          headers: head,
+          body: jsonEncode(message));
+
+      if (res.statusCode != 200) {
+        throw Exception("Failed to update playlist (${res.statusCode})");
+      }
+
+      var body = Map<String, dynamic>.from(jsonDecode(res.body));
+      if (body["success"] != true) {
+        var errors = body["errors"] as List<String>;
+        throw Exception("Failed to update playlist: ${errors.join(", ")}");
+      }
+
+      await Future.delayed(const Duration(milliseconds: 100));
+    }
+  }
+
+  Future pushPlaylistChanges(Playlist playlist) async {
+    // Pushing changes to a playlist is a bit complicated becase we need to manually remove the songs we don't want and add the ones we do
+    var id = _getPlaylistIdFromSyncUrl(playlist);
+    if (id == null) {
+      throw Exception("Invalid playlist push URL");
+    }
+
+    // Get the current playlist state
+    var remote = await getPlaylist(playlist.syncUrl!);
+
+    // Check this here as getPlaylist may log us out on error
+    if (userInfo == null) {
+      throw Exception("You must be logged in to push playlists");
+    }
+
+    if (remote.ownerId != userInfo!.id) {
+      throw Exception("You do not own this playlist");
+    }
+
+    var remove = remote.songs
+        .where((song) =>
+            !playlist.songs.any((element) => element.hash == song.hash))
+        .map((e) => e.hash)
+        .toList();
+
+    var add = playlist.songs
+        .where(
+            (song) => !remote.songs.any((element) => element.hash == song.hash))
+        .map((e) => e.hash)
+        .toList();
+
+    if (remove.isNotEmpty) {
+      await _playlistSongOperation(id, false, remove);
+    }
+
+    if (add.isNotEmpty) {
+      await _playlistSongOperation(id, true, add);
+    }
+  }
+}
+
+class BeatSaverPlaylist extends Playlist {
+  final String ownerId;
+
+  BeatSaverPlaylist(this.ownerId);
+
+  factory BeatSaverPlaylist.fromPlaylist(Playlist p, String ownerId) {
+    return BeatSaverPlaylist(ownerId)..fromAnotherInstance(p);
   }
 }
 

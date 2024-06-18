@@ -28,7 +28,7 @@ class PlatformHelper {
       // Process.run arg escaping is broken on windows
       getPlatform().invokeMethod("openUrl", [link.toString()]);
     } else if (Platform.isLinux) {
-      Process.run('xdg-open', ["\"$link\""]);
+      Process.run('xdg-open', [link.toString()]);
     } else {
       throw Exception('Unsupported platform');
     }
