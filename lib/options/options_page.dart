@@ -17,11 +17,9 @@ import 'game_path_picker_page.dart';
 import 'quest_install_location_options.dart';
 
 class OptionsPageState extends State<OptionsPage> {
-  final TextEditingController _idController = TextEditingController();
-  final TextEditingController _urlController = TextEditingController();
   late StreamSubscription<BeatSaverLoginNotification> _loginStateSubscription;
 
-  bool _showTestOptions = false;
+  bool _showAdvancedOptions = false;
   bool _pathChangedRestart = false;
   bool _showFsRequestButton = true;
 
@@ -41,24 +39,6 @@ class OptionsPageState extends State<OptionsPage> {
     super.dispose();
   }
 
-  void _downloadById() async {
-    var id = _idController.text;
-    if (id.isEmpty) {
-      return;
-    }
-
-    await DownloadUtil.downloadById(id, null);
-  }
-
-  void _downloadPlaylist() async {
-    var url = _urlController.text;
-    if (url.isEmpty) {
-      return;
-    }
-
-    await DownloadUtil.downloadPlaylist(context, url, null);
-  }
-
   static Future<bool> requestFileAccess() async {
     if (await Permission.manageExternalStorage.request().isGranted) {
       return true;
@@ -69,9 +49,12 @@ class OptionsPageState extends State<OptionsPage> {
   List<Widget> _permissionCheckWidget() {
     if (Platform.isAndroid && _showFsRequestButton) {
       return [
-        ElevatedButton(
-            child: const Text('Request file access permission'),
-            onPressed: () async {
+        ListTile(
+            title: const Text("Request file access"),
+            leading: const Icon(Icons.settings),
+            subtitle: const Text(
+                "Try this option if the app can't access your songs"),
+            onTap: () async {
               if (await requestFileAccess()) {
                 App.showToast("Permission granted");
                 _reloadSongs();
@@ -81,8 +64,7 @@ class OptionsPageState extends State<OptionsPage> {
               } else {
                 App.showToast("Permission denied");
               }
-            }),
-        const SizedBox(height: 20),
+            })
       ];
     }
 
@@ -124,48 +106,6 @@ class OptionsPageState extends State<OptionsPage> {
     }
   }
 
-  Widget _hashCacheOptions() {
-    var using = App.modManager.useFastHashCache;
-
-    Widget button;
-
-    if (using) {
-      button = ElevatedButton(
-        onPressed: () async {
-          await App.modManager.removeCachedHashes();
-          App.modManager.useFastHashCache = false;
-          App.preferences.useHashCache = false;
-          App.showToast("Hash cache has been disabled");
-          setState(() {});
-        },
-        child: const Text("Disable hash cache"),
-      );
-    } else {
-      button = ElevatedButton(
-        onPressed: () {
-          App.preferences.useHashCache = true;
-          App.showToast("Restart the app to apply changes");
-          setState(() {});
-        },
-        child: const Text("Enable hash cache"),
-      );
-    }
-
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Text(using ? "Using fast hash cache" : "hash cache has been disabled"),
-        const SizedBox(width: 10),
-        button,
-        const SizedBox(width: 10),
-        ElevatedButton(
-          onPressed: () => _rehashAllSongs(),
-          child: const Text("Check all song hashes"),
-        ),
-      ],
-    );
-  }
-
   void _removeFromPlaylistOnSongDeleteChange(bool? value) {
     setState(() {
       App.preferences.removeFromPlaylistOnSongDelete = value ?? false;
@@ -173,24 +113,22 @@ class OptionsPageState extends State<OptionsPage> {
   }
 
   List<Widget> _utilOptions() => [
-        Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-          ElevatedButton(
-              onPressed: _reloadSongs,
-              child: const Text("Reload songs and playlists")),
-          const SizedBox(width: 10),
-          if (App.isQuest)
-            ElevatedButton(
-                onPressed: _openBookmarksManager,
-                child: const Text("Manage browser bookmarks"))
-        ]),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Checkbox(
-                value: App.preferences.removeFromPlaylistOnSongDelete,
-                onChanged: _removeFromPlaylistOnSongDeleteChange),
-            const Text("When deleting a song, remove it from all playlists")
-          ],
+        ListTile(
+          leading: const Icon(Icons.refresh),
+          title: const Text("Reload songs and playlists"),
+          onTap: _reloadSongs,
+        ),
+        if (App.isQuest)
+          ListTile(
+            leading: const Icon(Icons.star),
+            title: const Text("Manage browser bookmarks"),
+            onTap: _openBookmarksManager,
+          ),
+        CheckboxListTile(
+          value: App.preferences.removeFromPlaylistOnSongDelete,
+          onChanged: _removeFromPlaylistOnSongDeleteChange,
+          title:
+              const Text("When deleting a song, remove it from all playlists"),
         )
       ];
 
@@ -211,16 +149,17 @@ class OptionsPageState extends State<OptionsPage> {
   }
 
   Widget _questInstallLocationOptions() {
-    return Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-      (App.modManager.paths as QuestPaths).preferredInstallLocation ==
-              CustomLevelLocation.songCore
-          ? const Text("Songs will be installed to the new 'SongCore' folder")
-          : const Text(
-              "Songs will be installed to the legacy 'SongLoader' folder"),
-      const SizedBox(width: 10),
-      ElevatedButton(
-          onPressed: _openInstallLocationOptions, child: const Text("Change"))
-    ]);
+    var text = (App.modManager.paths as QuestPaths).preferredInstallLocation ==
+            CustomLevelLocation.songCore
+        ? "Songs will be installed to the new 'SongCore' folder"
+        : "Songs will be installed to the legacy 'SongLoader' folder";
+
+    return ListTile(
+      title: const Text("Custom maps install location"),
+      subtitle: Text("$text\nTap to change"),
+      leading: const Icon(Icons.folder),
+      onTap: _openInstallLocationOptions,
+    );
   }
 
   void _openGamePathPicker() async {
@@ -238,18 +177,20 @@ class OptionsPageState extends State<OptionsPage> {
   }
 
   Widget _pcInstallLocationOptions() {
-    return Column(children: [
-      Text("Current game location: ${App.modManager.gameRoot}"),
-      ElevatedButton(
-          onPressed: _openGamePathPicker, child: const Text("Change")),
-      _pathChangedRestart
-          ? const Text(
-              "The path has been changed, restart the app to use the new path.")
-          : const SizedBox(
-              width: 1,
-              height: 1,
-            )
-    ]);
+    if (_pathChangedRestart) {
+      return const ListTile(
+        title: Text("The game install location has been changed"),
+        subtitle: Text("Restart the app to apply the changes"),
+        leading: Icon(Icons.warning),
+      );
+    }
+
+    return ListTile(
+      title: const Text("Game install location"),
+      subtitle: Text("${App.modManager.gameRoot}\nClick to change"),
+      leading: const Icon(Icons.folder),
+      onTap: _openGamePathPicker,
+    );
   }
 
   Widget _installLocationOptions() {
@@ -274,48 +215,6 @@ class OptionsPageState extends State<OptionsPage> {
         MaterialPageRoute(builder: (context) => const BookmarksManager()));
   }
 
-  Widget _downloadByIdTest() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        const Text("Download by ID"),
-        const SizedBox(width: 10),
-        SizedBox(
-          width: 100,
-          child: TextField(
-            controller: _idController,
-          ),
-        ),
-        const SizedBox(width: 10),
-        ElevatedButton(
-          onPressed: _downloadById,
-          child: const Text("Download"),
-        )
-      ],
-    );
-  }
-
-  Widget _downloadPlaylistByUrlTest() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        const Text("Download playlist by url"),
-        const SizedBox(width: 10),
-        SizedBox(
-          width: 100,
-          child: TextField(
-            controller: _urlController,
-          ),
-        ),
-        const SizedBox(width: 10),
-        ElevatedButton(
-          onPressed: _downloadPlaylist,
-          child: const Text("Download"),
-        )
-      ],
-    );
-  }
-
   Widget _credits() {
     return Column(children: [
       const Text("Quest Song Manager, by exelix11"),
@@ -325,32 +224,65 @@ class OptionsPageState extends State<OptionsPage> {
     ]);
   }
 
-  void _setShowTestOptions(bool value) {
-    setState(() {
-      _showTestOptions = value;
-    });
-  }
-
-  Widget _buildTestOptions() {
-    if (!_showTestOptions) {
-      return IconButton(
-          onPressed: () => _setShowTestOptions(true),
-          icon: const Text("Show advanced options"));
-    } else {
-      return Column(
-        children: [
-          IconButton(
-              onPressed: () => _setShowTestOptions(false),
-              icon: const Text("Advanced/Test options")),
-          const SizedBox(height: 20),
-          _hashCacheOptions(),
-          const SizedBox(height: 20),
-          _downloadByIdTest(),
-          _downloadPlaylistByUrlTest(),
-          const SizedBox(height: 20),
-        ],
-      );
+  List<Widget> _buildAdvancedOptions() {
+    if (!_showAdvancedOptions) {
+      return [
+        ListTile(
+          title: const Text("Show advanced options"),
+          subtitle: const Text("Usually these are not needed"),
+          leading: const Icon(Icons.warning_sharp),
+          onTap: () {
+            setState(() {
+              _showAdvancedOptions = true;
+            });
+          },
+        )
+      ];
     }
+
+    var usingCache = App.modManager.useFastHashCache;
+
+    return [
+      ListTile(
+        title: const Text("Hide advanced options"),
+        leading: const Icon(Icons.hide_source),
+        onTap: () {
+          setState(() {
+            _showAdvancedOptions = false;
+          });
+        },
+      ),
+      ListTile(
+        title: const Text("Rehash all songs hashes"),
+        subtitle: const Text(
+            "This will recalculate the hash of all the songs. This is useful if you have modified the songs files. It may take some time"),
+        onTap: _rehashAllSongs,
+      ),
+      if (usingCache)
+        ListTile(
+          title: const Text("Disable hash cache"),
+          subtitle: const Text(
+              "This will disable the map hash cache and make the app much slower. The cache files will be deleted. This option is NOT recommended."),
+          leading: const Icon(Icons.warning_amber),
+          onTap: () async {
+            await App.modManager.removeCachedHashes();
+            App.modManager.useFastHashCache = false;
+            App.preferences.useHashCache = false;
+            App.showToast("Hash cache has been disabled");
+            setState(() {});
+          },
+        ),
+      if (!usingCache)
+        ListTile(
+          title: const Text("Enable hash cache"),
+          subtitle: const Text("The app will load faster (default mode)"),
+          onTap: () async {
+            App.preferences.useHashCache = true;
+            App.showToast("Restart the app to apply changes");
+            setState(() {});
+          },
+        ),
+    ];
   }
 
   List<Widget> _beatSaverIntegration() {
@@ -359,61 +291,70 @@ class OptionsPageState extends State<OptionsPage> {
 
     var user = App.beatSaverClient.userInfo;
 
-    var tile = user == null
-        ? ListTile(
-            leading: Image.asset("assets/BeatSaverIcon.png"),
-            title: const Text('Login with BeatSaver'),
+    if (user == null) {
+      return [
+        InkWell(
             onTap: () async {
               await BeatSaverIntegration.beginLoginFlow(context);
               setState(() {});
             },
-          )
-        : ListTile(
-            leading: user.avatar == null
-                ? const Icon(Icons.account_circle)
-                : Image.network(user.avatar!),
-            title: Text('Logged in as ${user.username}'),
-            subtitle: const Text("BeatSaver account"),
-            trailing: IconButton(
-              icon: const Icon(Icons.logout),
-              onPressed: () => {
-                setState(() {
-                  App.beatSaverClient.logout();
-                })
-              },
-            ),
-          );
+            child: Center(
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: <Widget>[
+                  Image.asset("assets/BeatSaverIcon.png",
+                      width: 60, height: 60),
+                  const SizedBox(
+                      width: 20), // You can adjust this value as needed
+                  const Text("Login with BeatSaver"),
+                ],
+              ),
+            ))
+      ];
+    }
 
     return [
-      Container(
-          alignment: Alignment.center,
-          padding: const EdgeInsets.only(left: 40, right: 40),
-          child: tile),
-      const SizedBox(height: 20)
+      ListTile(
+        leading: user.avatar == null
+            ? const Icon(Icons.account_circle)
+            : Image.network(user.avatar!),
+        title: Text(user.username),
+        subtitle: const Text("Current BeatSaver account"),
+        trailing: IconButton(
+          icon: const Icon(Icons.logout),
+          onPressed: () => {
+            setState(() {
+              App.beatSaverClient.logout();
+            })
+          },
+        ),
+      )
     ];
   }
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isLargeScreen = screenWidth > 600; // Change this value as needed
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Options'),
       ),
-      body: SingleChildScrollView(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            ..._permissionCheckWidget(),
-            ..._beatSaverIntegration(),
-            ..._utilOptions(),
-            const SizedBox(height: 20),
-            _installLocationOptions(),
-            const SizedBox(height: 20),
-            _buildTestOptions(),
-            const SizedBox(height: 20),
-            _credits(),
-          ],
-        ),
+      body: ListView(
+        padding:
+            isLargeScreen ? const EdgeInsets.all(40) : const EdgeInsets.all(10),
+        children: [
+          _credits(),
+          const Divider(),
+          ..._beatSaverIntegration(),
+          const Divider(),
+          ..._permissionCheckWidget(),
+          ..._utilOptions(),
+          _installLocationOptions(),
+          const Divider(),
+          ..._buildAdvancedOptions(),
+        ],
       ),
     );
   }
