@@ -126,6 +126,8 @@ class BeatSaverLoginPagePcState extends State<BeatSaverLoginPagePc> {
 }
 
 class BeatSaverLoginPagePc extends StatefulWidget {
+  const BeatSaverLoginPagePc({super.key});
+
   @override
   BeatSaverLoginPagePcState createState() => BeatSaverLoginPagePcState();
 }

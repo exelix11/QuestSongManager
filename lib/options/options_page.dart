@@ -1,5 +1,7 @@
+import 'dart:async';
 import 'dart:io';
 
+import 'package:bsaberquest/download_manager/beat_saver_api.dart';
 import 'package:bsaberquest/download_manager/gui/bookmarks_manager.dart';
 import 'package:bsaberquest/download_manager/gui/util.dart';
 import 'package:bsaberquest/download_manager/oauth_config.dart';
@@ -8,7 +10,6 @@ import 'package:bsaberquest/integrations/beatsaver_integration.dart';
 import 'package:bsaberquest/main.dart';
 import 'package:bsaberquest/mod_manager/mod_manager.dart';
 import 'package:bsaberquest/mod_manager/version_detector.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 
@@ -18,9 +19,27 @@ import 'quest_install_location_options.dart';
 class OptionsPageState extends State<OptionsPage> {
   final TextEditingController _idController = TextEditingController();
   final TextEditingController _urlController = TextEditingController();
+  late StreamSubscription<BeatSaverLoginNotification> _loginStateSubscription;
 
   bool _showTestOptions = false;
   bool _pathChangedRestart = false;
+  bool _showFsRequestButton = true;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _loginStateSubscription =
+        App.beatSaverClient.loginStateObservable.stream.listen((event) {
+      setState(() {});
+    });
+  }
+
+  @override
+  void dispose() {
+    _loginStateSubscription.cancel();
+    super.dispose();
+  }
 
   void _downloadById() async {
     var id = _idController.text;
@@ -48,13 +67,17 @@ class OptionsPageState extends State<OptionsPage> {
   }
 
   List<Widget> _permissionCheckWidget() {
-    if (Platform.isAndroid) {
+    if (Platform.isAndroid && _showFsRequestButton) {
       return [
         ElevatedButton(
             child: const Text('Request file access permission'),
             onPressed: () async {
               if (await requestFileAccess()) {
+                App.showToast("Permission granted");
                 _reloadSongs();
+                setState(() {
+                  _showFsRequestButton = false;
+                });
               } else {
                 App.showToast("Permission denied");
               }

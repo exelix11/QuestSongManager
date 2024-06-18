@@ -138,6 +138,10 @@ class BeatSaverClient {
   }
 
   Future useSession(BeatSaverSession session) async {
+    if (!BeatSaverOauthConfig.isConfigured) {
+      return;
+    }
+
     _session = session;
     _setAuthHeader(session.accessToken);
     await _fetchUserInformation();

@@ -19,15 +19,8 @@ class BrowserPageViewState extends State<BrowserPageView> {
     controller = WebViewController.fromPlatformCreationParams(
         const PlatformWebViewControllerCreationParams())
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
-      ..setBackgroundColor(const Color(0x00000000))
       ..setNavigationDelegate(
         NavigationDelegate(
-          onProgress: (int progress) {
-            // Update loading bar.
-          },
-          onPageStarted: (String url) {},
-          onPageFinished: (String url) {},
-          onWebResourceError: (WebResourceError error) {},
           onNavigationRequest: (NavigationRequest request) async {
             var parse = BsSchemaParser.parse(request.url);
             if (parse != null) {
