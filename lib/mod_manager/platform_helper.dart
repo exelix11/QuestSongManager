@@ -12,4 +12,14 @@ class PlatformHelper {
       throw Exception('Unsupported platform');
     }
   }
+
+  static void openUrl(Uri link) {
+    if (Platform.isWindows) {
+      Process.run('cmd', ["/c", "start", link.toString()]);
+    } else if (Platform.isLinux) {
+      Process.run('xdg-open', [link.toString()]);
+    } else {
+      throw Exception('Unsupported platform');
+    }
+  }
 }

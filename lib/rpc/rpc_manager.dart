@@ -4,6 +4,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:ffi';
 import 'dart:io';
+import 'package:bsaberquest/download_manager/oauth_config.dart';
 import 'package:ffi/ffi.dart';
 import 'package:flutter/services.dart';
 
@@ -11,30 +12,41 @@ typedef NativeRpcCallback = Void Function(Pointer<Utf8>);
 
 enum InitResult { fail, parent, child }
 
-class RpcCommand {
-  String name;
-  List<String> args;
+enum RpcCommandType {
+  ping,
+  getSongById,
+  getPlaylistByUrl,
+  beatSaverOauthLogin,
+}
 
-  bool get isSongDownload => name == "getSongById";
-  bool get isPlaylistDownload => name == "getPlaylistByUrl";
+class RpcCommand {
+  final RpcCommandType name;
+  final List<String> args;
 
   RpcCommand._(this.name, this.args);
 
-  Map<String, dynamic> toJson() => {"name": name, "args": args};
+  Map<String, dynamic> toJson() => {"name": name.toString(), "args": args};
 
   factory RpcCommand.fromJson(Map<String, dynamic> json) {
     var name = json["name"] as String;
     var args = (json["args"] as List<dynamic>).map((e) => e as String).toList();
-    return RpcCommand._(name, args);
+
+    var type = RpcCommandType.values
+        .firstWhere((element) => element.toString() == name);
+
+    return RpcCommand._(type, args);
   }
 
-  factory RpcCommand.ping() => RpcCommand._("ping", []);
+  factory RpcCommand.ping() => RpcCommand._(RpcCommandType.ping, []);
 
   factory RpcCommand.downloadSong(String songId) =>
-      RpcCommand._("getSongById", [songId]);
+      RpcCommand._(RpcCommandType.getSongById, [songId]);
 
   factory RpcCommand.downloadPlaylist(String fullUrl) =>
-      RpcCommand._("getPlaylistByUrl", [fullUrl]);
+      RpcCommand._(RpcCommandType.getPlaylistByUrl, [fullUrl]);
+
+  factory RpcCommand.beatSaverOauthLogin(String code) =>
+      RpcCommand._(RpcCommandType.beatSaverOauthLogin, [code]);
 }
 
 class RpcManager {
@@ -55,10 +67,18 @@ class RpcManager {
   }
 
   static Future _registerRegFile(String name, String content) async {
+    if (!Platform.isWindows) {
+      return;
+    }
+
     var rpc = File(name);
     await rpc.writeAsString(content);
 
-    Process.run("cmd.exe", ["/k", "reg", "import", rpc.absolute.path]);
+    var res = await Process.run("reg.exe", ["import", rpc.absolute.path]);
+
+    if (res.exitCode != 0) {
+      throw Exception("Failed to register rpc handler: ${res.stderr}");
+    }
   }
 
   static Future removeRpcHandler() async {
@@ -70,32 +90,54 @@ class RpcManager {
     await _registerRegFile("rpc_remove.reg", reg);
   }
 
+  static String _rpcHandlerFor(String protocol, String exepath) {
+    exepath = exepath.replaceAll("\\", "\\\\");
+
+    String reg = "";
+    reg += "Windows Registry Editor Version 5.00\r\n";
+    reg += "[HKEY_CURRENT_USER\\SOFTWARE\\Classes\\$protocol]\r\n";
+    reg += r'"URL Protocol"=""' "\r\n";
+    reg += "[HKEY_CURRENT_USER\\SOFTWARE\\Classes\\$protocol\\shell]\r\n";
+    reg += "[HKEY_CURRENT_USER\\SOFTWARE\\Classes\\$protocol\\shell\\open]\r\n";
+    reg +=
+        "[HKEY_CURRENT_USER\\SOFTWARE\\Classes\\$protocol\\shell\\open\\command]\r\n";
+    // ignore: prefer_interpolation_to_compose_strings
+    reg += r'@="\"' + exepath + r'\" \"%1\""' "\r\n";
+    reg += "\r\n";
+
+    return reg;
+  }
+
+  static Future installOauthLoginHandler() async {
+    var exepath = Platform.resolvedExecutable;
+    if (!File(exepath).existsSync()) {
+      throw Exception("The main executable could not be found");
+    }
+
+    String reg = "";
+    reg += _rpcHandlerFor(BeatSaverOauthConfig.oauthProtocol, exepath);
+
+    await _registerRegFile("rpc_registration.reg", reg);
+  }
+
+  static Future removeOauthHandler() async {
+    String reg = "";
+    reg += r'Windows Registry Editor Version 5.00' "\r\n";
+    reg +=
+        "[-HKEY_CURRENT_USER\\SOFTWARE\\Classes\\${BeatSaverOauthConfig.oauthProtocol}] \r\n";
+
+    await _registerRegFile("rpc_remove.reg", reg);
+  }
+
   static Future installRpcHandler() async {
     var exepath = Platform.resolvedExecutable;
     if (!File(exepath).existsSync()) {
       throw Exception("The main executable could not be found");
     }
 
-    exepath = exepath.replaceAll("\\", "\\\\");
-
     String reg = "";
-    reg += r'Windows Registry Editor Version 5.00' "\r\n";
-    reg += r'[HKEY_CURRENT_USER\SOFTWARE\Classes\bsplaylist]' "\r\n";
-    reg += r'"URL Protocol"=""' "\r\n";
-    reg += r'[HKEY_CURRENT_USER\SOFTWARE\Classes\bsplaylist\shell]' "\r\n";
-    reg += r'[HKEY_CURRENT_USER\SOFTWARE\Classes\bsplaylist\shell\open]' "\r\n";
-    reg += r'[HKEY_CURRENT_USER\SOFTWARE\Classes\bsplaylist\shell\open\command]'
-        "\r\n";
-    // ignore: prefer_interpolation_to_compose_strings
-    reg += r'@="\"' + exepath + r'\" \"%1\""' "\r\n";
-    reg += r'[HKEY_CURRENT_USER\SOFTWARE\Classes\beatsaver]' "\r\n";
-    reg += r'"URL Protocol"=""' "\r\n";
-    reg += r'[HKEY_CURRENT_USER\SOFTWARE\Classes\beatsaver\shell]' "\r\n";
-    reg += r'[HKEY_CURRENT_USER\SOFTWARE\Classes\beatsaver\shell\open]' "\r\n";
-    reg += r'[HKEY_CURRENT_USER\SOFTWARE\Classes\beatsaver\shell\open\command]'
-        "\r\n";
-    // ignore: prefer_interpolation_to_compose_strings
-    reg += r'@="\"' + exepath + r'\" \"%1\""' "\r\n";
+    reg += _rpcHandlerFor("bsplaylist", exepath);
+    reg += _rpcHandlerFor("beatsaver", exepath);
 
     await _registerRegFile("rpc_registration.reg", reg);
   }

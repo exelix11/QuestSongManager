@@ -2,10 +2,13 @@ import 'dart:io';
 
 import 'package:bsaberquest/download_manager/gui/bookmarks_manager.dart';
 import 'package:bsaberquest/download_manager/gui/util.dart';
+import 'package:bsaberquest/download_manager/oauth_config.dart';
 import 'package:bsaberquest/gui_util.dart';
+import 'package:bsaberquest/integrations/beatsaver_integration.dart';
 import 'package:bsaberquest/main.dart';
 import 'package:bsaberquest/mod_manager/mod_manager.dart';
 import 'package:bsaberquest/mod_manager/version_detector.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 
@@ -327,6 +330,46 @@ class OptionsPageState extends State<OptionsPage> {
     }
   }
 
+  List<Widget> _beatSaverIntegration() {
+    // Only official builds include the secrets needed for this
+    if (!BeatSaverOauthConfig.isConfigured) return [];
+
+    var user = App.beatSaverClient.userInfo;
+
+    if (user == null) {
+      return [
+        Container(
+          alignment: Alignment.center,
+          padding: EdgeInsets.only(left: 40, right: 40),
+          child: ListTile(
+            leading: Image.asset("assets/BeatSaverIcon.png"),
+            title: const Text('Login with BeatSaver'),
+            onTap: () => BeatSaverIntegration.beginLoginFlow(context),
+          ),
+        ),
+        const SizedBox(height: 20)
+      ];
+    } else {
+      return [
+        ListTile(
+          leading: user.avatar == null
+              ? const Icon(Icons.account_circle)
+              : Image.network(user.avatar!),
+          title: Text('Logged in as ${user.username}'),
+          trailing: IconButton(
+            icon: const Icon(Icons.logout),
+            onPressed: () => {
+              setState(() {
+                App.beatSaverClient.logout();
+              })
+            },
+          ),
+        ),
+        const SizedBox(height: 20)
+      ];
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -338,6 +381,7 @@ class OptionsPageState extends State<OptionsPage> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             ..._permissionCheckWidget(),
+            ..._beatSaverIntegration(),
             ..._utilOptions(),
             const SizedBox(height: 20),
             _installLocationOptions(),

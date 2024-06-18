@@ -2,6 +2,7 @@ import 'package:bsaberquest/download_manager/gui/pending_downloads_widget.dart';
 import 'package:bsaberquest/download_manager/gui/util.dart';
 import 'package:bsaberquest/main.dart';
 import 'package:bsaberquest/options/preferences.dart';
+import 'package:bsaberquest/rpc/rpc_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:webview_flutter_android/webview_flutter_android.dart';
@@ -30,11 +31,14 @@ class BrowserPageViewState extends State<BrowserPageView> {
           onNavigationRequest: (NavigationRequest request) async {
             var parse = BsSchemaParser.parse(request.url);
             if (parse != null) {
-              if (parse.isSongDownload) {
+              if (parse.name == RpcCommandType.getSongById) {
                 _downloadSongById(parse.args[0]);
                 return NavigationDecision.prevent;
-              } else if (parse.isPlaylistDownload) {
+              } else if (parse.name == RpcCommandType.getPlaylistByUrl) {
                 _downloadPlaylistByUrl(parse.args[0]);
+                return NavigationDecision.prevent;
+              } else {
+                App.showToast("Can't handle this command here");
                 return NavigationDecision.prevent;
               }
             } else if (request.url.endsWith(".zip")) {

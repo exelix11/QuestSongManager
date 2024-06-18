@@ -130,10 +130,12 @@ class MainPageState extends State<MainPage> {
   }
 
   void _processRpcCommand(RpcCommand cmd) async {
-    if (cmd.isSongDownload) {
+    if (cmd.name == RpcCommandType.getSongById) {
       DownloadUtil.downloadById(cmd.args[0], null);
-    } else if (cmd.isPlaylistDownload) {
+    } else if (cmd.name == RpcCommandType.getPlaylistByUrl) {
       DownloadUtil.downloadPlaylist(context, cmd.args[0], null);
+    } else if (cmd.name == RpcCommandType.beatSaverOauthLogin) {
+      App.beatSaverClient.finalizeOauthLogin(cmd.args[0]);
     }
   }
 

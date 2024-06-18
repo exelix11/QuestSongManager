@@ -4,6 +4,8 @@ class BeatSaverOauthConfig {
   static const String _CLIENT_SECRET = "######CLIENT_SECRET######";
   static const String REDIRECT_URL = "questsongmanager://beatsaver_auth";
 
+  static String get oauthProtocol => REDIRECT_URL.split("://").first;
+
   static bool get isConfigured =>
       !_CLIENT_ID.contains("CLIENT_ID") &&
       !_CLIENT_SECRET.contains("CLIENT_SECRET");
