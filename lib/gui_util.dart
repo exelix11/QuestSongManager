@@ -1,5 +1,6 @@
 import 'package:bsaberquest/main.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 
 class GuiUtil {
   static Future<String?> textInputDialog(BuildContext context, String prompt,
@@ -46,7 +47,10 @@ class GuiUtil {
                   App.showToast(snapshot.error.toString());
                 }
 
-                Navigator.of(context).pop(future);
+                // Schedule a pop to happen after the toast
+                SchedulerBinding.instance.addPostFrameCallback((_) {
+                  Navigator.of(context).pop();
+                });
               }
               return const Center(
                   child: SizedBox(

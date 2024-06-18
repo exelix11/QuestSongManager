@@ -204,7 +204,7 @@ class BeatSaverClient {
       throw Exception("The server returned an error (${res.statusCode})");
     }
 
-    return res.body;
+    return utf8.decode(res.bodyBytes);
   }
 
   Future<BeatSaverMapInfo> getMapById(String id) async {
@@ -216,7 +216,7 @@ class BeatSaverClient {
       throw Exception("Failed to get map info (${res.statusCode})");
     }
 
-    var map = Map<String, dynamic>.from(jsonDecode(res.body));
+    var map = Map<String, dynamic>.from(jsonDecode(utf8.decode(res.bodyBytes)));
     return BeatSaverMapInfo.fromJson(map);
   }
 
@@ -229,7 +229,7 @@ class BeatSaverClient {
       throw Exception("Failed to get map info (${res.statusCode})");
     }
 
-    var map = Map<String, dynamic>.from(jsonDecode(res.body));
+    var map = Map<String, dynamic>.from(jsonDecode(utf8.decode(res.bodyBytes)));
     return BeatSaverMapInfo.fromJson(map);
   }
 
@@ -251,7 +251,8 @@ class BeatSaverClient {
         throw Exception("Failed to get map info (${res.statusCode})");
       }
 
-      var list = Map<String, dynamic>.from(jsonDecode(res.body));
+      var list =
+          Map<String, dynamic>.from(jsonDecode(utf8.decode(res.bodyBytes)));
       ret.addAll(list.values
           .map((e) => BeatSaverMapInfo.fromJson(e as Map<String, dynamic>)));
     }
@@ -266,7 +267,7 @@ class BeatSaverClient {
       throw Exception("Failed to get user info (${res.statusCode})");
     }
 
-    return jsonDecode(res.body);
+    return jsonDecode(utf8.decode(res.bodyBytes));
   }
 
   bool isValidPlaylistForPush(Playlist playlist) {
@@ -286,13 +287,10 @@ class BeatSaverClient {
     return match.group(1)!;
   }
 
-  Future<BeatSaverPlaylist> getPlaylist(String url) async {
-    var data = await get(url);
+  Future<String> findPlaylistOwnerById(String playlistId) async {
+    var data = await get("$_apiUri/playlists/id/$playlistId");
     var json = Map<String, dynamic>.from(jsonDecode(data));
-    var playlist = Playlist.fromJson(json);
-
-    return BeatSaverPlaylist.fromPlaylist(
-        playlist, json["owner"]["id"].toString());
+    return json["playlist"]["owner"]["id"].toString();
   }
 
   Future _playlistSongOperation(
@@ -318,7 +316,8 @@ class BeatSaverClient {
         throw Exception("Failed to update playlist (${res.statusCode})");
       }
 
-      var body = Map<String, dynamic>.from(jsonDecode(res.body));
+      var body =
+          Map<String, dynamic>.from(jsonDecode(utf8.decode(res.bodyBytes)));
       if (body["success"] != true) {
         var errors = body["errors"] as List<String>;
         throw Exception("Failed to update playlist: ${errors.join(", ")}");
@@ -336,14 +335,16 @@ class BeatSaverClient {
     }
 
     // Get the current playlist state
-    var remote = await getPlaylist(playlist.syncUrl!);
+    var remote =
+        await App.downloadManager.downloadPlaylistMetadata(playlist.syncUrl!);
+    var owner = await findPlaylistOwnerById(id);
 
     // Check this here as getPlaylist may log us out on error
     if (userInfo == null) {
       throw Exception("You must be logged in to push playlists");
     }
 
-    if (remote.ownerId != userInfo!.id) {
+    if (owner != userInfo!.id) {
       throw Exception("You do not own this playlist");
     }
 
@@ -366,16 +367,6 @@ class BeatSaverClient {
     if (add.isNotEmpty) {
       await _playlistSongOperation(id, true, add);
     }
-  }
-}
-
-class BeatSaverPlaylist extends Playlist {
-  final String ownerId;
-
-  BeatSaverPlaylist(this.ownerId);
-
-  factory BeatSaverPlaylist.fromPlaylist(Playlist p, String ownerId) {
-    return BeatSaverPlaylist(ownerId)..fromAnotherInstance(p);
   }
 }
 

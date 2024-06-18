@@ -220,7 +220,11 @@ class PlaylistDetailPageState extends State<PlaylistDetailPage> {
       }
     }
 
-    App.beatSaverClient.pushPlaylistChanges(remote);
+    try {
+      await App.beatSaverClient.pushPlaylistChanges(remote);
+    } catch (e) {
+      App.showToast("Failed to upload playlist: $e");
+    }
 
     // If everything went well, also update the local playlist
     widget.playlist.songs.clear();

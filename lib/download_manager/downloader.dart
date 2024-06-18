@@ -100,7 +100,7 @@ class DownloadManager {
       if (res.statusCode != 200) {
         throw Exception("Failed to get playlist info (${res.statusCode})");
       }
-      body = res.body;
+      body = utf8.decode(res.bodyBytes);
     }
 
     return Playlist.fromJson(jsonDecode(body));
