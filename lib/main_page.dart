@@ -105,6 +105,18 @@ class MainPageState extends State<MainPage> {
       }
     }
 
+    {
+      var session = App.preferences.beatSaverSession;
+      if (session != null) {
+        try {
+          await App.beatSaverClient.useSession(session);
+        } catch (e) {
+          App.showToast(
+              "Failed to recover BeatSaver session, please login again ($e)");
+        }
+      }
+    }
+
     // If everything went well try to process pending messages
     if (App.rpc != null) {
       _rpcSubscription = App.rpc!.subscribeEvents(_processRpcCommand);
@@ -135,7 +147,9 @@ class MainPageState extends State<MainPage> {
     } else if (cmd.name == RpcCommandType.getPlaylistByUrl) {
       DownloadUtil.downloadPlaylist(context, cmd.args[0], null);
     } else if (cmd.name == RpcCommandType.beatSaverOauthLogin) {
-      App.beatSaverClient.finalizeOauthLogin(cmd.args[0]);
+      App.beatSaverClient.finalizeOauthLogin(cmd.args[0]).onError(
+          (error, stackTrace) =>
+              {}); // Ignore errors as they are handled by the login page
     }
   }
 

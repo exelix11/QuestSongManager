@@ -336,38 +336,38 @@ class OptionsPageState extends State<OptionsPage> {
 
     var user = App.beatSaverClient.userInfo;
 
-    if (user == null) {
-      return [
-        Container(
-          alignment: Alignment.center,
-          padding: EdgeInsets.only(left: 40, right: 40),
-          child: ListTile(
+    var tile = user == null
+        ? ListTile(
             leading: Image.asset("assets/BeatSaverIcon.png"),
             title: const Text('Login with BeatSaver'),
-            onTap: () => BeatSaverIntegration.beginLoginFlow(context),
-          ),
-        ),
-        const SizedBox(height: 20)
-      ];
-    } else {
-      return [
-        ListTile(
-          leading: user.avatar == null
-              ? const Icon(Icons.account_circle)
-              : Image.network(user.avatar!),
-          title: Text('Logged in as ${user.username}'),
-          trailing: IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () => {
-              setState(() {
-                App.beatSaverClient.logout();
-              })
+            onTap: () async {
+              await BeatSaverIntegration.beginLoginFlow(context);
+              setState(() {});
             },
-          ),
-        ),
-        const SizedBox(height: 20)
-      ];
-    }
+          )
+        : ListTile(
+            leading: user.avatar == null
+                ? const Icon(Icons.account_circle)
+                : Image.network(user.avatar!),
+            title: Text('Logged in as ${user.username}'),
+            subtitle: const Text("BeatSaver account"),
+            trailing: IconButton(
+              icon: const Icon(Icons.logout),
+              onPressed: () => {
+                setState(() {
+                  App.beatSaverClient.logout();
+                })
+              },
+            ),
+          );
+
+    return [
+      Container(
+          alignment: Alignment.center,
+          padding: const EdgeInsets.only(left: 40, right: 40),
+          child: tile),
+      const SizedBox(height: 20)
+    ];
   }
 
   @override

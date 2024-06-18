@@ -98,7 +98,7 @@ class BeatSaverClient {
 
     // First, get the user name and id
     try {
-      var res = await http.get(Uri.parse("$_apiUri/api/oauth2/identity"),
+      var res = await http.get(Uri.parse("$_siteUri/api/oauth2/identity"),
           headers: _authHeaders);
 
       if (res.statusCode != 200) {
@@ -133,11 +133,13 @@ class BeatSaverClient {
     _session = null;
     userInfo = null;
     _setAuthHeader(null);
+    App.preferences.beatSaverSession = null;
     loginStateObservable.add(BeatSaverLoginNotification(error: reason));
   }
 
   Future useSession(BeatSaverSession session) async {
     _session = session;
+    _setAuthHeader(session.accessToken);
     await _fetchUserInformation();
   }
 
@@ -148,25 +150,31 @@ class BeatSaverClient {
 
   Future finalizeOauthLogin(String code) async {
     logout();
+    try {
+      var res = await http.post(Uri.parse("$_siteUri/api/oauth2/token"),
+          headers: _plainHeaders,
+          body: {
+            "client_id": BeatSaverOauthConfig.clientId,
+            "client_secret": BeatSaverOauthConfig.clientSecret,
+            "grant_type": "authorization_code",
+            "code": code,
+            "redirect_uri": BeatSaverOauthConfig.REDIRECT_URL
+          });
 
-    var res = await http.post(Uri.parse("$_siteUri/api/oauth2/token"),
-        headers: _plainHeaders,
-        body: {
-          "client_id": BeatSaverOauthConfig.clientId,
-          "client_secret": BeatSaverOauthConfig.clientSecret,
-          "grant_type": "authorization_code",
-          "code": code,
-          "redirect_uri": BeatSaverOauthConfig.REDIRECT_URL
-        });
+      if (res.statusCode != 200) {
+        throw Exception("Failed to finalize login (${res.statusCode})");
+      }
 
-    if (res.statusCode != 200) {
+      var session = sessionFromOauthJson(res.body);
+      useSession(session);
+
+      // If all went well, store the session
+      App.preferences.beatSaverSession = _session;
+    } catch (e) {
       // Pass the failure reason to any listeners too
-      logout(reason: "Failed to finalize login (${res.statusCode})");
-      throw Exception("Failed to finalize login (${res.statusCode})");
+      logout(reason: e.toString());
+      rethrow;
     }
-
-    var session = sessionFromOauthJson(res.body);
-    useSession(session);
   }
 
   bool isBeatSaverUrl(String url) {

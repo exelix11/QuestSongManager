@@ -54,6 +54,36 @@ static void RpcHandler(const flutter::MethodCall<> &call, std::unique_ptr<flutte
   }
 }
 
+static void NativeCommandHandler(const flutter::MethodCall<> &call, std::unique_ptr<flutter::MethodResult<>> result)
+{
+  if (!std::holds_alternative<flutter::EncodableList>(*call.arguments()))
+  {
+    result->NotImplemented();
+    return;
+  }
+
+  auto& args = std::get<flutter::EncodableList>(*call.arguments());
+
+  if (call.method_name() == "openUrl")
+  {
+    auto url = std::get<std::string>(args[0]);
+
+    if (url.find_first_of("http://") != 0 && url.find_first_of("https://") != 0)
+    {
+      result->Error("Not a valid url");
+    }
+
+    ShellExecuteA(NULL, "open", url.c_str(), NULL, NULL, SW_SHOWNORMAL);
+
+    result->Success();
+  }
+  else
+  {
+    result->NotImplemented();
+  }
+}
+
+
 bool FlutterWindow::OnCreate()
 {
   if (!Win32Window::OnCreate())
@@ -75,10 +105,12 @@ bool FlutterWindow::OnCreate()
 
   RegisterPlugins(flutter_controller_->engine());
 
-  flutter::MethodChannel<> channel(flutter_controller_->engine()->messenger(), "songmanager/rpc", &flutter::StandardMethodCodec::GetInstance());
+  flutter::MethodChannel<> rpc_channel(flutter_controller_->engine()->messenger(), "songmanager/rpc", &flutter::StandardMethodCodec::GetInstance());
+  flutter::MethodChannel<> native_channel(flutter_controller_->engine()->messenger(), "songmanager/native_helper", &flutter::StandardMethodCodec::GetInstance());
 
   rootWindowhandle = this->GetHandle();
-  channel.SetMethodCallHandler(RpcHandler);
+  rpc_channel.SetMethodCallHandler(RpcHandler);
+  native_channel.SetMethodCallHandler(NativeCommandHandler);
 
   SetChildContent(flutter_controller_->view()->GetNativeWindow());
 
