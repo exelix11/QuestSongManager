@@ -1,0 +1,31 @@
+name: Build APK
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v4
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version-file: pubspec.yaml # path to pubspec.yaml
+      - name: Write keystore
+        run: cat $KEYSTORE | base64 -d > android/ci.keystore
+        env: 
+          KEYSTORE: ${{ secrets.ANDROID_KEYSTORE }}
+      - name: Build the app
+        run: flutter build apk --release
+      - name: Upload the apk
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-release.apk
+          path: build/app/outputs/flutter-apk/app-release.apk
