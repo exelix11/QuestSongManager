@@ -1,36 +1,195 @@
+import 'dart:async';
 import 'dart:convert';
+import 'dart:math';
 
+import 'package:bsaberquest/download_manager/oauth_config.dart';
 import 'package:bsaberquest/main.dart';
+import 'package:bsaberquest/options/preferences.dart';
 import 'package:http/http.dart' as http;
 
 class BeatSaverClient {
-  static const String _baseUrl = "https://api.beatsaver.com/";
-  final Map<String, String> _headers = {
+  static const String _apiUri = "https://api.beatsaver.com";
+  static const String _siteUri = "https://beatsaver.com";
+
+  BeatSaverSession? _session;
+  BeatSaverUserInfo? userInfo;
+
+  final Map<String, String> _plain_headers = {
     "User-Agent": "QuestSongManager/${App.versionName}"
   };
+
+  final Map<String, String> _auth_headers = {
+    "User-Agent": "QuestSongManager/${App.versionName}"
+  };
+
+  void _setAuthHeader(String? token) {
+    if (_auth_headers.containsKey("Authorization")) {
+      _auth_headers.remove("Authorization");
+    }
+
+    if (token == null) {
+      return;
+    }
+
+    _auth_headers["Authorization"] = "Bearer $token";
+  }
+
+  static BeatSaverSession sessionFromOauthJson(String json) {
+    var data = Map<String, dynamic>.from(jsonDecode(json));
+    return BeatSaverSession(
+        accessToken: data["access_token"],
+        refreshToken: data["refresh_token"],
+        accessExpiration:
+            DateTime.now().add(Duration(seconds: data["expires_in"])));
+  }
+
+  Future _refreshSessionIfNeeded() async {
+    try {
+      if (!BeatSaverOauthConfig.isConfigured) {
+        throw Exception("BeatSaver OAuth is not configured in this build");
+      }
+
+      if (_session == null) {
+        return;
+      }
+
+      // If the session expires in more than 5 minutes, we don't need to refresh
+      var exp = DateTime.now().add(const Duration(minutes: 5));
+      if (_session!.accessExpiration.isAfter(exp)) {
+        // Session is valid, no need to refresh
+        return;
+      }
+
+      // Otherwise, we need to refresh the session
+      var res = await http.post(Uri.parse("$_siteUri/api/oauth2/token"),
+          headers: _plain_headers,
+          body: {
+            "client_id": BeatSaverOauthConfig.clientId,
+            "client_secret": BeatSaverOauthConfig.clientSecret,
+            "grant_type": "refresh_token",
+            "refresh_token": _session!.refreshToken
+          });
+
+      if (res.statusCode != 200) {
+        throw Exception("Failed to refresh session (${res.statusCode})");
+      }
+
+      _session = sessionFromOauthJson(res.body);
+
+      _setAuthHeader(_session!.accessToken);
+
+      App.preferences.beatSaverSession = _session;
+    } catch (e) {
+      logout(reason: e.toString());
+    }
+  }
+
+  Future _fetchUserInformation() async {
+    await _refreshSessionIfNeeded();
+
+    if (_session == null) {
+      return;
+    }
+
+    String userId;
+    String userName;
+
+    // First, get the user name and id
+    try {
+      var res = await http.get(Uri.parse("$_apiUri/api/oauth2/identity"),
+          headers: _auth_headers);
+
+      if (res.statusCode != 200) {
+        throw Exception("Failed to get user information (${res.statusCode})");
+      }
+
+      var data = Map<String, dynamic>.from(jsonDecode(res.body));
+      userId = data["id"];
+      userName = data["name"];
+    } catch (e) {
+      logout(reason: e.toString());
+      return;
+    }
+
+    // Next it would be nice if we could show the PFP
+    String? avatarUrl;
+
+    try {
+      var user = await getUserById(userId);
+      avatarUrl = user["avatar"];
+    } catch (_) {
+      // Ignore this one
+    }
+
+    userInfo =
+        BeatSaverUserInfo(id: userId, username: userName, avatar: avatarUrl);
+    // TODO: Notify
+  }
+
+  void logout({String? reason}) {
+    _session = null;
+    userInfo = null;
+    // Todo: notify
+    _setAuthHeader(null);
+  }
+
+  Future useSession(BeatSaverSession session) async {
+    _session = session;
+    await _fetchUserInformation();
+  }
+
+  Uri beginOauthLogin() {
+    return Uri.parse(
+        "$_siteUri/oauth2/authorize?response_type=code&client_id=${BeatSaverOauthConfig.clientId}&redirect_uri=${BeatSaverOauthConfig.REDIRECT_URL}");
+  }
+
+  Future finalizeOauthLogin(String code) async {
+    logout();
+
+    var res = await http.post(Uri.parse("$_siteUri/api/oauth2/token"),
+        headers: _plain_headers,
+        body: {
+          "client_id": BeatSaverOauthConfig.clientId,
+          "client_secret": BeatSaverOauthConfig.clientSecret,
+          "grant_type": "authorization_code",
+          "code": code,
+          "redirect_uri": BeatSaverOauthConfig.REDIRECT_URL
+        });
+
+    if (res.statusCode != 200) {
+      throw Exception("Failed to finalize login (${res.statusCode})");
+    }
+
+    var session = sessionFromOauthJson(res.body);
+    useSession(session);
+  }
 
   bool isBeatSaverUrl(String url) {
     var uri = Uri.parse(url);
     return uri.host == "beatsaver.com" || uri.host == "api.beatsaver.com";
   }
 
-  Future<String> get(String url) {
+  Future<String> get(String url) async {
+    // Do not accidentally leak the access token
     if (!isBeatSaverUrl(url)) {
       throw Exception("Invalid BeatSaver URL");
     }
 
-    return http.get(Uri.parse(url), headers: _headers).then((res) {
-      if (res.statusCode != 200) {
-        throw Exception("The server returned an error (${res.statusCode})");
-      }
+    await _refreshSessionIfNeeded();
 
-      return res.body;
-    });
+    var res = await http.get(Uri.parse(url), headers: _auth_headers);
+    if (res.statusCode != 200) {
+      throw Exception("The server returned an error (${res.statusCode})");
+    }
+
+    return res.body;
   }
 
   Future<BeatSaverMapInfo> getMapById(String id) async {
-    var res =
-        await http.get(Uri.parse("$_baseUrl/maps/id/$id"), headers: _headers);
+    await _refreshSessionIfNeeded();
+
+    var res = await http.get(Uri.parse("$_apiUri/maps/id/$id"),
+        headers: _auth_headers);
     if (res.statusCode != 200) {
       throw Exception("Failed to get map info (${res.statusCode})");
     }
@@ -40,8 +199,10 @@ class BeatSaverClient {
   }
 
   Future<BeatSaverMapInfo> getMapByHash(String hash) async {
-    var res = await http.get(Uri.parse("$_baseUrl/maps/hash/$hash"),
-        headers: _headers);
+    await _refreshSessionIfNeeded();
+
+    var res = await http.get(Uri.parse("$_apiUri/maps/hash/$hash"),
+        headers: _auth_headers);
     if (res.statusCode != 200) {
       throw Exception("Failed to get map info (${res.statusCode})");
     }
@@ -54,13 +215,15 @@ class BeatSaverClient {
     // rquests are limited to 50 hashes each so we must manually batch this
     List<BeatSaverMapInfo> ret = [];
 
+    await _refreshSessionIfNeeded();
+
     for (var i = 0; i < hash.length;) {
       var step = hash.skip(i).take(50).toList();
       i += step.length;
 
       var query = step.join(",");
-      var res = await http.get(Uri.parse("$_baseUrl/maps/hash/$query"),
-          headers: _headers);
+      var res = await http.get(Uri.parse("$_apiUri/maps/hash/$query"),
+          headers: _auth_headers);
 
       if (res.statusCode != 200) {
         throw Exception("Failed to get map info (${res.statusCode})");
@@ -73,6 +236,32 @@ class BeatSaverClient {
 
     return ret;
   }
+
+  Future<Map<String, dynamic>> getUserById(String id) async {
+    var res = await http.get(Uri.parse("$_apiUri/users/id/$id"),
+        headers: _plain_headers);
+    if (res.statusCode != 200) {
+      throw Exception("Failed to get user info (${res.statusCode})");
+    }
+
+    return jsonDecode(res.body);
+  }
+}
+
+class UserInfo {
+  final String id;
+  final String username;
+  final String avatar;
+
+  factory UserInfo.fromJson(Map<String, dynamic> json) {
+    return UserInfo(
+      id: json["id"] as String,
+      username: json["username"] as String,
+      avatar: json["avatar"] as String,
+    );
+  }
+
+  UserInfo({required this.id, required this.username, required this.avatar});
 }
 
 class MapVersion {
@@ -124,4 +313,13 @@ class BeatSaverMapInfo {
       required this.name,
       required this.id,
       required this.versions});
+}
+
+class BeatSaverUserInfo {
+  final String id;
+  final String username;
+  final String? avatar;
+
+  BeatSaverUserInfo(
+      {required this.id, required this.username, required this.avatar});
 }

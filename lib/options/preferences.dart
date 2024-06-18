@@ -103,6 +103,24 @@ class PreferencesManager {
   set removeFromPlaylistOnSongDelete(bool value) {
     _prefs.setBool("auto_remove_songs_on_delete", value);
   }
+
+  BeatSaverSession? get beatSaverSession {
+    var session = _prefs.getString("beatsaver_session");
+    if (session == null) return null;
+    try {
+      return BeatSaverSession.fromJson(jsonDecode(session));
+    } catch (e) {
+      return null;
+    }
+  }
+
+  set beatSaverSession(BeatSaverSession? session) {
+    if (session == null) {
+      _prefs.remove("beatsaver_session");
+    } else {
+      _prefs.setString("beatsaver_session", jsonEncode(session.toJson()));
+    }
+  }
 }
 
 enum PreferredCustomSongFolder { auto, songLoader, songCore }
@@ -168,5 +186,31 @@ class WebBookmark {
   factory WebBookmark.fromJson(String json) {
     Map<String, dynamic> map = jsonDecode(json);
     return WebBookmark(map['title'], map['url']);
+  }
+}
+
+class BeatSaverSession {
+  final String accessToken;
+  final String refreshToken;
+  final DateTime accessExpiration;
+
+  BeatSaverSession(
+      {required this.accessToken,
+      required this.refreshToken,
+      required this.accessExpiration});
+
+  factory BeatSaverSession.fromJson(Map<String, dynamic> json) {
+    return BeatSaverSession(
+        accessToken: json['access_token'],
+        refreshToken: json['refresh_token'],
+        accessExpiration: DateTime.parse(json['access_expiration']));
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'access_token': accessToken,
+      'refresh_token': refreshToken,
+      'access_expiration': accessExpiration.toIso8601String()
+    };
   }
 }
