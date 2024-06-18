@@ -1,0 +1,34 @@
+name: Windows
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Add MSBuild to PATH
+      uses: microsoft/setup-msbuild@v1.0.2
+    - name: Set up Flutter
+      uses: subosito/flutter-action@v2
+      with:
+        channel: stable
+    - name: Write secrets (1)
+      run: dart run build_helper\ci_secrets.dart lib\download_manager\oauth_config.dart
+      env: 
+        REPLACE_FROM: "######CLIENT_ID######"
+        REPLACE_TO: ${{ secrets.CLIENT_ID }}
+    - name: Write secrets (2)
+      run: dart run build_helper\ci_secrets.dart lib\download_manager\oauth_config.dart
+      env: 
+        REPLACE_FROM: "######CLIENT_SECRET######"
+        REPLACE_TO: ${{ secrets.CLIENT_SECRET }}
+    - name: Build the app
+      run: flutter build windows --release
+    - name: Upload the release
+      uses: actions/upload-artifact@v4
+      with:
+        name: Release
+        path: build\windows\x64\runner\Release\
