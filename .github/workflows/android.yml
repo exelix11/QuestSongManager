@@ -18,9 +18,19 @@ jobs:
         with:
           channel: stable
       - name: Write keystore
-        run: cat $KEYSTORE | base64 -d > android/ci.keystore
+        run: echo $KEYSTORE | base64 -d > android/ci.keystore
         env: 
           KEYSTORE: ${{ secrets.ANDROID_KEYSTORE }}
+      - name: Write secrets (1)
+        run: dart run build_helper/ci_secrets.dart lib/download_manager/oauth_config.dart
+        env: 
+          REPLACE_FROM: "######CLIENT_ID######"
+          REPLACE_TO: ${{ secrets.CLIENT_ID }}
+      - name: Write secrets (2)
+        run: dart run build_helper/ci_secrets.dart lib/download_manager/oauth_config.dart
+        env: 
+          REPLACE_FROM: "######CLIENT_SECRET######"
+          REPLACE_TO: ${{ secrets.CLIENT_SECRET }}
       - name: Build the app
         run: flutter build apk --release
       - name: Upload the apk
