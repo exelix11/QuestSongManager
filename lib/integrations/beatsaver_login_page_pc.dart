@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:bsaberquest/download_manager/beat_saver_api.dart';
 import 'package:bsaberquest/main.dart';
@@ -7,26 +8,25 @@ import 'package:bsaberquest/rpc/rpc_manager.dart';
 import 'package:flutter/material.dart';
 
 class BeatSaverLoginPagePcState extends State<BeatSaverLoginPagePc> {
-  late StreamSubscription<BeatSaverLoginNotification> _loginStateSubscription;
+  late StreamSubscription<BeatSaverLoginState> _loginStateSubscription;
   late Future _initFuture;
+
+  // For development on linux allow manual input of the auth code
+  final bool _debugCodeInput = Platform.isLinux;
+  final _debugInputController = TextEditingController();
+
   bool _loginRequested = false;
-
-  final _controller = TextEditingController();
-
-  void _testLoginFromManualInput() {
-    App.beatSaverClient.finalizeOauthLogin(_controller.text);
-  }
 
   void _leavePage() {
     Navigator.of(context).pop();
   }
 
-  void _onLoginStateChange(BeatSaverLoginNotification state) {
-    if (state.error != null) {
-      App.showToast(state.error!);
+  void _onLoginStateChange(BeatSaverLoginState state) {
+    if (state.state == LoginState.authenticated) {
+      App.showToast(state.toGuiMessage());
       _leavePage();
-    } else if (state.userInfo != null) {
-      App.showToast("Logged in as ${state.userInfo!.username}");
+    } else if (state.error != null) {
+      App.showToast(state.error!);
       _leavePage();
     }
 
@@ -58,6 +58,21 @@ class BeatSaverLoginPagePcState extends State<BeatSaverLoginPagePc> {
     super.dispose();
   }
 
+  void _testLoginFromManualInput() {
+    App.beatSaverClient.finalizeOauthLogin(_debugInputController.text);
+  }
+
+  List<Widget> _buildTestCodeInput() {
+    if (!_debugCodeInput) return [];
+    return [
+      TextField(controller: _debugInputController),
+      ElevatedButton(
+        onPressed: _testLoginFromManualInput,
+        child: const Text('Login with code'),
+      )
+    ];
+  }
+
   List<Widget> _buildActionButtons() {
     if (_loginRequested) {
       return [
@@ -74,11 +89,7 @@ class BeatSaverLoginPagePcState extends State<BeatSaverLoginPagePc> {
           onPressed: _leavePage,
           child: const Text('Cancel'),
         ),
-        TextField(controller: _controller),
-        ElevatedButton(
-          onPressed: _testLoginFromManualInput,
-          child: const Text('Finish login'),
-        )
+        ..._buildTestCodeInput()
       ];
     } else {
       return [

@@ -1,11 +1,11 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:bsaberquest/download_manager/oauth_config.dart';
 import 'package:bsaberquest/main.dart';
 import 'package:bsaberquest/mod_manager/model/playlist.dart';
 import 'package:bsaberquest/options/preferences.dart';
-import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
 class BeatSaverClient {
@@ -16,10 +16,10 @@ class BeatSaverClient {
       RegExp(r"^https?:\/\/api\.beatsaver\.com\/playlists\/id\/(\d+)\/");
 
   BeatSaverSession? _session;
-  BeatSaverUserInfo? userInfo;
+  BeatSaverLoginState userState = BeatSaverLoginState.notLoggedIn();
 
-  StreamController<BeatSaverLoginNotification> loginStateObservable =
-      StreamController<BeatSaverLoginNotification>.broadcast();
+  StreamController<BeatSaverLoginState> loginStateObservable =
+      StreamController<BeatSaverLoginState>.broadcast();
 
   final Map<String, String> _plainHeaders = {
     "User-Agent": "QuestSongManager/${App.versionName}"
@@ -50,11 +50,13 @@ class BeatSaverClient {
             DateTime.now().add(Duration(seconds: data["expires_in"])));
   }
 
-  Future _refreshSessionIfNeeded() async {
+  Future _refreshSessionIfNeeded({bool logoutOnError = true}) async {
     try {
       if (!BeatSaverOauthConfig.isConfigured) {
         throw Exception("BeatSaver OAuth is not configured in this build");
       }
+
+      // TODO: If in offline mode maybe try resuming the session here since this is called during other network operations too
 
       if (_session == null) {
         return;
@@ -87,36 +89,34 @@ class BeatSaverClient {
 
       App.preferences.beatSaverSession = _session;
     } catch (e) {
-      logout(reason: e.toString());
+      // The default when we fail to refresh during another request is to log out
+      if (logoutOnError) {
+        logout(reason: e.toString());
+      } else {
+        // Otherwise, if this is the app initialization or another process where explicit error handling is better use this flag
+        rethrow;
+      }
     }
   }
 
-  Future _fetchUserInformation() async {
-    await _refreshSessionIfNeeded();
+  Future _beginOauthSession() async {
+    // Do not call logout in this function as it is used only in the initial session setup
+    await _refreshSessionIfNeeded(logoutOnError: false);
 
     if (_session == null) {
       return;
     }
 
-    String userId;
-    String userName;
+    var res = await http.get(Uri.parse("$_siteUri/api/oauth2/identity"),
+        headers: _authHeaders);
 
-    // First, get the user name and id
-    try {
-      var res = await http.get(Uri.parse("$_siteUri/api/oauth2/identity"),
-          headers: _authHeaders);
-
-      if (res.statusCode != 200) {
-        throw Exception("Failed to get user information (${res.statusCode})");
-      }
-
-      var data = Map<String, dynamic>.from(jsonDecode(res.body));
-      userId = data["id"];
-      userName = data["name"];
-    } catch (e) {
-      logout(reason: e.toString());
-      return;
+    if (res.statusCode != 200) {
+      throw Exception("Failed to get user information (${res.statusCode})");
     }
+
+    var data = Map<String, dynamic>.from(jsonDecode(res.body));
+    var userId = data["id"];
+    var userName = data["name"];
 
     // Next it would be nice if we could show the PFP
     String? avatarUrl;
@@ -125,31 +125,66 @@ class BeatSaverClient {
       var user = await getUserById(userId);
       avatarUrl = user["avatar"];
     } catch (_) {
-      // Ignore this one
+      // Ignore if this fails
     }
 
-    userInfo =
-        BeatSaverUserInfo(id: userId, username: userName, avatar: avatarUrl);
+    userState = BeatSaverLoginState.authenticated(
+        id: userId, username: userName, avatar: avatarUrl);
 
-    loginStateObservable.add(BeatSaverLoginNotification(userInfo: userInfo));
+    loginStateObservable.add(userState);
+  }
+
+  void _disconnectSession(BeatSaverLoginState newState) {
+    _session = null;
+    _setAuthHeader(null);
+    userState = newState;
+    loginStateObservable.add(newState);
   }
 
   void logout({String? reason}) {
-    _session = null;
-    userInfo = null;
-    _setAuthHeader(null);
+    _disconnectSession(BeatSaverLoginState.notLoggedIn(error: reason));
+    // On explicit logout, clear the stored session
     App.preferences.beatSaverSession = null;
-    loginStateObservable.add(BeatSaverLoginNotification(error: reason));
   }
 
-  Future useSession(BeatSaverSession session) async {
+  // This is the same as logout, but it will not clear the session
+  // use in case of network errors when resuming the session to prevent logging out when the app is opened with no internet
+  void _offlineMode(String message) {
+    _disconnectSession(BeatSaverLoginState.offline(error: message));
+  }
+
+  Future tryLoginFromStoredCredentials() async {
+    var session = App.preferences.beatSaverSession;
+    if (session == null) {
+      logout();
+    }
+
+    try {
+      useSession(session!, true);
+    } catch (e) {
+      App.showToast(
+          "Failed to recover BeatSaver session, please login again ($e)");
+    }
+  }
+
+  Future useSession(BeatSaverSession session, bool offlineGrace) async {
     if (!BeatSaverOauthConfig.isConfigured) {
       return;
     }
 
     _session = session;
     _setAuthHeader(session.accessToken);
-    await _fetchUserInformation();
+    try {
+      await _beginOauthSession();
+    } on SocketException catch (e) {
+      // The device is offline, if this is a resume operation, we can continue in offline mode
+      if (offlineGrace) {
+        _offlineMode(e.toString());
+      } else {
+        // Otherwise, propagate the error
+        rethrow;
+      }
+    }
   }
 
   Uri beginOauthLogin() {
@@ -175,7 +210,7 @@ class BeatSaverClient {
       }
 
       var session = sessionFromOauthJson(res.body);
-      useSession(session);
+      useSession(session, false);
 
       // If all went well, store the session
       App.preferences.beatSaverSession = _session;
@@ -340,11 +375,11 @@ class BeatSaverClient {
     var owner = await findPlaylistOwnerById(id);
 
     // Check this here as getPlaylist may log us out on error
-    if (userInfo == null) {
+    if (userState.state != LoginState.authenticated) {
       throw Exception("You must be logged in to push playlists");
     }
 
-    if (owner != userInfo!.id) {
+    if (owner != userState.userId) {
       throw Exception("You do not own this playlist");
     }
 
@@ -437,18 +472,53 @@ class BeatSaverMapInfo {
       required this.versions});
 }
 
-class BeatSaverUserInfo {
-  final String id;
-  final String username;
+enum LoginState { notLoggedIn, authenticated, offline }
+
+class BeatSaverLoginState {
+  final LoginState state;
+
+  // When state is logged in, these fields are guaranteed to be non-null
+  final String? userId;
+  final String? username;
+
+  // This may be null even when logged in
   final String? avatar;
 
-  BeatSaverUserInfo(
-      {required this.id, required this.username, required this.avatar});
-}
-
-class BeatSaverLoginNotification {
-  final BeatSaverUserInfo? userInfo;
+  // WHen offline or not logged in, this field may contain the error message
   final String? error;
 
-  BeatSaverLoginNotification({this.userInfo, this.error});
+  String toGuiMessage() {
+    switch (state) {
+      case LoginState.notLoggedIn:
+        return error == null ? "Not logged in" : "Not logged in ($error)";
+      case LoginState.authenticated:
+        return "Logged in as $username";
+      case LoginState.offline:
+        return "You are offline";
+    }
+  }
+
+  BeatSaverLoginState._(
+      {required this.state,
+      this.userId,
+      this.username,
+      this.avatar,
+      this.error});
+
+  factory BeatSaverLoginState.notLoggedIn({String? error}) {
+    return BeatSaverLoginState._(state: LoginState.notLoggedIn, error: error);
+  }
+
+  factory BeatSaverLoginState.authenticated(
+      {required String id, required String username, required String? avatar}) {
+    return BeatSaverLoginState._(
+        state: LoginState.authenticated,
+        userId: id,
+        username: username,
+        avatar: avatar);
+  }
+
+  factory BeatSaverLoginState.offline({String? error}) {
+    return BeatSaverLoginState._(state: LoginState.offline, error: error);
+  }
 }

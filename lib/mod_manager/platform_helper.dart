@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:bsaberquest/main.dart';
 import 'package:bsaberquest/mod_manager/model/song.dart';
 import 'package:flutter/services.dart';
 

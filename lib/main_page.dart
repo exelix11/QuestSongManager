@@ -105,17 +105,7 @@ class MainPageState extends State<MainPage> {
       }
     }
 
-    {
-      var session = App.preferences.beatSaverSession;
-      if (session != null) {
-        try {
-          await App.beatSaverClient.useSession(session);
-        } catch (e) {
-          App.showToast(
-              "Failed to recover BeatSaver session, please login again ($e)");
-        }
-      }
-    }
+    await App.beatSaverClient.tryLoginFromStoredCredentials();
 
     // If everything went well try to process pending messages
     if (App.rpc != null) {

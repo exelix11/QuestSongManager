@@ -16,7 +16,7 @@ import 'game_path_picker_page.dart';
 import 'quest_install_location_options.dart';
 
 class OptionsPageState extends State<OptionsPage> {
-  late StreamSubscription<BeatSaverLoginNotification> _loginStateSubscription;
+  late StreamSubscription<BeatSaverLoginState> _loginStateSubscription;
 
   bool _showAdvancedOptions = false;
   bool _pathChangedRestart = false;
@@ -28,6 +28,7 @@ class OptionsPageState extends State<OptionsPage> {
 
     _loginStateSubscription =
         App.beatSaverClient.loginStateObservable.stream.listen((event) {
+      App.showToast(event.toGuiMessage());
       setState(() {});
     });
   }
@@ -288,9 +289,9 @@ class OptionsPageState extends State<OptionsPage> {
     // Only official builds include the secrets needed for this
     if (!BeatSaverOauthConfig.isConfigured) return [];
 
-    var user = App.beatSaverClient.userInfo;
+    var user = App.beatSaverClient.userState;
 
-    if (user == null) {
+    if (user.state == LoginState.notLoggedIn || true) {
       return [
         InkWell(
             onTap: () async {
@@ -300,35 +301,57 @@ class OptionsPageState extends State<OptionsPage> {
             child: Center(
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
-                children: <Widget>[
+                children: [
                   Image.asset("assets/BeatSaverIcon.png",
                       width: 60, height: 60),
-                  const SizedBox(
-                      width: 20), // You can adjust this value as needed
-                  const Text("Login with BeatSaver"),
+                  const SizedBox(width: 20),
+                  const Column(children: [
+                    Text("Login with BeatSaver"),
+                    Text(
+                        "Use your account to download and sync private playlists",
+                        style: TextStyle(fontSize: 12))
+                  ])
                 ],
               ),
             ))
       ];
+    } else if (user.state == LoginState.authenticated) {
+      return [
+        ListTile(
+          leading: user.avatar == null
+              ? const Icon(Icons.account_circle)
+              : Image.network(user.avatar!),
+          title: Text(user.username!),
+          subtitle: const Text("Current BeatSaver account"),
+          trailing: IconButton(
+            icon: const Icon(Icons.logout),
+            onPressed: () => {
+              setState(() {
+                App.beatSaverClient.logout();
+              })
+            },
+          ),
+        )
+      ];
+    } else {
+      return [
+        ListTile(
+          leading: const Icon(Icons.device_unknown),
+          title: const Text("You are offline"),
+          subtitle: const Text(
+              "Failed to retrieve user data from BeatSaver.\nTap to try again."),
+          onTap: () => App.beatSaverClient.tryLoginFromStoredCredentials(),
+          trailing: IconButton(
+            icon: const Icon(Icons.logout),
+            onPressed: () => {
+              setState(() {
+                App.beatSaverClient.logout();
+              })
+            },
+          ),
+        )
+      ];
     }
-
-    return [
-      ListTile(
-        leading: user.avatar == null
-            ? const Icon(Icons.account_circle)
-            : Image.network(user.avatar!),
-        title: Text(user.username),
-        subtitle: const Text("Current BeatSaver account"),
-        trailing: IconButton(
-          icon: const Icon(Icons.logout),
-          onPressed: () => {
-            setState(() {
-              App.beatSaverClient.logout();
-            })
-          },
-        ),
-      )
-    ];
   }
 
   @override

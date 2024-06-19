@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:collection';
 
 import 'package:bsaberquest/download_manager/beat_saver_api.dart';
-import 'package:bsaberquest/download_manager/gui/playlist_download_page.dart';
 import 'package:bsaberquest/gui_util.dart';
 import 'package:bsaberquest/main.dart';
 import 'package:bsaberquest/mod_manager/gui/playlist_sync_page.dart';
@@ -295,7 +294,7 @@ class PlaylistDetailPageState extends State<PlaylistDetailPage> {
           ),
 
         // Only allow this when the user is logged in and the playlist is a BeatSaver playlist
-        if (App.beatSaverClient.userInfo != null &&
+        if (App.beatSaverClient.userState.state == LoginState.authenticated &&
             App.beatSaverClient.isValidPlaylistForPush(widget.playlist))
           PopupMenuItem<Function()>(
             value: _uploadPlaylist,
