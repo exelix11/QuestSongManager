@@ -35,7 +35,7 @@ class MainPageState extends State<MainPage> {
   @override
   void dispose() {
     _rpcSubscription?.cancel();
-    _updateCheckSubscription?.cancel();
+    _updateCheckSubscription.cancel();
     super.dispose();
   }
 

@@ -84,10 +84,11 @@ class ModManager {
 
   Future<Song> _loadSongFile(File file) async {
     var info = await file.readAsString();
-    var bsInfo = BeatSaberSongInfo.fromJson(jsonDecode(info));
-    var song =
-        Song.create(file.parent.path, dart_path.basename(file.path), bsInfo);
-    await _hashSong(song);
+    var metadata = BeatSaberSongInfo.fromJson(jsonDecode(info));
+    var infoFileName = dart_path.basename(file.path);
+    var folderPath = file.parent.path;
+    var hash = await _hashSong(folderPath, infoFileName, metadata);
+    var song = Song.create(hash, folderPath, infoFileName, metadata);
     return song;
   }
 
@@ -195,14 +196,13 @@ class ModManager {
     playlistObservable.sink.add(null);
   }
 
-  Future<String?> _tryGetCachedHash(Song song) async {
+  Future<String?> _tryGetCachedHash(String songFolderPath) async {
     if (useFastHashCache) {
-      var hashFile = File("${song.folderPath}/$_hashCacheFileName");
+      var hashFile = File("$songFolderPath/$_hashCacheFileName");
       if (await hashFile.exists()) {
         var hash = await hashFile.readAsString();
 
         if (hash.length == 40) {
-          print("Loaded cached hash for ${song.meta.songName}");
           return hash.toLowerCase();
         }
       }
@@ -211,48 +211,47 @@ class ModManager {
     return null;
   }
 
-  Future _writeCachedHash(Song song) async {
+  Future _writeCachedHash(String folderPath, String hash) async {
     if (useFastHashCache) {
-      print("Caching hash for ${song.meta.songName}");
-      var hashFile = File("${song.folderPath}/$_hashCacheFileName");
-      await hashFile.writeAsString(song.hash!);
+      var hashFile = File("${folderPath}/$_hashCacheFileName");
+      await hashFile.writeAsString(hash);
     }
   }
 
-  Future<String> _hashSongFromDiskFiles(Song song) async {
+  Future<String> _hashSongFromDiskFiles(
+      String folderPath, String infoFileName, BeatSaberSongInfo meta) async {
     var content = [
-      await File("${song.folderPath}/${song.infoFileName}").readAsBytes(),
-      for (var file in song.meta.fileNames)
-        await File("${song.folderPath}/$file").readAsBytes()
+      await File("$folderPath/$infoFileName").readAsBytes(),
+      for (var file in meta.fileNames)
+        await File("$folderPath/$file").readAsBytes()
     ];
 
     return hashSongInfo(content);
   }
 
-  Future<String> _hashSong(Song song) async {
-    if (song.hash != null) {
-      return Future.value(song.hash);
+  Future<String> _hashSong(
+      String songPath, String infoFileName, BeatSaberSongInfo meta) async {
+    var hash = await _tryGetCachedHash(songPath);
+
+    if (hash != null) {
+      return hash;
     }
 
-    song.hash = await _tryGetCachedHash(song);
+    hash = await _hashSongFromDiskFiles(songPath, infoFileName, meta);
 
-    if (song.hash != null) {
-      return song.hash!;
-    }
+    await _writeCachedHash(songPath, hash);
 
-    song.hash = await _hashSongFromDiskFiles(song);
-
-    await _writeCachedHash(song);
-
-    return song.hash!;
+    return hash;
   }
 
   Future<bool> checkSongHash(Song song) async {
-    var diskHash = await _hashSongFromDiskFiles(song);
+    var diskHash = await _hashSongFromDiskFiles(
+        song.folderPath, song.infoFileName, song.meta);
+
     if (diskHash != song.hash) {
       var oldHash = song.hash;
       song.hash = diskHash;
-      await _writeCachedHash(song);
+      await _writeCachedHash(song.folderPath, song.hash);
 
       if (songs.containsKey(oldHash)) {
         songs.remove(oldHash);
@@ -384,12 +383,11 @@ class ModManager {
       throw Exception(error);
     }
 
-    var song =
-        Song.create(directory.path, dart_path.basename(directory.path), bsInfo);
-    song.hash = hash;
+    var song = Song.create(
+        hash, directory.path, dart_path.basename(directory.path), bsInfo);
 
     try {
-      await _writeCachedHash(song);
+      await _writeCachedHash(song.folderPath, song.hash);
     } catch (e) {
       // It is safe to ignore this
     }

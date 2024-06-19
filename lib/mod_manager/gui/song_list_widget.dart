@@ -14,7 +14,7 @@ class SongListWidgetController {
   SongListWidgetState? _state;
 
   void _subscribe(SongListWidgetState state) {
-    state._allSongs = _initialSongs ?? {};
+    state.songListChanged(_initialSongs ?? {});
     _initialSongs = null;
     _state = state;
   }
@@ -30,10 +30,11 @@ class SongListWidgetController {
 
 class SongListWidgetState extends State<SongListWidget> {
   final Set<String> _selection = <String>{};
+  final Set<String> _searchHits = <String>{};
   final TextEditingController _searchController = TextEditingController();
 
-  Map<String, Song> _allSongs = {};
-  List<String> _uiSongs = [];
+  List<Song> _allSongs = [];
+  Map<String, Song> _songMap = {};
 
   bool _showSearch = false;
 
@@ -41,7 +42,6 @@ class SongListWidgetState extends State<SongListWidget> {
   void initState() {
     var controller = widget.controller;
     controller._subscribe(this);
-    _updateSearchResults(null);
     super.initState();
   }
 
@@ -52,10 +52,6 @@ class SongListWidgetState extends State<SongListWidget> {
 
   void _addOrRemoveSongFromSelection(Song song) {
     var hash = song.hash;
-
-    if (hash == null) {
-      return;
-    }
 
     setState(() {
       if (_selection.contains(hash)) {
@@ -75,20 +71,27 @@ class SongListWidgetState extends State<SongListWidget> {
     );
   }
 
-  Widget? _buildItem(BuildContext context, int index) {
-    var hash = _uiSongs[index];
-    var song = _allSongs[hash];
+  void _onSearchTextChanged(String text) {
+    setState(() {
+      _searchHits.clear();
+      _searchHits.addAll(_allSongs
+          .where((element) => element.isValid && element.meta.query(text))
+          .map((e) => e.hash));
+    });
+  }
 
-    if (song == null) {
-      // Shouldn't happen
-      return null;
+  Widget? _buildItem(BuildContext context, int index) {
+    var song = _allSongs[index];
+
+    if (_searchController.text.isNotEmpty) {
+      if (!_searchHits.contains(song.hash)) return Container();
     }
 
     if (_isAnySelected()) {
       return SongWidget(
         song: song,
         onTap: _addOrRemoveSongFromSelection,
-        highlight: _selection.contains(hash),
+        highlight: _selection.contains(song.hash),
       );
     } else {
       return SongWidget(
@@ -105,7 +108,7 @@ class SongListWidgetState extends State<SongListWidget> {
 
   void _selectAllInView() {
     setState(() {
-      _selection.addAll(_uiSongs);
+      _selection.addAll(_allSongs.map((e) => e.hash));
     });
   }
 
@@ -116,42 +119,29 @@ class SongListWidgetState extends State<SongListWidget> {
   }
 
   void songListChanged(Map<String, Song> songs) {
-    _allSongs = songs;
-    _updateSearchResults(_searchController.text);
+    setState(() {
+      _songMap = songs;
+      _allSongs = songs.values.toList();
+      _removeInvalidSongsFromSelection();
+    });
   }
 
   void _openSearch() {
     setState(() {
       _showSearch = true;
     });
-    _updateSearchResults(null);
   }
 
   void _closeSearch() {
     setState(() {
+      _searchController.text = "";
       _showSearch = false;
     });
-    _updateSearchResults(null);
   }
 
-  void _updateSearchResults(String? value) {
-    if (value == null || value.isEmpty) {
-      setState(() {
-        _uiSongs = _allSongs.keys.toList();
-      });
-    } else {
-      value = value.toLowerCase();
-
-      setState(() {
-        _uiSongs = _allSongs.values
-            .where((element) => element.isValid && element.meta.query(value!))
-            .map((e) => e.hash!)
-            .toList(growable: false);
-
-        // deselect songs that are not in the search results
-        _selection.removeWhere((element) => !_uiSongs.contains(element));
-      });
-    }
+  void _removeInvalidSongsFromSelection() {
+    _selection.removeWhere((hash) => !_songMap.containsKey(hash));
+    _searchHits.removeWhere((hash) => !_songMap.containsKey(hash));
   }
 
   void _addSelectionToPlaylist() async {
@@ -167,9 +157,9 @@ class SongListWidgetState extends State<SongListWidget> {
     }
 
     var songs = _selection
-        .map((e) => _allSongs[e])
+        .map((e) => _songMap[e])
         .where((x) => x != null && x.isValid)
-        .map((e) => PlayListSong(e!.hash!, e.meta.songName))
+        .map((e) => PlayListSong(e!.hash, e.meta.songName))
         .toList();
 
     _clearSelection();
@@ -192,7 +182,7 @@ class SongListWidgetState extends State<SongListWidget> {
     }
 
     var toDelete = _selection
-        .map((e) => _allSongs[e])
+        .map((e) => _songMap[e])
         .where((x) => x != null && x.isValid)
         .map((e) => e!)
         .toList();
@@ -212,10 +202,10 @@ class SongListWidgetState extends State<SongListWidget> {
 
     if (_isAnySelected()) {
       titleText = "${_selection.length} selected";
-    } else if (_showSearch) {
-      titleText = "${_uiSongs.length} results";
+    } else if (_searchController.text.isNotEmpty) {
+      titleText = "${_searchHits.length} results";
     } else {
-      titleText = "Found ${_uiSongs.length} songs";
+      titleText = "Found ${_allSongs.length} songs";
     }
 
     List<Widget> actions = [];
@@ -251,7 +241,7 @@ class SongListWidgetState extends State<SongListWidget> {
           Expanded(
             child: TextField(
               controller: _searchController,
-              onChanged: _updateSearchResults,
+              onChanged: _onSearchTextChanged,
               decoration: const InputDecoration(
                 hintText: 'Search',
               ),
@@ -271,7 +261,7 @@ class SongListWidgetState extends State<SongListWidget> {
       appBar: _appbar(),
       body: ListView.builder(
           padding: GuiUtil.defaultViewPadding(context),
-          itemCount: _uiSongs.length,
+          itemCount: _allSongs.length,
           itemBuilder: _buildItem),
     );
   }

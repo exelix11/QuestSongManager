@@ -4,16 +4,16 @@ class Song {
   final BeatSaberSongInfo meta;
   final bool isValid;
 
-  String? _hash;
+  late String _hash;
 
-  String? get hash => _hash;
+  String get hash => _hash;
 
   String? get iconPath => !isValid || (meta.coverImageFilename?.isEmpty ?? true)
       ? null
       : "$folderPath/${meta.coverImageFilename}";
 
-  set hash(String? value) {
-    _hash = value?.toLowerCase();
+  set hash(String value) {
+    _hash = value.toLowerCase();
   }
 
   String prettyMetaInfo() {
@@ -38,17 +38,19 @@ class Song {
     return info;
   }
 
-  Song(this.folderPath, this.infoFileName, this.isValid, this.meta);
+  Song(String hash, this.folderPath, this.infoFileName, this.isValid,
+      this.meta) {
+    this.hash = hash;
+  }
 
-  factory Song.create(
-      String folderPath, String infoFileName, BeatSaberSongInfo meta) {
-    return Song(folderPath, infoFileName, true, meta);
+  factory Song.create(String hash, String folderPath, String infoFileName,
+      BeatSaberSongInfo meta) {
+    return Song(hash, folderPath, infoFileName, true, meta);
   }
 
   factory Song.fromError(String folderPath, String error, String identifier) {
-    return Song(folderPath, "error", false,
-        BeatSaberSongInfo("Error: $error", "", null, null, null, []))
-      ..hash = identifier;
+    return Song(identifier, folderPath, "error", false,
+        BeatSaberSongInfo("Error: $error", "", null, null, null, []));
   }
 }
 
