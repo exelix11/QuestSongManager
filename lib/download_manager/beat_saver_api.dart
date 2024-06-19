@@ -158,7 +158,7 @@ class BeatSaverClient {
     }
 
     try {
-      useSession(session!, true);
+      useSession(session, true);
     } catch (e) {
       App.showToast(
           "Failed to recover BeatSaver session, please login again ($e)");

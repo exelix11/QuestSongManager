@@ -185,7 +185,7 @@ class PlaylistDetailPageState extends State<PlaylistDetailPage> {
     var sync = PlaylistSyncState(remote, widget.playlist);
 
     if (PlaylistSyncHelper.isNoChanges(sync)) {
-      App.showToast("No updates found");
+      App.showToast("No map updates found");
       return;
     }
 
@@ -199,6 +199,8 @@ class PlaylistDetailPageState extends State<PlaylistDetailPage> {
 
     App.modManager.applyPlaylistChanges(widget.playlist);
     setState(() {});
+
+    App.showToast("Download completed");
   }
 
   Future _doUploadPlaylist() async {
@@ -231,6 +233,8 @@ class PlaylistDetailPageState extends State<PlaylistDetailPage> {
     widget.playlist.songs.addAll(remote.songs);
     App.modManager.applyPlaylistChanges(widget.playlist);
     setState(() {});
+
+    App.showToast("Upload completed");
   }
 
   void _downloadPlaylist() async {
@@ -281,6 +285,18 @@ class PlaylistDetailPageState extends State<PlaylistDetailPage> {
     setState(() {});
   }
 
+  void _unlinkPlaylist() async {
+    var conf = await GuiUtil.confirmChoice(context, "Confirm unlink",
+        "This will unlink this playlist from the cloud version, making it impossible to synchronize it again without linking it first.\nDo you want to continue ?");
+
+    if (conf ?? false) {
+      widget.playlist.syncUrl = null;
+      setState(() {
+        _savePlaylistOnLeave = true;
+      });
+    }
+  }
+
   List<Widget> _buildMetadata() {
     return [
       Text(widget.playlist.fileName),
@@ -290,6 +306,8 @@ class PlaylistDetailPageState extends State<PlaylistDetailPage> {
         const Text("This playlist is linked to the cloud"),
       if (widget.playlist.playlistDescription != null)
         Text(widget.playlist.playlistDescription!),
+      if (widget.playlist.syncUrl != null)
+        Text("Update url ${widget.playlist.syncUrl}"),
     ];
   }
 
@@ -323,6 +341,7 @@ class PlaylistDetailPageState extends State<PlaylistDetailPage> {
             onTap: _downlaodAllMissingSongs,
             child: const Text('Download all missing songs'),
           ),
+
         if (widget.playlist.syncUrl != null)
           PopupMenuItem(
             onTap: _downloadPlaylist,
@@ -339,10 +358,16 @@ class PlaylistDetailPageState extends State<PlaylistDetailPage> {
 
         // If the user is logged in and the playlist is not a BeatSaver playlist, allow the user to upload it
         if (App.beatSaverClient.userState.state == LoginState.authenticated &&
-            !App.beatSaverClient.isValidPlaylistForPush(widget.playlist))
+            widget.playlist.syncUrl == null)
           PopupMenuItem(
             onTap: _linkPlaylist,
             child: const Text('Link to BeatSaver'),
+          ),
+
+        if (widget.playlist.syncUrl != null)
+          PopupMenuItem(
+            onTap: _unlinkPlaylist,
+            child: const Text('Unlink from cloud'),
           ),
 
         PopupMenuItem(
