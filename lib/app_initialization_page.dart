@@ -99,9 +99,10 @@ class AppInitializationPageState extends State<AppInitializationPage> {
           return;
         }
       }
-
-      App.showToast("Initialization error: $e");
-      return;
+      else {
+        App.showToast("Initialization error: $e");
+        return;
+      }
     }
 
     // Try to apply preferences
