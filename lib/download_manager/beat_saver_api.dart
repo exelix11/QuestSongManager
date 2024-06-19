@@ -154,6 +154,7 @@ class BeatSaverClient {
     var session = App.preferences.beatSaverSession;
     if (session == null) {
       logout();
+      return;
     }
 
     try {
@@ -285,8 +286,12 @@ class BeatSaverClient {
 
       var list =
           Map<String, dynamic>.from(jsonDecode(utf8.decode(res.bodyBytes)));
-      ret.addAll(list.entries.map((e) => BeatSaverMapInfo.fromJson(
-          requestHash: e.key, e.value as Map<String, dynamic>)));
+      ret.addAll(list.entries
+          .where((e) =>
+              e.value !=
+              null) // May be null in case of custom songs that beat saver doesn't know
+          .map((e) => BeatSaverMapInfo.fromJson(
+              requestHash: e.key, e.value as Map<String, dynamic>)));
     }
 
     return ret;
@@ -343,7 +348,12 @@ class BeatSaverClient {
       var step = hashes.skip(i).take(100).toList();
       i += step.length;
 
-      var message = {"hashes": step, "ignoreUnknown": true, "inPlaylist": add};
+      var message = {
+        "hashes": step,
+        "ignoreUnknown": true,
+        "inPlaylist": add,
+        "keys": []
+      };
 
       var res = await http.post(
           Uri.parse("$_apiUri/playlists/id/$playlistId/batch"),

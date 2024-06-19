@@ -4,8 +4,10 @@ import 'package:flutter/material.dart';
 
 class GamePathPickerPage extends StatelessWidget {
   final bool canGoBack;
+  final bool askForRestart;
 
-  const GamePathPickerPage(this.canGoBack, {super.key});
+  const GamePathPickerPage(this.canGoBack,
+      {super.key, this.askForRestart = true});
 
   void _pickPath(BuildContext context) async {
     String? selectedDirectory = await FilePicker.platform.getDirectoryPath();
@@ -13,8 +15,11 @@ class GamePathPickerPage extends StatelessWidget {
 
     // Do something with the selected directory
     App.preferences.gameRootPath = selectedDirectory;
-    App.showToast(
-        "Game path set to: $selectedDirectory\nRestart the app to apply the change");
+
+    var message = "Game path set to: $selectedDirectory";
+    if (askForRestart) message += "\nRestart the app to apply the change";
+
+    App.showToast(message);
     if (context.mounted) {
       Navigator.pop(context);
     }

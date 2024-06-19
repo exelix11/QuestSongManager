@@ -48,7 +48,7 @@ class MapUpdateCheckWidgetState extends State<MapUpdateCheckWidget> {
     if (App.mapUpdates.state.error != null) {
       return "Error while checking for updates";
     } else if (App.mapUpdates.checkedOnce) {
-      return "No updates found";
+      return "No map updates found";
     } else {
       return "Tap to check for map updates";
     }

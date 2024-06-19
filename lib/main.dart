@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:bsaberquest/app_initialization_page.dart';
 import 'package:bsaberquest/download_manager/map_update_controller.dart';
 import 'package:bsaberquest/download_manager/beat_saver_api.dart';
 import 'package:bsaberquest/download_manager/downloader.dart';
@@ -76,7 +77,7 @@ class App extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: const MainPage(),
+      home: const AppInitializationPage(),
     );
   }
 }

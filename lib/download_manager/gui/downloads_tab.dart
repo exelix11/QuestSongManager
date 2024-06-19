@@ -100,7 +100,7 @@ class DownloadsTabState extends State<DownloadsTab> {
   void _removeRpcHandler() async {
     try {
       await RpcManager.removeRpcHandler();
-      App.showToast("Operation requested");
+      App.showToast("Protocol handler removed");
     } catch (e) {
       App.showToast("Error: $e");
     }
@@ -109,7 +109,7 @@ class DownloadsTabState extends State<DownloadsTab> {
   void _installRpcHandler() async {
     try {
       await RpcManager.installRpcHandler();
-      App.showToast("Installation requested");
+      App.showToast("Protocol handler installed");
     } catch (e) {
       App.showToast("Error: $e");
     }
@@ -127,6 +127,7 @@ class DownloadsTabState extends State<DownloadsTab> {
             ElevatedButton(
                 onPressed: _installRpcHandler,
                 child: const Text("Install the protocol handler")),
+            const SizedBox(width: 30),
             ElevatedButton(
                 onPressed: _removeRpcHandler,
                 child: const Text("Remove the protocol handler")),

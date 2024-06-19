@@ -28,7 +28,6 @@ class OptionsPageState extends State<OptionsPage> {
 
     _loginStateSubscription =
         App.beatSaverClient.loginStateObservable.stream.listen((event) {
-      App.showToast(event.toGuiMessage());
       setState(() {});
     });
   }

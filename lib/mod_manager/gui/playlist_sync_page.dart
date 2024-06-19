@@ -93,8 +93,11 @@ class PlaylistSyncPageState extends State<PlaylistSyncPage> {
         appBar: AppBar(
           title: const Text("Compare playlists"),
           actions: [
-            IconButton(onPressed: _cancel, icon: const Icon(Icons.close)),
-            IconButton(onPressed: _apply, icon: const Icon(Icons.check)),
+            IconButton(
+                onPressed: _apply,
+                icon: const Row(
+                  children: [Icon(Icons.check), Text("Apply changes")],
+                )),
             _popupMenu()
           ],
         ),
