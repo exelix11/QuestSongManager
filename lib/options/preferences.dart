@@ -106,7 +106,7 @@ class PreferencesManager {
 
   BeatSaverSession? get beatSaverSession {
     var session = _prefs.getString("beatsaver_session");
-    if (session == null) return null;
+    if (session == null || session.isEmpty) return null;
     try {
       return BeatSaverSession.fromJson(jsonDecode(session));
     } catch (e) {
