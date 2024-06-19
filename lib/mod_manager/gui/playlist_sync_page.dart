@@ -21,7 +21,7 @@ class PlaylistSyncPageState extends State<PlaylistSyncPage> {
 
     return CheckboxListTile(
       title: Row(
-        children: <Widget>[
+        children: [
           SizedBox(width: 26, height: 26, child: icon),
           const SizedBox(width: 10),
           Flexible(child: Text(name)),

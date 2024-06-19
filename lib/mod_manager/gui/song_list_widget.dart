@@ -269,8 +269,10 @@ class SongListWidgetState extends State<SongListWidget> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: _appbar(),
-      body:
-          ListView.builder(itemCount: _uiSongs.length, itemBuilder: _buildItem),
+      body: ListView.builder(
+          padding: GuiUtil.defaultViewPadding(context),
+          itemCount: _uiSongs.length,
+          itemBuilder: _buildItem),
     );
   }
 }

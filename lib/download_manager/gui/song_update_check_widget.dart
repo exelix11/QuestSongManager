@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:bsaberquest/download_manager/gui/song_update_page.dart';
 import 'package:bsaberquest/download_manager/map_update_controller.dart';
 import 'package:bsaberquest/main.dart';
 import 'package:flutter/material.dart';
@@ -23,6 +24,19 @@ class MapUpdateCheckWidgetState extends State<MapUpdateCheckWidget> {
 
   void _checkAgain() {
     App.mapUpdates.checkForUpdates();
+  }
+
+  void _clearUpdates() {
+    App.mapUpdates.clearPendingState();
+  }
+
+  void _openUpdatePage() async {
+    await Navigator.of(context).push(MaterialPageRoute(
+        builder: (context) => SongUpdateListPage(
+              updates: List.from(App.mapUpdates.pendingUpdates),
+            )));
+
+    App.mapUpdates.clearPendingState();
   }
 
   Widget _buildLoader() => const ListTile(
@@ -63,9 +77,11 @@ class MapUpdateCheckWidgetState extends State<MapUpdateCheckWidget> {
   Widget _buildUpdateAvailable() => ListTile(
         title: Text(_updatePendingMapCount()),
         subtitle: const Text("Tap to see details"),
+        leading: const Icon(Icons.download),
+        onTap: _openUpdatePage,
         trailing: IconButton(
-          icon: const Icon(Icons.download),
-          onPressed: _checkAgain,
+          icon: const Icon(Icons.close),
+          onPressed: _clearUpdates,
         ),
       );
 

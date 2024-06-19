@@ -75,9 +75,12 @@ class DownloadsTabState extends State<DownloadsTab> {
 
   Widget _playlistSelectWidget(BuildContext context) {
     if (App.downloadManager.downloadToPlaylist == null) {
-      return ElevatedButton(
-          child: const Text("Enable auto download to playlist"),
-          onPressed: () => _pickPlaylist(context));
+      return ListTile(
+          title: const Text("Download to playlist"),
+          leading: const Icon(Icons.playlist_add),
+          subtitle: const Text(
+              "Tap to select the playlist where new songs are added automatically"),
+          onTap: () => _pickPlaylist(context));
     } else {
       return Column(
         children: [

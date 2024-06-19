@@ -42,7 +42,7 @@ class MainPageState extends State<MainPage> {
   Future<String?> _getGameRootPath() async {
     // For dev when simulating a quest use this path
     if (App.isQuest && App.isDev) {
-      return "/home/user/bsaberquest/test_sd_root";
+      return "/home/user/bsaberquest/test_sd_root/ModData/com.beatgames.beatsaber";
     }
 
     // On a quest use the default path

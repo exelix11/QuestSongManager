@@ -165,11 +165,6 @@ class DownloadManager {
     return item;
   }
 
-  DownloadItem startMapDownloadWithGlobalPlaylist(
-      String id, String? webSource) {
-    return downloadMapByID(id, webSource, downloadToPlaylist?.fileName);
-  }
-
   void _itemFromBeatSaver(SongDownloadItem item, BeatSaverMapInfo map) {
     item.name = map.name;
     item.urlIcon = map.versions.first.coverUrl;
@@ -179,7 +174,7 @@ class DownloadManager {
   }
 
   DownloadItem downloadMapByMetadata(
-      BeatSaverMapInfo info, String? webSource, String? playlistName) {
+      BeatSaverMapInfo info, String? webSource, Playlist? downloadTOPlaylist) {
     var item =
         SongDownloadItem(info.name, webSource, downloadToPlaylist?.fileName);
     item.statusMessage = "Downloading metadata";
@@ -187,37 +182,37 @@ class DownloadManager {
     _beginBackgroundOperation(item, () async {
       _itemFromBeatSaver(item, info);
       return await _downloadAndAddMap(info.requestHash, item.hash!,
-          info.versions.first.downloadUrl, playlistName);
+          info.versions.first.downloadUrl, downloadTOPlaylist?.fileName);
     });
 
     return item;
   }
 
   DownloadItem downloadMapByHash(
-      String hash, String? webSource, String? playlistName) {
+      String hash, String? webSource, Playlist? downloadTOPlaylist) {
     var item = SongDownloadItem(hash, webSource, downloadToPlaylist?.fileName);
     item.statusMessage = "Downloading metadata";
 
     _beginBackgroundOperation(item, () async {
       var map = await App.beatSaverClient.getMapByHash(hash);
       _itemFromBeatSaver(item, map);
-      return await _downloadAndAddMap(
-          hash, item.hash!, map.versions.first.downloadUrl, playlistName);
+      return await _downloadAndAddMap(hash, item.hash!,
+          map.versions.first.downloadUrl, downloadTOPlaylist?.fileName);
     });
 
     return item;
   }
 
   DownloadItem downloadMapByID(
-      String id, String? webSource, String? playlistName) {
+      String id, String? webSource, Playlist? downloadTOPlaylist) {
     var item = SongDownloadItem(id, webSource, downloadToPlaylist?.fileName);
     item.statusMessage = "Downloading metadata";
 
     _beginBackgroundOperation(item, () async {
       var map = await App.beatSaverClient.getMapById(id);
       _itemFromBeatSaver(item, map);
-      return await _downloadAndAddMap(
-          null, item.hash!, map.versions.first.downloadUrl, playlistName);
+      return await _downloadAndAddMap(null, item.hash!,
+          map.versions.first.downloadUrl, downloadTOPlaylist?.fileName);
     });
 
     return item;

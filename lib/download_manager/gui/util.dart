@@ -20,8 +20,8 @@ class DownloadUtil {
     try {
       App.showToast("Starting download...");
 
-      var r =
-          App.downloadManager.startMapDownloadWithGlobalPlaylist(id, webSource);
+      var r = App.downloadManager.downloadMapByID(
+          id, webSource, App.downloadManager.downloadToPlaylist);
 
       var res = await r.future;
 

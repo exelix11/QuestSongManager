@@ -5,9 +5,7 @@ import 'package:bsaberquest/main.dart';
 import 'package:bsaberquest/mod_manager/gui/playlist_detail_page.dart';
 import 'package:bsaberquest/mod_manager/gui/song_detail_page.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 
 class PendingDownloadsState extends State<PendingDownloadsWidget> {
   late StreamSubscription<DownloadItem?> _downloadItemsSubscription;
@@ -97,7 +95,7 @@ class PendingDownloadsState extends State<PendingDownloadsWidget> {
         subtitle: item.status == ItemDownloadStatus.pending
             ? Column(children: [Text(message), const LinearProgressIndicator()])
             : Text(message),
-        onTap: () => _tappedItem(item!));
+        onTap: () => _tappedItem(item));
   }
 
   void _cancelPendingQueue() {

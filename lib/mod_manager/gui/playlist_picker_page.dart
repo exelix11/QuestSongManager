@@ -1,3 +1,4 @@
+import 'package:bsaberquest/gui_util.dart';
 import 'package:bsaberquest/main.dart';
 import 'package:bsaberquest/mod_manager/gui/simple_widgets.dart';
 import 'package:flutter/material.dart';
@@ -23,6 +24,7 @@ class PlaylistPickerPageState extends State<PlaylistPickerPage> {
           title: const Text('Select a playlist'),
         ),
         body: ListView.builder(
+          padding: GuiUtil.defaultViewPadding(context),
           itemCount: App.modManager.playlists.length,
           itemBuilder: (context, index) {
             var playlist = App.modManager.playlists.values.elementAt(index);

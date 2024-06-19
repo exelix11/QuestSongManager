@@ -17,6 +17,13 @@ class MapUpdateController {
     stateListener.add(state);
   }
 
+  void clearPendingState() {
+    checkedOnce = false;
+    pendingUpdates = [];
+    state = AutoUpdateResult(AutoMapUpdateState.none);
+    stateListener.add(state);
+  }
+
   // This is async and will notify any listeners when done
   void checkForUpdates() async {
     if (state.state == AutoMapUpdateState.checking) {
