@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:bsaberquest/download_manager/map_update_controller.dart';
 import 'package:bsaberquest/download_manager/beat_saver_api.dart';
 import 'package:bsaberquest/download_manager/downloader.dart';
 import 'package:bsaberquest/main_page.dart';
@@ -48,6 +49,8 @@ class App extends StatelessWidget {
   static final PreferencesManager preferences = PreferencesManager();
 
   static final BeatSaverClient beatSaverClient = BeatSaverClient();
+
+  static final MapUpdateController mapUpdates = MapUpdateController();
 
   static final GlobalKey<ScaffoldMessengerState> _scaffoldMessengerKey =
       GlobalKey<ScaffoldMessengerState>();

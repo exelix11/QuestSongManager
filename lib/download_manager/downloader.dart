@@ -25,22 +25,36 @@ class DownloadManager {
 
   final Queue<_QueuedItem> _downloadQueue = Queue();
 
-  final List<DownloadItem> pendingItems = [];
-  final List<DownloadItem> completedItems = [];
+  final List<DownloadItem> items = [];
+
+  int get queuedCount => _downloadQueue.length;
 
   StreamController<DownloadItem?> downloadItemsObservable =
       StreamController<DownloadItem?>.broadcast();
 
   void clearCompleted() {
-    completedItems.clear();
+    items
+        .removeWhere((element) => element.status != ItemDownloadStatus.pending);
+
     downloadItemsObservable.add(null);
   }
-
-  int get pendingCount => pendingItems.length;
 
   void cancelQueue() {
     _downloadQueue.clear();
     downloadItemsObservable.add(null);
+  }
+
+  void addTestElements() {
+    for (int i = 0; i < 10; i++) {
+      var item = SongDownloadItem("Test $i", null, null);
+      item.statusMessage = "Test message";
+      if (i > 5) {
+        item.status = ItemDownloadStatus.done;
+      } else {
+        item.status = ItemDownloadStatus.pending;
+      }
+      items.add(item);
+    }
   }
 
   void _updateItemState(DownloadItem item) {
@@ -59,7 +73,11 @@ class DownloadManager {
   }
 
   void _tryRunNextInQueue() {
-    if (pendingItems.length < maxConcurrentDownloads) {
+    var pendingCount = items
+        .where((element) => element.status == ItemDownloadStatus.pending)
+        .length;
+
+    if (pendingCount < maxConcurrentDownloads) {
       if (_downloadQueue.isNotEmpty) {
         var item = _downloadQueue.removeLast();
         _processBackgroundOperation(item);
@@ -73,16 +91,13 @@ class DownloadManager {
     var future = queue.action().catchError(
         (error, stackTrace) => DownloadResult.error(error.toString()));
 
-    pendingItems.insert(0, item);
+    items.add(item);
     _updateItemState(item);
 
     var result = await future;
     item.statusMessage = result.message;
     item.status =
         result.error ? ItemDownloadStatus.error : ItemDownloadStatus.done;
-
-    pendingItems.remove(item);
-    completedItems.insert(0, item);
 
     item._completer.complete(result);
     _updateItemState(item);
@@ -171,8 +186,8 @@ class DownloadManager {
 
     _beginBackgroundOperation(item, () async {
       _itemFromBeatSaver(item, info);
-      return await _downloadAndAddMap(
-          item.hash!, info.versions.first.downloadUrl, playlistName);
+      return await _downloadAndAddMap(info.requestHash, item.hash!,
+          info.versions.first.downloadUrl, playlistName);
     });
 
     return item;
@@ -187,7 +202,7 @@ class DownloadManager {
       var map = await App.beatSaverClient.getMapByHash(hash);
       _itemFromBeatSaver(item, map);
       return await _downloadAndAddMap(
-          item.hash!, map.versions.first.downloadUrl, playlistName);
+          hash, item.hash!, map.versions.first.downloadUrl, playlistName);
     });
 
     return item;
@@ -202,15 +217,23 @@ class DownloadManager {
       var map = await App.beatSaverClient.getMapById(id);
       _itemFromBeatSaver(item, map);
       return await _downloadAndAddMap(
-          item.hash!, map.versions.first.downloadUrl, playlistName);
+          null, item.hash!, map.versions.first.downloadUrl, playlistName);
     });
 
     return item;
   }
 
-  Future<DownloadResult> _downloadAndAddMap(
-      String hash, String downloadUrl, String? playlistName) async {
-    if (App.modManager.hasSong(hash)) {
+  // Expectd hash is the hash we requested to download or expect
+  // Download hash is the hash that was returned by the beatsaver api
+  // These may differ for example when we are requesting an hash for an old map and the api returns a newer version
+  Future<DownloadResult> _downloadAndAddMap(String? expectedHash,
+      String downloadHash, String downloadUrl, String? playlistName) async {
+    if (App.modManager.hasSong(downloadHash)) {
+      // The map is already downloaded but if the the new hash is different than the old one we are trying to update an outdated playlist
+      if (expectedHash != null && expectedHash != downloadHash) {
+        App.modManager.replaceSongInPlaylists(expectedHash, downloadHash);
+      }
+
       return DownloadResult.ok("Map already downloaded");
     }
 
@@ -236,7 +259,7 @@ class DownloadManager {
     Song installed;
 
     try {
-      installed = await App.modManager.installSong(files, hash);
+      installed = await App.modManager.installSong(files, expectedHash);
     } catch (e) {
       return DownloadResult.error("Failed to process map: $e");
     }

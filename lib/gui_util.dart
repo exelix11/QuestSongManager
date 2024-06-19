@@ -120,4 +120,11 @@ class GuiUtil {
       },
     );
   }
+
+  static EdgeInsets defaultViewPadding(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isLargeScreen = screenWidth > 600; // Change this value as needed
+    final padding = isLargeScreen ? 40.0 : 10.0;
+    return EdgeInsets.only(left: padding, right: padding);
+  }
 }

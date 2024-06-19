@@ -3,12 +3,14 @@ import 'dart:io';
 
 import 'package:bsaberquest/download_manager/gui/downloads_tab.dart';
 import 'package:bsaberquest/download_manager/gui/util.dart';
+import 'package:bsaberquest/download_manager/map_update_controller.dart';
 import 'package:bsaberquest/gui_util.dart';
 import 'package:bsaberquest/mod_manager/mod_manager.dart';
 import 'package:bsaberquest/options/options_page.dart';
 import 'package:bsaberquest/main.dart';
 import 'package:bsaberquest/mod_manager/gui/playlist_list_page.dart';
 import 'package:bsaberquest/mod_manager/gui/song_list_page.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 import 'options/game_path_picker_page.dart';
@@ -19,16 +21,21 @@ class MainPageState extends State<MainPage> {
   late Future _init;
   String _hintText = "";
   StreamSubscription<RpcCommand>? _rpcSubscription;
+  late StreamSubscription _updateCheckSubscription;
 
   @override
   void initState() {
     _init = _initialize();
+    _updateCheckSubscription =
+        App.mapUpdates.stateListener.stream.listen((_) => setState(() {}));
+
     super.initState();
   }
 
   @override
   void dispose() {
     _rpcSubscription?.cancel();
+    _updateCheckSubscription?.cancel();
     super.dispose();
   }
 
@@ -107,6 +114,9 @@ class MainPageState extends State<MainPage> {
 
     await App.beatSaverClient.tryLoginFromStoredCredentials();
 
+    App.mapUpdates.doAutoUpdateCheckIfNeeded();
+    //App.downloadManager.addTestElements();
+
     // If everything went well try to process pending messages
     if (App.rpc != null) {
       _rpcSubscription = App.rpc!.subscribeEvents(_processRpcCommand);
@@ -162,16 +172,40 @@ class MainPageState extends State<MainPage> {
     );
   }
 
+  Widget _networkIcon() {
+    if (App.mapUpdates.state.state != AutoMapUpdateState.updatesAvailable) {
+      return const Icon(Icons.wifi);
+    }
+
+    // Else render a notification dot
+    return Stack(
+      children: [
+        const Icon(Icons.wifi),
+        Positioned(
+          right: 0,
+          top: 1,
+          child: Container(
+            padding: const EdgeInsets.all(2),
+            decoration:
+                const BoxDecoration(color: Colors.red, shape: BoxShape.circle),
+            width: 10,
+            height: 10,
+          ),
+        )
+      ],
+    );
+  }
+
   Widget _buildMainView() {
     return DefaultTabController(
       length: 4,
       child: Scaffold(
         appBar: AppBar(
-          title: const TabBar(tabs: [
-            Tab(icon: Icon(Icons.music_note)),
-            Tab(icon: Icon(Icons.list)),
-            Tab(icon: Icon(Icons.wifi)),
-            Tab(icon: Icon(Icons.settings)),
+          title: TabBar(tabs: [
+            const Tab(icon: Icon(Icons.music_note)),
+            const Tab(icon: Icon(Icons.list)),
+            Tab(icon: _networkIcon()),
+            const Tab(icon: Icon(Icons.settings)),
           ]),
         ),
         body: const TabBarView(

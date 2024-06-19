@@ -112,6 +112,12 @@ class OptionsPageState extends State<OptionsPage> {
     });
   }
 
+  void _autoUpdateMapsChange(bool? value) {
+    setState(() {
+      App.preferences.autoUpdateMaps = value ?? false;
+    });
+  }
+
   List<Widget> _utilOptions() => [
         ListTile(
           leading: const Icon(Icons.refresh),
@@ -129,6 +135,11 @@ class OptionsPageState extends State<OptionsPage> {
           onChanged: _removeFromPlaylistOnSongDeleteChange,
           title:
               const Text("When deleting a song, remove it from all playlists"),
+        ),
+        CheckboxListTile(
+          value: App.preferences.autoUpdateMaps,
+          onChanged: _autoUpdateMapsChange,
+          title: const Text("Automatically check for map updates"),
         )
       ];
 
@@ -356,16 +367,12 @@ class OptionsPageState extends State<OptionsPage> {
 
   @override
   Widget build(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
-    final isLargeScreen = screenWidth > 600; // Change this value as needed
-    final padding = isLargeScreen ? 40.0 : 10.0;
-
     return Scaffold(
       appBar: AppBar(
         title: const Text('Options'),
       ),
       body: ListView(
-        padding: EdgeInsets.only(left: padding, right: padding),
+        padding: GuiUtil.defaultViewPadding(context),
         children: [
           _credits(),
           const Divider(),

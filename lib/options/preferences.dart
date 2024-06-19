@@ -121,6 +121,24 @@ class PreferencesManager {
       _prefs.setString("beatsaver_session", jsonEncode(session.toJson()));
     }
   }
+
+  bool get autoUpdateMaps {
+    return _prefs.getBool("auto_update_maps") ?? false;
+  }
+
+  set autoUpdateMaps(bool value) {
+    _prefs.setBool("auto_update_maps", value);
+  }
+
+  DateTime get lastMapUpdateCheck {
+    var time = _prefs.getString("last_map_update_check");
+    if (time == null) return DateTime.fromMillisecondsSinceEpoch(0);
+    return DateTime.parse(time);
+  }
+
+  set lastMapUpdateCheck(DateTime time) {
+    _prefs.setString("last_map_update_check", time.toIso8601String());
+  }
 }
 
 enum PreferredCustomSongFolder { auto, songLoader, songCore }

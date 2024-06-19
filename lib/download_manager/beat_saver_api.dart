@@ -252,7 +252,7 @@ class BeatSaverClient {
     }
 
     var map = Map<String, dynamic>.from(jsonDecode(utf8.decode(res.bodyBytes)));
-    return BeatSaverMapInfo.fromJson(map);
+    return BeatSaverMapInfo.fromJson(requestKey: id, map);
   }
 
   Future<BeatSaverMapInfo> getMapByHash(String hash) async {
@@ -265,7 +265,7 @@ class BeatSaverClient {
     }
 
     var map = Map<String, dynamic>.from(jsonDecode(utf8.decode(res.bodyBytes)));
-    return BeatSaverMapInfo.fromJson(map);
+    return BeatSaverMapInfo.fromJson(requestHash: hash, map);
   }
 
   Future<List<BeatSaverMapInfo>> getMapsByHashes(List<String> hash) async {
@@ -288,8 +288,8 @@ class BeatSaverClient {
 
       var list =
           Map<String, dynamic>.from(jsonDecode(utf8.decode(res.bodyBytes)));
-      ret.addAll(list.values
-          .map((e) => BeatSaverMapInfo.fromJson(e as Map<String, dynamic>)));
+      ret.addAll(list.entries.map((e) => BeatSaverMapInfo.fromJson(
+          requestHash: e.key, e.value as Map<String, dynamic>)));
     }
 
     return ret;
@@ -449,13 +449,19 @@ class MapVersion {
 }
 
 class BeatSaverMapInfo {
+  final String? requestKey;
+  final String? requestHash;
+
   final String lastUpdate;
   final String name;
   final String id;
   final List<MapVersion> versions;
 
-  factory BeatSaverMapInfo.fromJson(Map<String, dynamic> json) {
+  factory BeatSaverMapInfo.fromJson(Map<String, dynamic> json,
+      {String? requestKey, String? requestHash}) {
     return BeatSaverMapInfo(
+      requestKey: requestKey,
+      requestHash: requestHash,
       lastUpdate: json["lastPublishedAt"] as String,
       name: json["name"] as String,
       id: json["id"] as String,
@@ -466,7 +472,9 @@ class BeatSaverMapInfo {
   }
 
   BeatSaverMapInfo(
-      {required this.lastUpdate,
+      {this.requestKey,
+      this.requestHash,
+      required this.lastUpdate,
       required this.name,
       required this.id,
       required this.versions});

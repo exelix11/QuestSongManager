@@ -2,6 +2,8 @@ import 'dart:io';
 
 import 'package:bsaberquest/download_manager/gui/browser_page.dart';
 import 'package:bsaberquest/download_manager/gui/pending_downloads_widget.dart';
+import 'package:bsaberquest/download_manager/gui/song_update_check_widget.dart';
+import 'package:bsaberquest/gui_util.dart';
 import 'package:bsaberquest/main.dart';
 import 'package:bsaberquest/mod_manager/gui/playlist_picker_page.dart';
 import 'package:bsaberquest/mod_manager/gui/simple_widgets.dart';
@@ -140,9 +142,10 @@ class DownloadsTabState extends State<DownloadsTab> {
   }
 
   Widget _questOpenBrowser() {
-    return ElevatedButton(
-      onPressed: () => _openBrowser(null),
-      child: const Text('Launch browser'),
+    return ListTile(
+      onTap: () => _openBrowser(null),
+      title: const Text('Launch browser'),
+      leading: const Icon(Icons.online_prediction),
     );
   }
 
@@ -157,17 +160,19 @@ class DownloadsTabState extends State<DownloadsTab> {
                 icon: const Icon(Icons.playlist_remove))
           ],
         ),
-        body: Center(
-          child: Column(children: [
+        body: ListView(
+          padding: GuiUtil.defaultViewPadding(context),
+          children: [
             _playlistSelectWidget(context),
-            const SizedBox(height: 10),
-            App.isQuest ? _questOpenBrowser() : _pcDownloadTextInfo(),
             const SizedBox(height: 20),
-            Expanded(
-                child: PendingDownloadsWidget(
+            App.isQuest ? _questOpenBrowser() : _pcDownloadTextInfo(),
+            const SizedBox(height: 30),
+            const MapUpdateCheckWidget(),
+            PendingDownloadsWidget(
               navigateCallback: _openBrowser,
-            ))
-          ]),
+              isPartOfList: true,
+            )
+          ],
         ));
   }
 }
