@@ -73,18 +73,17 @@ class PlaylistSyncPageState extends State<PlaylistSyncPage> {
   }
 
   Widget _popupMenu() {
-    return PopupMenuButton<Function()>(
-        onSelected: (value) => value(),
+    return PopupMenuButton(
         itemBuilder: (ctx) => [
               PopupMenuItem(
-                  value: _selectOnlyFrom,
+                  onTap: _selectOnlyFrom,
                   child: Text("Only songs from ${widget.fromName}")),
               PopupMenuItem(
-                  value: _selectOnlyTo,
+                  onTap: _selectOnlyTo,
                   child: Text("Only songs from ${widget.toName}")),
-              PopupMenuItem(value: _selectAll, child: const Text("Select all")),
+              PopupMenuItem(onTap: _selectAll, child: const Text("Select all")),
               PopupMenuItem(
-                  value: _selectNone, child: const Text("Select none")),
+                  onTap: _selectNone, child: const Text("Select none")),
             ]);
   }
 

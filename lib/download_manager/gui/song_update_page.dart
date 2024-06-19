@@ -64,13 +64,11 @@ class SongUpdateListPageState extends State<SongUpdateListPage> {
             PopupMenuButton(
                 itemBuilder: (context) => [
                       PopupMenuItem(
-                          child: ListTile(
-                              title: const Text("Select all"),
-                              onTap: () => _updateSelection(true))),
+                          child: const Text("Select all"),
+                          onTap: () => _updateSelection(true)),
                       PopupMenuItem(
-                          child: ListTile(
-                              title: const Text("Select none"),
-                              onTap: () => _updateSelection(false)))
+                          child: const Text("Select none"),
+                          onTap: () => _updateSelection(false))
                     ])
           ],
         ),

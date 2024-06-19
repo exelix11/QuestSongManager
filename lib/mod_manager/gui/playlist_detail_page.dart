@@ -277,32 +277,29 @@ class PlaylistDetailPageState extends State<PlaylistDetailPage> {
   }
 
   Widget _buildPopupMenu() {
-    return PopupMenuButton<Function()>(
-      onSelected: (Function() selection) {
-        selection();
-      },
+    return PopupMenuButton(
       itemBuilder: (BuildContext context) => [
         if (_hasMissingSongs)
-          PopupMenuItem<Function()>(
-            value: _downlaodAllMissingSongs,
+          PopupMenuItem(
+            onTap: _downlaodAllMissingSongs,
             child: const Text('Download all missing songs'),
           ),
         if (widget.playlist.syncUrl != null)
-          PopupMenuItem<Function()>(
-            value: _downloadPlaylist,
+          PopupMenuItem(
+            onTap: _downloadPlaylist,
             child: const Text('Download playlist updates'),
           ),
 
         // Only allow this when the user is logged in and the playlist is a BeatSaver playlist
         if (App.beatSaverClient.userState.state == LoginState.authenticated &&
             App.beatSaverClient.isValidPlaylistForPush(widget.playlist))
-          PopupMenuItem<Function()>(
-            value: _uploadPlaylist,
+          PopupMenuItem(
+            onTap: _uploadPlaylist,
             child: const Text('Upload playlist changes'),
           ),
 
-        PopupMenuItem<Function()>(
-          value: _deletePlaylist,
+        PopupMenuItem(
+          onTap: _deletePlaylist,
           child: const Text('Delete this playlist'),
         ),
       ],
