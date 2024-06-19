@@ -1,5 +1,7 @@
 import 'dart:io';
 
+import 'package:bsaberquest/mod_manager/gui/playlist_detail_page.dart';
+import 'package:bsaberquest/mod_manager/gui/simple_widgets.dart';
 import 'package:bsaberquest/util/gui_util.dart';
 import 'package:bsaberquest/main.dart';
 import 'package:bsaberquest/mod_manager/mod_manager.dart';
@@ -13,8 +15,10 @@ import 'playlist_picker_page.dart';
 
 class SongDetailPage extends StatelessWidget {
   final Song song;
+  final List<Playlist> playlists;
 
-  const SongDetailPage({super.key, required this.song});
+  SongDetailPage({super.key, required this.song})
+      : playlists = App.modManager.findPlaylistsBySong(song);
 
   Future _addToPlaylist(BuildContext context) async {
     // Pick a playlist
@@ -93,54 +97,76 @@ class SongDetailPage extends StatelessWidget {
             "This song is installed in the 'SongCore' folder, Beat Saber versions older than 1.35 will not be able to load it."));
   }
 
+  void _openPlaylistDetails(BuildContext context, Playlist playlist) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => PlaylistDetailPage(playlist: playlist),
+      ),
+    );
+  }
+
+  List<Widget> _buildPlaylistList(BuildContext context) {
+    if (playlists.isEmpty) {
+      return [];
+    }
+
+    return [
+      const Center(child: Text("This song is in the following playlists")),
+      ...playlists.map((e) => PlaylistWidget(
+          playlist: e, onTap: (p) => _openPlaylistDetails(context, p)))
+    ];
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text("${song.meta.songName} ${song.meta.songSubName ?? ""}"),
-      ),
-      body: Center(
-        child: Column(
+        appBar: AppBar(
+          title: Text("${song.meta.songName} ${song.meta.songSubName ?? ""}"),
+        ),
+        body: ListView(
+          padding: GuiUtil.defaultViewPadding(context),
           children: [
             // Limit the image size so it doesn't take up the whole screen
             SizedBox(
-                width: 200,
-                height: 200,
-                child: Image.file(File(
-                    "${song.folderPath}/${song.meta.coverImageFilename}"))),
+                width: 200, height: 200, child: SongWidget.iconForSong(song)),
             const SizedBox(height: 20),
-            Text("Author: ${_nameOrUnknown(song.meta.songSubName)}"),
-            Text("Mapper: ${_nameOrUnknown(song.meta.levelAuthorName)}"),
-            _beatSaberVersionWarn(),
-            Text("Path on disk: ${song.folderPath}"),
-            Text("Song hash: ${_nameOrUnknown(song.hash)}"),
-            const SizedBox(height: 40),
-            // Add a group of buttons to add to playlist or delete
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                ElevatedButton(
-                  onPressed: () => _addToPlaylist(context),
-                  child: const Text('Add to playlist'),
-                ),
-                ElevatedButton(
-                  onPressed: () => _recheckSongHash(),
-                  child: const Text('Recheck hash'),
-                ),
-                ElevatedButton(
-                  onPressed: () => _deleteSong(context),
-                  child: const Text('Delete'),
-                ),
-                if (!App.isQuest)
-                  ElevatedButton(
-                    onPressed: () => _openFolder(),
-                    child: const Text('Open folder'),
-                  ),
-              ],
+            Center(
+              child: Column(
+                children: [
+                  Text("Author: ${_nameOrUnknown(song.meta.songSubName)}"),
+                  Text("Mapper: ${_nameOrUnknown(song.meta.levelAuthorName)}"),
+                  _beatSaberVersionWarn(),
+                  Text("Path on disk: ${song.folderPath}"),
+                  Text("Song hash: ${_nameOrUnknown(song.hash)}"),
+                ],
+              ),
             ),
+            const SizedBox(height: 40),
+            ListTile(
+              title: const Text("Add to playlist"),
+              leading: const Icon(Icons.add),
+              onTap: () => _addToPlaylist(context),
+            ),
+            ListTile(
+              title: const Text("Delete song"),
+              leading: const Icon(Icons.delete),
+              onTap: () => _deleteSong(context),
+            ),
+            if (!App.isQuest)
+              ListTile(
+                title: const Text("Open folder"),
+                leading: const Icon(Icons.folder),
+                onTap: () => _openFolder(),
+              ),
+            ListTile(
+              title: const Text("Recheck hash"),
+              leading: const Icon(Icons.warning),
+              onTap: () => _recheckSongHash(),
+            ),
+            ..._buildPlaylistList(context),
+            const SizedBox(height: 40),
           ],
-        ),
-      ),
-    );
+        ));
   }
 }

@@ -404,8 +404,14 @@ class ModManager {
     return song;
   }
 
+  List<Playlist> findPlaylistsBySong(Song song) {
+    return playlists.values
+        .where((element) => element.songs.any((x) => x.hash == song.hash))
+        .toList();
+  }
+
   // Delete a song and remove it from all playlists, but don't save the playlists
-  Future<Set<Playlist>> _deleteSingleSong(
+  Future<List<Playlist>> _deleteSingleSong(
       Song song, _PlaylistHandling handlePlaylists) async {
     // Get the song from our list to ensure we know it exists
     song = songs[song.hash]!;
@@ -418,18 +424,14 @@ class ModManager {
     songs.remove(song.hash);
 
     if (handlePlaylists == _PlaylistHandling.none) {
-      return {};
+      return [];
     }
 
-    Set<Playlist> affectedPlaylists = {};
+    var affectedPlaylists = findPlaylistsBySong(song);
 
-    for (var playlist in playlists.values) {
-      if (playlist.songs.any((element) => element.hash == song.hash)) {
-        affectedPlaylists.add(playlist);
-
-        if (handlePlaylists == _PlaylistHandling.remove) {
-          playlist.songs.removeWhere((element) => element.hash == song.hash);
-        }
+    if (handlePlaylists == _PlaylistHandling.remove) {
+      for (var playlist in affectedPlaylists) {
+        playlist.songs.removeWhere((element) => element.hash == song.hash);
       }
     }
 
