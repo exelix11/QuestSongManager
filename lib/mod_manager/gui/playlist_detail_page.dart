@@ -239,12 +239,12 @@ class PlaylistDetailPageState extends State<PlaylistDetailPage> {
 
   void _downloadPlaylist() async {
     await GuiUtil.loadingDialog(
-        context, "Downloading playlist information", _doDownloadPlaylist());
+        context, "Checking playlist information", _doDownloadPlaylist());
   }
 
   void _uploadPlaylist() async {
     await GuiUtil.loadingDialog(
-        context, "Downloading playlist information", _doUploadPlaylist());
+        context, "Checking playlist information", _doUploadPlaylist());
   }
 
   void _linkPlaylist() async {
