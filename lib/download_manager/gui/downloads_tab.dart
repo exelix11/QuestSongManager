@@ -5,12 +5,10 @@ import 'package:bsaberquest/download_manager/gui/pending_downloads_widget.dart';
 import 'package:bsaberquest/download_manager/gui/song_update_check_widget.dart';
 import 'package:bsaberquest/util/gui_util.dart';
 import 'package:bsaberquest/main.dart';
-import 'package:bsaberquest/mod_manager/gui/playlist_picker_page.dart';
 import 'package:bsaberquest/mod_manager/gui/simple_widgets.dart';
 import 'package:bsaberquest/rpc/rpc_manager.dart';
+import 'package:bsaberquest/util/list_item_picker_page.dart';
 import 'package:flutter/material.dart';
-
-import '../../mod_manager/model/playlist.dart';
 
 class DownloadsTabState extends State<DownloadsTab> {
   bool _playlistIsPersistent = false;
@@ -41,13 +39,7 @@ class DownloadsTabState extends State<DownloadsTab> {
   }
 
   void _pickPlaylist(BuildContext context) async {
-    var playList = await Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => const PlaylistPickerPage(),
-      ),
-    ) as Playlist?;
-
+    var playList = await CommonPickers.pickPlaylist(context);
     App.downloadManager.downloadToPlaylist = playList;
 
     setState(() {});

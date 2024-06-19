@@ -7,6 +7,7 @@ import 'package:archive/archive.dart';
 import 'package:bsaberquest/download_manager/beat_saver_api.dart';
 import 'package:bsaberquest/main.dart';
 import 'package:bsaberquest/mod_manager/model/song.dart';
+import 'package:ffi/ffi.dart';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 

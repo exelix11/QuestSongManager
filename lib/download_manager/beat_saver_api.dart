@@ -12,9 +12,6 @@ class BeatSaverClient {
   static const String _apiUri = "https://api.beatsaver.com";
   static const String _siteUri = "https://beatsaver.com";
 
-  final RegExp _playlistSyncUrl =
-      RegExp(r"^https?:\/\/api\.beatsaver\.com\/playlists\/id\/(\d+)\/");
-
   BeatSaverSession? _session;
   BeatSaverLoginState userState = BeatSaverLoginState.notLoggedIn();
 
@@ -305,6 +302,12 @@ class BeatSaverClient {
     return jsonDecode(utf8.decode(res.bodyBytes));
   }
 
+  final RegExp _playlistSyncUrl = RegExp(
+      r"^https?:\/\/api\.beatsaver\.com\/playlists\/id\/(\d+)\/download");
+
+  static String makePlaylistLinkUrl(BeatSaverPlaylistMetadata playlist) =>
+      "https://api.beatsaver.com/playlists/id/${playlist.id}/download";
+
   bool isValidPlaylistForPush(Playlist playlist) {
     return _getPlaylistIdFromSyncUrl(playlist) != null;
   }
@@ -360,6 +363,16 @@ class BeatSaverClient {
 
       await Future.delayed(const Duration(milliseconds: 100));
     }
+  }
+
+  Future<List<BeatSaverPlaylistMetadata>> getUserPlaylists() async {
+    if (userState.state != LoginState.authenticated) {
+      throw Exception("You must be logged in to view playlists");
+    }
+
+    var data = await get("$_apiUri/playlists/user/${userState.userId}/0");
+    var json = List<dynamic>.from(jsonDecode(data)["docs"]);
+    return json.map((e) => BeatSaverPlaylistMetadata.fromJson(e)).toList();
   }
 
   Future pushPlaylistChanges(Playlist playlist) async {
@@ -446,6 +459,44 @@ class MapVersion {
       required this.downloadUrl,
       required this.state,
       required this.createdAt});
+}
+
+class BeatSaverPlaylistMetadata {
+  final String id;
+  final String name;
+  final String authorId;
+  final String authorName;
+  final String? image;
+  final bool private;
+  final String downloadUrl;
+
+  BeatSaverPlaylistMetadata(
+      {required this.id,
+      required this.name,
+      required this.authorId,
+      required this.authorName,
+      String? image,
+      required this.private,
+      required this.downloadUrl})
+      : image = image == null
+            ? null
+            // Sometimes the image is in the format file:// which is not valid
+            : (image.startsWith("https://") || image.startsWith("http://")
+                ? image
+                : null);
+
+  factory BeatSaverPlaylistMetadata.fromJson(Map<String, dynamic> json) {
+    return BeatSaverPlaylistMetadata(
+      id: (json["playlistId"] as int).toString(),
+      name: json["name"] as String,
+      authorId: (json["owner"]["id"] as int).toString(),
+      authorName: json["owner"]["name"] as String,
+      image: json["playlistImage512"] as String? ??
+          json["playlistImage"] as String?,
+      private: json["type"] == "Private",
+      downloadUrl: json["downloadURL"] as String,
+    );
+  }
 }
 
 class BeatSaverMapInfo {

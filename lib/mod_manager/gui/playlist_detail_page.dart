@@ -8,6 +8,7 @@ import 'package:bsaberquest/mod_manager/gui/playlist_sync_page.dart';
 import 'package:bsaberquest/mod_manager/gui/simple_widgets.dart';
 import 'package:bsaberquest/mod_manager/gui/song_detail_page.dart';
 import 'package:bsaberquest/mod_manager/model/song.dart';
+import 'package:bsaberquest/util/list_item_picker_page.dart';
 import 'package:flutter/material.dart';
 
 import '../model/playlist.dart';
@@ -242,6 +243,44 @@ class PlaylistDetailPageState extends State<PlaylistDetailPage> {
         context, "Downloading playlist information", _doUploadPlaylist());
   }
 
+  void _linkPlaylist() async {
+    try {
+      var userPlaylists = await App.beatSaverClient.getUserPlaylists();
+
+      if (!mounted) return;
+
+      var picked = await CommonPickers.pick(
+          context,
+          ListItemPickerPage(
+            title: "Select a playlist from your account",
+            items: userPlaylists,
+            itemBuilder: (context, confirm, playlist) {
+              return ListTile(
+                onTap: () => confirm(playlist),
+                title: Text(playlist.name),
+                subtitle: Text(playlist.private ? "Private" : "Public"),
+                leading: playlist.image == null
+                    ? const Icon(Icons.music_note)
+                    : Image.network(playlist.image!),
+              );
+            },
+          ));
+
+      if (picked == null) return;
+
+      var url = BeatSaverClient.makePlaylistLinkUrl(picked);
+      widget.playlist.syncUrl = url;
+      App.modManager.applyPlaylistChanges(widget.playlist);
+    } catch (e) {
+      App.showToast("$e");
+      return;
+    }
+
+    App.showToast(
+        "The playlist is now linked, perform a download or upload to sync it");
+    setState(() {});
+  }
+
   List<Widget> _buildMetadata() {
     return [
       Text(widget.playlist.fileName),
@@ -296,6 +335,14 @@ class PlaylistDetailPageState extends State<PlaylistDetailPage> {
           PopupMenuItem(
             onTap: _uploadPlaylist,
             child: const Text('Upload playlist changes'),
+          ),
+
+        // If the user is logged in and the playlist is not a BeatSaver playlist, allow the user to upload it
+        if (App.beatSaverClient.userState.state == LoginState.authenticated &&
+            !App.beatSaverClient.isValidPlaylistForPush(widget.playlist))
+          PopupMenuItem(
+            onTap: _linkPlaylist,
+            child: const Text('Link to BeatSaver'),
           ),
 
         PopupMenuItem(

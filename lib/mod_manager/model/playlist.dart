@@ -49,6 +49,11 @@ class Playlist {
 
   String? get syncUrl => customData?['syncURL'] as String?;
 
+  set syncUrl(String? value) {
+    customData ??= {};
+    customData!['syncURL'] = value;
+  }
+
   Playlist();
 
   void fromAnotherInstance(Playlist other) {

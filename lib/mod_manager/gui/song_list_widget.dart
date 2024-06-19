@@ -1,9 +1,9 @@
 import 'package:bsaberquest/util/gui_util.dart';
 import 'package:bsaberquest/main.dart';
-import 'package:bsaberquest/mod_manager/gui/playlist_picker_page.dart';
 import 'package:bsaberquest/mod_manager/gui/simple_widgets.dart';
 import 'package:bsaberquest/mod_manager/gui/song_detail_page.dart';
 import 'package:bsaberquest/mod_manager/model/song.dart';
+import 'package:bsaberquest/util/list_item_picker_page.dart';
 import 'package:flutter/material.dart';
 
 import '../model/playlist.dart';
@@ -145,12 +145,7 @@ class SongListWidgetState extends State<SongListWidget> {
   }
 
   void _addSelectionToPlaylist() async {
-    var playlist = await Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => const PlaylistPickerPage(),
-      ),
-    ) as Playlist?;
+    var playlist = await CommonPickers.pickPlaylist(context);
 
     if (playlist == null) {
       return;

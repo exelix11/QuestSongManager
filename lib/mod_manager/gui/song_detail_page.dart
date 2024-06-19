@@ -6,10 +6,10 @@ import 'package:bsaberquest/mod_manager/mod_manager.dart';
 import 'package:bsaberquest/mod_manager/model/song.dart';
 import 'package:bsaberquest/mod_manager/platform_helper.dart';
 import 'package:bsaberquest/mod_manager/version_detector.dart';
+import 'package:bsaberquest/util/list_item_picker_page.dart';
 import 'package:flutter/material.dart';
 
 import '../model/playlist.dart';
-import 'playlist_picker_page.dart';
 
 class SongDetailPage extends StatelessWidget {
   final Song song;
@@ -19,15 +19,7 @@ class SongDetailPage extends StatelessWidget {
       : playlists = App.modManager.findPlaylistsBySong(song);
 
   Future _addToPlaylist(BuildContext context) async {
-    // Pick a playlist
-    var result = await Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => const PlaylistPickerPage(),
-      ),
-    );
-
-    var playlist = result as Playlist?;
+    var playlist = await CommonPickers.pickPlaylist(context);
 
     if (playlist != null) {
       // Add to playlist

@@ -102,7 +102,7 @@ class PlaylistSyncPageState extends State<PlaylistSyncPage> {
           const ListTile(
             title: Text("The two playlists can't be merged automatically"),
             subtitle: Text(
-                "The following songs are only in one of the playlists, select the ones you want to keep and confirm"),
+                "The following songs are only in one of the playlists, select the ones you want to keep and confirm.\nThe songs that have not been selected will be removed from this playlist after the merge."),
           ),
           const Divider(),
           ListTile(
