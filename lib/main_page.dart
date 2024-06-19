@@ -10,7 +10,6 @@ import 'package:bsaberquest/options/options_page.dart';
 import 'package:bsaberquest/main.dart';
 import 'package:bsaberquest/mod_manager/gui/playlist_list_page.dart';
 import 'package:bsaberquest/mod_manager/gui/song_list_page.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 import 'options/game_path_picker_page.dart';

@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:bsaberquest/mod_manager/gui/playlist_detail_page.dart';
 import 'package:bsaberquest/mod_manager/gui/simple_widgets.dart';
 import 'package:bsaberquest/util/gui_util.dart';

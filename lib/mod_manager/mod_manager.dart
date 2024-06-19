@@ -142,7 +142,7 @@ class ModManager {
             song = Song.fromError(
                 entity.path, e.toString(), "invalid_${invalidCounter++}");
           }
-          songs[song.hash!] = song;
+          songs[song.hash] = song;
         }
       }
     }
@@ -213,7 +213,7 @@ class ModManager {
 
   Future _writeCachedHash(String folderPath, String hash) async {
     if (useFastHashCache) {
-      var hashFile = File("${folderPath}/$_hashCacheFileName");
+      var hashFile = File("$folderPath/$_hashCacheFileName");
       await hashFile.writeAsString(hash);
     }
   }
@@ -307,8 +307,7 @@ class ModManager {
       for (var i = 0; i < playlist.songs.length; i++) {
         if (playlist.songs[i].hash == oldHash) {
           replaced = true;
-          playlist.songs[i] =
-              PlayListSong(newSong.hash!, newSong.meta.songName);
+          playlist.songs[i] = PlayListSong(newSong.hash, newSong.meta.songName);
         }
       }
 
@@ -392,7 +391,7 @@ class ModManager {
       // It is safe to ignore this
     }
 
-    songs[song.hash!] = song;
+    songs[song.hash] = song;
 
     // When we are expecting a hash different than the one we calculated, it's probably because a song was updated
     // Update all its references in playlists and remove the old song
@@ -429,10 +428,8 @@ class ModManager {
 
     var affectedPlaylists = findPlaylistsBySong(song);
 
-    if (handlePlaylists == _PlaylistHandling.remove) {
-      for (var playlist in affectedPlaylists) {
-        playlist.songs.removeWhere((element) => element.hash == song.hash);
-      }
+    for (var playlist in affectedPlaylists) {
+      playlist.songs.removeWhere((element) => element.hash == song.hash);
     }
 
     return affectedPlaylists;
@@ -603,4 +600,4 @@ class ModManager {
   }
 }
 
-enum _PlaylistHandling { remove, check, none }
+enum _PlaylistHandling { remove, none }

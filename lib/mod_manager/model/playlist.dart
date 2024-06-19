@@ -12,15 +12,11 @@ class PlayListSong {
   PlayListSong(this.hash, this.songName, {this.key});
 
   factory PlayListSong.fromSong(Song song) {
-    if (song.hash == null) {
-      throw Exception("Song must be hashed before adding to playlist");
-    }
-
     if (!song.isValid) {
       throw Exception("This song is not valid");
     }
 
-    return PlayListSong(song.hash!, song.meta.songName);
+    return PlayListSong(song.hash, song.meta.songName);
   }
 
   factory PlayListSong.fromJson(Map<String, dynamic> json) {
@@ -66,10 +62,6 @@ class Playlist {
   }
 
   void add(Song song) {
-    if (song.hash == null) {
-      throw Exception("Song must be hashed before adding to playlist");
-    }
-
     if (songs.any((element) => element.hash == song.hash)) {
       return;
     }

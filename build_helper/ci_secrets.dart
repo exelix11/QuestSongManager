@@ -1,4 +1,6 @@
 // Replace CI secrets from env vars in a safe way
+// ignore_for_file: avoid_print
+
 import 'dart:io';
 
 void main(List<String> args) {
