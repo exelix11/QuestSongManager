@@ -4,7 +4,7 @@ import 'dart:io';
 import 'package:bsaberquest/download_manager/gui/downloads_tab.dart';
 import 'package:bsaberquest/download_manager/gui/util.dart';
 import 'package:bsaberquest/download_manager/map_update_controller.dart';
-import 'package:bsaberquest/gui_util.dart';
+import 'package:bsaberquest/util/gui_util.dart';
 import 'package:bsaberquest/mod_manager/mod_manager.dart';
 import 'package:bsaberquest/options/options_page.dart';
 import 'package:bsaberquest/main.dart';

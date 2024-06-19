@@ -4,7 +4,7 @@ import 'dart:io';
 import 'package:bsaberquest/download_manager/beat_saver_api.dart';
 import 'package:bsaberquest/download_manager/gui/bookmarks_manager.dart';
 import 'package:bsaberquest/download_manager/oauth_config.dart';
-import 'package:bsaberquest/gui_util.dart';
+import 'package:bsaberquest/util/gui_util.dart';
 import 'package:bsaberquest/integrations/beatsaver_integration.dart';
 import 'package:bsaberquest/main.dart';
 import 'package:bsaberquest/mod_manager/mod_manager.dart';

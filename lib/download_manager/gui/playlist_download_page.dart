@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:bsaberquest/gui_util.dart';
+import 'package:bsaberquest/util/gui_util.dart';
 import 'package:bsaberquest/main.dart';
 import 'package:bsaberquest/mod_manager/model/playlist.dart';
 import 'package:flutter/material.dart';

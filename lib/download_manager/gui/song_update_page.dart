@@ -1,5 +1,5 @@
 import 'package:bsaberquest/download_manager/beat_saver_api.dart';
-import 'package:bsaberquest/gui_util.dart';
+import 'package:bsaberquest/util/gui_util.dart';
 import 'package:bsaberquest/main.dart';
 import 'package:flutter/material.dart';
 

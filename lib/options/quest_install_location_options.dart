@@ -1,4 +1,4 @@
-import 'package:bsaberquest/gui_util.dart';
+import 'package:bsaberquest/util/gui_util.dart';
 import 'package:bsaberquest/main.dart';
 import 'package:bsaberquest/mod_manager/mod_manager.dart';
 import 'package:bsaberquest/mod_manager/version_detector.dart';
