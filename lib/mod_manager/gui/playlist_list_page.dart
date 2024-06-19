@@ -84,7 +84,7 @@ class PlaylistListPageState extends State<PlaylistListPage> {
     );
   }
 
-  Widget _songsListView() => ListView.builder(
+  Widget _buildPlaylistList() => ListView.builder(
         padding: GuiUtil.defaultViewPadding(context),
         itemCount: App.modManager.playlists.length,
         itemBuilder: (context, index) {
@@ -112,19 +112,27 @@ class PlaylistListPageState extends State<PlaylistListPage> {
     });
   }
 
-  List<Widget> _iconFormatIssueWidget() => [
-        Text(
-            'Some playlists have wrong icon data which will prevent the game from displaying them ${playlistIconWarningText()}.'),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
+  Widget _iconFormatIssueWidget() => Padding(
+        padding: GuiUtil.defaultViewPadding(context),
+        child: Column(
           children: [
-            ElevatedButton(
-                onPressed: _fixPlaylistIcons, child: const Text('Fix now')),
-            ElevatedButton(
-                onPressed: _ignorePlaylistIcons, child: const Text('Ignore')),
+            Text(
+                'Some playlists have wrong icon data which will prevent the game from displaying them ${playlistIconWarningText()}.'),
+            const SizedBox(height: 10),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                ElevatedButton(
+                    onPressed: _fixPlaylistIcons, child: const Text('Fix now')),
+                const SizedBox(width: 40),
+                ElevatedButton(
+                    onPressed: _ignorePlaylistIcons,
+                    child: const Text('Ignore')),
+              ],
+            )
           ],
-        )
-      ];
+        ),
+      );
 
   void _openPlaylistErrorDetails() async {
     var errors = "";
@@ -134,21 +142,25 @@ class PlaylistListPageState extends State<PlaylistListPage> {
     await GuiUtil.longTextDialog(context, 'Playlist loading errors', errors);
   }
 
-  Widget _playlistErrors() => Column(
+  Widget _playlistErrors() => Padding(
+      padding: GuiUtil.defaultViewPadding(context),
+      child: Column(
         children: [
+          const SizedBox(height: 10),
           const Text(
               'Some playlists failed to load. This can be caused by a corrupted file or a missing song file.'),
+          const SizedBox(height: 10),
           ElevatedButton(
               onPressed: _openPlaylistErrorDetails,
               child: const Text('Details'))
         ],
-      );
+      ));
 
   Widget _bodyContent() {
     return Column(children: [
-      if (showPlaylistIconFormatWarning) ..._iconFormatIssueWidget(),
+      if (showPlaylistIconFormatWarning) _iconFormatIssueWidget(),
       if (showPlaylistErrorList) _playlistErrors(),
-      Expanded(child: _songsListView())
+      Expanded(child: _buildPlaylistList())
     ]);
   }
 
@@ -156,9 +168,7 @@ class PlaylistListPageState extends State<PlaylistListPage> {
   Widget build(BuildContext context) {
     return Scaffold(
         appBar: AppBar(
-          title: Row(children: [
-            const Text('Playlists'),
-            Expanded(child: Container()),
+          actions: [
             PopupMenuButton(
               itemBuilder: (BuildContext context) {
                 return [
@@ -174,7 +184,8 @@ class PlaylistListPageState extends State<PlaylistListPage> {
                 ];
               },
             )
-          ]),
+          ],
+          title: const Text('Playlists'),
         ),
         body: _bodyContent());
   }
