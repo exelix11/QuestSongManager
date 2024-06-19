@@ -291,7 +291,7 @@ class OptionsPageState extends State<OptionsPage> {
 
     var user = App.beatSaverClient.userState;
 
-    if (user.state == LoginState.notLoggedIn || true) {
+    if (user.state == LoginState.notLoggedIn) {
       return [
         InkWell(
             onTap: () async {
