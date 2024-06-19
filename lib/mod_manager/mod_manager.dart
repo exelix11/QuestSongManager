@@ -296,6 +296,43 @@ class ModManager {
     }
   }
 
+  Future replaceSongInPlaylists(String oldHash, String newHash) async {
+    var newSong = songs[newHash];
+    if (newSong == null) {
+      throw Exception("New song not found");
+    }
+
+    for (var playlist in playlists.values) {
+      bool replaced = false;
+
+      for (var i = 0; i < playlist.songs.length; i++) {
+        if (playlist.songs[i].hash == oldHash) {
+          replaced = true;
+          playlist.songs[i] =
+              PlayListSong(newSong.hash!, newSong.meta.songName);
+        }
+      }
+
+      if (replaced) {
+        await applyPlaylistChanges(playlist);
+      }
+    }
+  }
+
+  Future _handleSongUpdate(String oldHash, String newHash) async {
+    var old = songs[oldHash];
+
+    // We might not have the old song but playlists that reference it
+    // eg when the user clicks on download song from a playlist with the old hash
+    await replaceSongInPlaylists(oldHash, newHash);
+
+    if (old == null) {
+      return;
+    }
+
+    await _deleteSingleSong(old, _PlaylistHandling.none);
+  }
+
   Future<Song> installSong(
       Map<String, Uint8List> unpackedFiles, String? expectedHash) async {
     await reloadIfNeeded();
@@ -319,11 +356,6 @@ class ModManager {
     }
 
     var hash = hashSongInfo(ordered);
-    if (expectedHash != null && hash != expectedHash) {
-      throw Exception(
-          "The calculated song hash did not match with the expected hash");
-    }
-
     if (songs.containsKey(hash)) {
       throw Exception("Song with hash $hash already exists");
     }
@@ -363,13 +395,20 @@ class ModManager {
     }
 
     songs[song.hash!] = song;
-    songListObservable.sink.add(null);
 
+    // When we are expecting a hash different than the one we calculated, it's probably because a song was updated
+    // Update all its references in playlists and remove the old song
+    if (expectedHash != null && hash != expectedHash) {
+      await _handleSongUpdate(expectedHash, hash);
+    }
+
+    songListObservable.sink.add(null);
     return song;
   }
 
   // Delete a song and remove it from all playlists, but don't save the playlists
-  Future<Set<Playlist>> _deleteSingleSong(Song song) async {
+  Future<Set<Playlist>> _deleteSingleSong(
+      Song song, _PlaylistHandling handlePlaylists) async {
     // Get the song from our list to ensure we know it exists
     song = songs[song.hash]!;
 
@@ -380,12 +419,17 @@ class ModManager {
 
     songs.remove(song.hash);
 
+    if (handlePlaylists == _PlaylistHandling.none) {
+      return {};
+    }
+
     Set<Playlist> affectedPlaylists = {};
 
-    if (App.preferences.removeFromPlaylistOnSongDelete) {
-      for (var playlist in playlists.values) {
-        if (playlist.songs.any((element) => element.hash == song.hash)) {
-          affectedPlaylists.add(playlist);
+    for (var playlist in playlists.values) {
+      if (playlist.songs.any((element) => element.hash == song.hash)) {
+        affectedPlaylists.add(playlist);
+
+        if (handlePlaylists == _PlaylistHandling.remove) {
           playlist.songs.removeWhere((element) => element.hash == song.hash);
         }
       }
@@ -417,8 +461,12 @@ class ModManager {
 
     Set<Playlist> affectedPlaylists = {};
 
+    var handlePlaylist = App.preferences.removeFromPlaylistOnSongDelete
+        ? _PlaylistHandling.remove
+        : _PlaylistHandling.none;
+
     for (var song in songs) {
-      affectedPlaylists.addAll(await _deleteSingleSong(song));
+      affectedPlaylists.addAll(await _deleteSingleSong(song, handlePlaylist));
     }
 
     // Notify the UI only once
@@ -554,3 +602,5 @@ class ModManager {
     // return null;
   }
 }
+
+enum _PlaylistHandling { remove, check, none }

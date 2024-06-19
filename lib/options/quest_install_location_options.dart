@@ -1,3 +1,4 @@
+import 'package:bsaberquest/gui_util.dart';
 import 'package:bsaberquest/main.dart';
 import 'package:bsaberquest/mod_manager/mod_manager.dart';
 import 'package:bsaberquest/mod_manager/version_detector.dart';
@@ -89,45 +90,48 @@ class InstallLocationPage extends StatelessWidget {
     return Text(name);
   }
 
+  Widget _buildCurrentStateTile() {
+    if (BeatSaberVersionDetector.detectedVersion == null) {
+      return const SizedBox();
+    }
+
+    return Padding(
+        padding: const EdgeInsets.all(20),
+        child: Text(
+            'Detected Beat Saber version: ${BeatSaberVersionDetector.detectedVersion}'));
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
         appBar: AppBar(
           title: const Text('Select song install location'),
         ),
-        body: Column(children: [
-          Expanded(
-              child: ListView(
-            children: [
-              ListTile(
-                title: _labelFor(PreferredCustomSongFolder.songLoader),
-                subtitle: const Text(
-                    "This is the install location for Beat Saber versions prior to 1.35. This is the most compatible option as it will work with all versions."),
-                onTap: () =>
-                    _applyMode(context, PreferredCustomSongFolder.songLoader),
-              ),
-              ListTile(
-                title: _labelFor(PreferredCustomSongFolder.songCore),
-                subtitle: const Text(
-                    "This is the new install location for Beat Saber versions 1.35 and newer. If you install songs in this location, older versions will not be able to find them."),
-                onTap: () =>
-                    _applyMode(context, PreferredCustomSongFolder.songCore),
-              ),
-              ListTile(
-                title: _labelFor(PreferredCustomSongFolder.auto),
-                subtitle: const Text(
-                    "Automatically detect the current Beat Saber version and pick the optimal option. If you downgrade Beat Saber after installing 1.35, older versions may not be able to detect all the songs."),
-                onTap: () =>
-                    _applyMode(context, PreferredCustomSongFolder.auto),
-              ),
-            ],
-          )),
-          BeatSaberVersionDetector.detectedVersion == null
-              ? const SizedBox()
-              : Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: Text(
-                      'Detected Beat Saber version: ${BeatSaberVersionDetector.detectedVersion}'))
-        ]));
+        body: ListView(
+          padding: GuiUtil.defaultViewPadding(context),
+          children: [
+            ListTile(
+              title: _labelFor(PreferredCustomSongFolder.songLoader),
+              subtitle: const Text(
+                  "This is the install location for Beat Saber versions prior to 1.35. This is the most compatible option as it will work with all versions."),
+              onTap: () =>
+                  _applyMode(context, PreferredCustomSongFolder.songLoader),
+            ),
+            ListTile(
+              title: _labelFor(PreferredCustomSongFolder.songCore),
+              subtitle: const Text(
+                  "This is the new install location for Beat Saber versions 1.35 and newer. If you install songs in this location, older versions will not be able to find them."),
+              onTap: () =>
+                  _applyMode(context, PreferredCustomSongFolder.songCore),
+            ),
+            ListTile(
+              title: _labelFor(PreferredCustomSongFolder.auto),
+              subtitle: const Text(
+                  "Automatically detect the current Beat Saber version and pick the optimal option. If you downgrade Beat Saber after installing 1.35, older versions may not be able to detect all the songs."),
+              onTap: () => _applyMode(context, PreferredCustomSongFolder.auto),
+            ),
+            _buildCurrentStateTile()
+          ],
+        ));
   }
 }

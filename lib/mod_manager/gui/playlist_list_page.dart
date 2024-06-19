@@ -85,6 +85,7 @@ class PlaylistListPageState extends State<PlaylistListPage> {
   }
 
   Widget _songsListView() => ListView.builder(
+        padding: GuiUtil.defaultViewPadding(context),
         itemCount: App.modManager.playlists.length,
         itemBuilder: (context, index) {
           var playlist = App.modManager.playlists.values.elementAt(index);

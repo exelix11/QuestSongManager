@@ -76,21 +76,7 @@ class PendingDownloadsState extends State<PendingDownloadsWidget> {
   }
 
   Widget? _buildEntry(BuildContext context, int index) {
-    DownloadItem? item;
-
-    try {
-      var pendingLen = App.downloadManager.pendingItems.length;
-      if (index < pendingLen) {
-        item = App.downloadManager.pendingItems[index];
-      } else if (index - pendingLen <
-          App.downloadManager.completedItems.length) {
-        item = App.downloadManager.completedItems[index - pendingLen];
-      } else {
-        return null;
-      }
-    } catch (e) {
-      return null;
-    }
+    DownloadItem item = App.downloadManager.items[index];
 
     var message = "";
 
@@ -118,6 +104,15 @@ class PendingDownloadsState extends State<PendingDownloadsWidget> {
     App.downloadManager.cancelQueue();
   }
 
+  Widget _buildListView() => ListView.builder(
+        shrinkWrap: widget.isPartOfList,
+        physics:
+            widget.isPartOfList ? const NeverScrollableScrollPhysics() : null,
+        itemCount: App.downloadManager.items.length,
+        reverse: true,
+        itemBuilder: _buildEntry,
+      );
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -126,29 +121,30 @@ class PendingDownloadsState extends State<PendingDownloadsWidget> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             const Text("Downloads queue"),
-            if (App.downloadManager.pendingCount > 0)
+            if (App.downloadManager.queuedCount > 0)
               Padding(
                   padding: const EdgeInsets.only(left: 5),
                   child: IconButton(
                       icon: Text(
-                          "Cancel ${App.downloadManager.pendingCount} pending items"),
+                          "Cancel ${App.downloadManager.queuedCount} pending items"),
                       onPressed: _cancelPendingQueue))
           ],
         ),
-        Expanded(
-          child: ListView.builder(
-            itemBuilder: _buildEntry,
-          ),
-        ),
+        if (widget.isPartOfList)
+          _buildListView()
+        else
+          Expanded(child: _buildListView()),
       ],
     );
   }
 }
 
 class PendingDownloadsWidget extends StatefulWidget {
-  const PendingDownloadsWidget({super.key, this.navigateCallback});
+  const PendingDownloadsWidget(
+      {super.key, this.navigateCallback, this.isPartOfList = false});
 
   final Function(String)? navigateCallback;
+  final bool isPartOfList;
 
   @override
   State<PendingDownloadsWidget> createState() => PendingDownloadsState();

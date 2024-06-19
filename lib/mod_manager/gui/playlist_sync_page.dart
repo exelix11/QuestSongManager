@@ -1,3 +1,4 @@
+import 'package:bsaberquest/gui_util.dart';
 import 'package:bsaberquest/main.dart';
 import 'package:bsaberquest/mod_manager/gui/simple_widgets.dart';
 import 'package:bsaberquest/mod_manager/model/playlist.dart';
@@ -98,7 +99,7 @@ class PlaylistSyncPageState extends State<PlaylistSyncPage> {
             _popupMenu()
           ],
         ),
-        body: ListView(children: [
+        body: ListView(padding: GuiUtil.defaultViewPadding(context), children: [
           const ListTile(
             title: Text("The two playlists can't be merged automatically"),
             subtitle: Text(
