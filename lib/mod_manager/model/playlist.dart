@@ -9,6 +9,11 @@ class PlayListSong {
   final String hash;
   final String songName;
 
+  BeatSaberSongInfo? _info;
+
+  // Lazily try to get additional song info if we have the song
+  BeatSaberSongInfo? get meta => _info ??= App.modManager.songs[hash]?.meta;
+
   PlayListSong(this.hash, this.songName, {this.key});
 
   factory PlayListSong.fromSong(Song song) {
@@ -25,6 +30,11 @@ class PlayListSong {
       json['songName'] as String,
       key: json['key'] as String?,
     );
+  }
+
+  bool query(String query) {
+    return songName.toLowerCase().contains(query) ||
+        (meta?.query(query) ?? false);
   }
 
   Map<String, dynamic> toJson() => {

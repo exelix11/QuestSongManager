@@ -30,7 +30,7 @@ class PlaylistDetailPageState extends State<PlaylistDetailPage> {
     _listController = GenericListController(
         items: {},
         getItemUniqueKey: (x) => x.hash,
-        queryItem: (x, query) => x.songName.toLowerCase().contains(query),
+        queryItem: (x, query) => x.query(query),
         renderItem: _buildSong,
         configureAppButtons: _buildExtraActions,
         canSelect: true);
