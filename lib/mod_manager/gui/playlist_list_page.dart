@@ -163,21 +163,26 @@ class PlaylistListPageState extends State<PlaylistListPage> {
 
   Widget _playlistErrors() => Padding(
       padding: GuiUtil.defaultViewPadding(context),
-      child: Column(
-        children: [
-          const SizedBox(height: 10),
-          const Text(
-              'Some playlists failed to load. This can be caused by a corrupted file or a missing song file.'),
-          const SizedBox(height: 10),
-          ElevatedButton(
-              onPressed: _openPlaylistErrorDetails,
-              child: const Text('Details'))
-        ],
+      child: ListTile(
+        title: const Text('Playlist loading errors'),
+        subtitle: const Text(
+            'Some playlists failed to load. This can be caused by a corrupted file or a missing song file.\nClick to see details.'),
+        onTap: _openPlaylistErrorDetails,
+        trailing: IconButton(
+          tooltip: "Dismiss",
+          icon: const Icon(Icons.close),
+          onPressed: () {
+            App.modManager.errorPlaylists.clear();
+            setState(() {
+              showPlaylistErrorList = false;
+            });
+          },
+        ),
       ));
 
   Widget _bodyContent() {
     return Column(children: [
-      if (showPlaylistIconFormatWarning) _iconFormatIssueWidget(),
+      if (!showPlaylistIconFormatWarning) _iconFormatIssueWidget(),
       if (showPlaylistErrorList) _playlistErrors(),
       Expanded(child: _buildPlaylistList())
     ]);

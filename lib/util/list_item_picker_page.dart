@@ -10,7 +10,8 @@ typedef ConfirmCallback<T> = void Function(T item);
 class ListItemPickerPage<T> extends StatelessWidget {
   final String title;
   final Widget Function(BuildContext, ConfirmCallback, T) itemBuilder;
-  final bool Function(String, T) filter;
+  final bool Function(String, T)? filter;
+  final bool showListHeading;
 
   final Map<String, T> _content = {};
   final Map<T, String> _inverseLookup = {};
@@ -22,7 +23,8 @@ class ListItemPickerPage<T> extends StatelessWidget {
       required List<T> items,
       required this.itemBuilder,
       required this.title,
-      required this.filter}) {
+      this.showListHeading = true,
+      this.filter}) {
     for (int i = 0; i < items.length; i++) {
       _content[i.toString()] = items[i];
       _inverseLookup[items[i]] = i.toString();
@@ -31,9 +33,10 @@ class ListItemPickerPage<T> extends StatelessWidget {
     _controller = GenericListController(
         items: _content,
         getItemUniqueKey: (x) => _inverseLookup[x]!,
-        queryItem: (query, x) => filter(x, query),
+        queryItem: filter == null ? null : (query, x) => filter!(x, query),
         renderItem: _itemBuilder,
-        canSelect: false);
+        canSelect: false,
+        showHeading: showListHeading);
   }
 
   Widget _itemBuilder(BuildContext context, GenericListController<T> controller,

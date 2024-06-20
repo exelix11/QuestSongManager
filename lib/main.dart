@@ -35,7 +35,7 @@ Future main(List<String> arguments) async {
 }
 
 class App extends StatelessWidget {
-  static const bool _devSimulateQuest = false;
+  static const bool _devSimulateQuest = true;
   static const String versionName = "1.4-dev";
 
   static final bool isDev = _devSimulateQuest && !Platform.isAndroid;

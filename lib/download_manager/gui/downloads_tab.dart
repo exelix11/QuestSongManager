@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:bsaberquest/download_manager/gui/browser_page.dart';
 import 'package:bsaberquest/download_manager/gui/pending_downloads_widget.dart';
 import 'package:bsaberquest/download_manager/gui/song_update_check_widget.dart';
+import 'package:bsaberquest/options/windows_protocol_handler_configure.dart';
 import 'package:bsaberquest/util/gui_util.dart';
 import 'package:bsaberquest/main.dart';
 import 'package:bsaberquest/mod_manager/gui/simple_widgets.dart';
@@ -98,44 +99,24 @@ class DownloadsTabState extends State<DownloadsTab> {
     }
   }
 
-  void _removeRpcHandler() async {
-    try {
-      await RpcManager.removeRpcHandler();
-      App.showToast("Protocol handler removed");
-    } catch (e) {
-      App.showToast("Error: $e");
-    }
-  }
-
-  void _installRpcHandler() async {
-    try {
-      await RpcManager.installRpcHandler();
-      App.showToast("Protocol handler installed");
-    } catch (e) {
-      App.showToast("Error: $e");
-    }
+  void _configureProtocolHandler() async {
+    await ProtocolHandlerConfiguration.configure(context);
   }
 
   Widget _pcDownloadTextInfo() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        const Text(
-            "The in-app browser is not supported on PC. Download songs from the browser using the beatsaber:// protocol."),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            ElevatedButton(
-                onPressed: _installRpcHandler,
-                child: const Text("Install the protocol handler")),
-            const SizedBox(width: 30),
-            ElevatedButton(
-                onPressed: _removeRpcHandler,
-                child: const Text("Remove the protocol handler")),
-          ],
-        )
-      ],
-    );
+    return ListTile(
+        title: const Text('beatsaver:// protocol handler'),
+        leading: const Icon(Icons.computer),
+        subtitle: const Text(
+            "The in-app browser is not available on PC. Download songs from Chrome and Firefox using the beatsaber:// protocol by installing the protocol handler"),
+        trailing: SizedBox(
+            width: 150,
+            child: IconButton(
+                onPressed: _configureProtocolHandler,
+                icon: const Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [Icon(Icons.settings), Text("Configure")],
+                ))));
   }
 
   Widget _questOpenBrowser() {

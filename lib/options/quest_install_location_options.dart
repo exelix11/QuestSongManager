@@ -95,8 +95,7 @@ class InstallLocationPage extends StatelessWidget {
       return const SizedBox();
     }
 
-    return Padding(
-        padding: const EdgeInsets.all(20),
+    return Center(
         child: Text(
             'Detected Beat Saber version: ${BeatSaberVersionDetector.detectedVersion}'));
   }
@@ -130,6 +129,7 @@ class InstallLocationPage extends StatelessWidget {
                   "Automatically detect the current Beat Saber version and pick the optimal option. If you downgrade Beat Saber after installing 1.35, older versions may not be able to detect all the songs."),
               onTap: () => _applyMode(context, PreferredCustomSongFolder.auto),
             ),
+            const SizedBox(height: 40),
             _buildCurrentStateTile()
           ],
         ));

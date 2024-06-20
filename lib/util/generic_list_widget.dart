@@ -15,10 +15,11 @@ class GenericListController<T> {
   final String itemName;
 
   final ItemUniqueKeyGetter<T> getItemUniqueKey;
-  final ItemQueryCallback<T> queryItem;
+  final ItemQueryCallback<T>? queryItem;
   final ItemRenderer<T> renderItem;
   final ConfigureAppButtonsCallback? configureAppButtons;
   final bool canSelect;
+  final bool showHeading;
 
   Map<String, T> items;
   Set<String> selection = {};
@@ -34,12 +35,13 @@ class GenericListController<T> {
   GenericListController(
       {required this.items,
       required this.getItemUniqueKey,
-      required this.queryItem,
+      this.queryItem,
       required this.renderItem,
       this.configureAppButtons,
       this.canSelect = true,
       this.itemName = "item",
-      this.itemsName = "items"});
+      this.itemsName = "items",
+      this.showHeading = true});
 
   void trySetList(Iterable<T> items) {
     Map<String, T> mapped =
@@ -99,11 +101,13 @@ class GenericListState<T> extends State<GenericList<T>> {
   }
 
   void _onSearchTextChanged(String text) {
+    if (controller.queryItem == null) return;
+
     setState(() {
       _searchHits.clear();
       text = text.toLowerCase();
       _searchHits.addAll(controller.items.values
-          .where((e) => controller.queryItem(e, text))
+          .where((e) => controller.queryItem!(e, text))
           .map((e) => controller.getItemUniqueKey(e)));
     });
   }
@@ -190,7 +194,7 @@ class GenericListState<T> extends State<GenericList<T>> {
           tooltip: "Close search",
           icon: const Icon(Icons.search_off_outlined),
           onPressed: _closeSearch));
-    } else if (controller.items.isNotEmpty) {
+    } else if (controller.items.isNotEmpty && controller.queryItem != null) {
       actions.add(IconButton(
           tooltip: "Search",
           icon: const Icon(Icons.search),
@@ -219,7 +223,8 @@ class GenericListState<T> extends State<GenericList<T>> {
         // Left aligned header and search
         Row(
           children: [
-            Text(titleText, style: const TextStyle(fontSize: 20)),
+            if (controller.showHeading)
+              Text(titleText, style: const TextStyle(fontSize: 20)),
             const SizedBox(width: 10),
             if (_showSearch)
               SizedBox(
