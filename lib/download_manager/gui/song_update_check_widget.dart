@@ -80,6 +80,7 @@ class MapUpdateCheckWidgetState extends State<MapUpdateCheckWidget> {
         leading: const Icon(Icons.download),
         onTap: _openUpdatePage,
         trailing: IconButton(
+          tooltip: "Dismiss",
           icon: const Icon(Icons.close),
           onPressed: _clearUpdates,
         ),

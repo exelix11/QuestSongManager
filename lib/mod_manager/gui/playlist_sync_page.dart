@@ -96,8 +96,7 @@ class PlaylistSyncPageState extends State<PlaylistSyncPage> {
             IconButton(
                 onPressed: _apply,
                 icon: const Row(
-                  children: [Icon(Icons.check), Text("Apply changes")],
-                )),
+                    children: [Icon(Icons.check), Text("Apply changes")])),
             _popupMenu()
           ],
         ),

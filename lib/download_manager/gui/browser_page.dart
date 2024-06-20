@@ -129,10 +129,17 @@ class BrowserPageViewState extends State<BrowserPageView> {
         appBar: AppBar(
           actions: [
             IconButton(
+                tooltip: "Download manager",
                 onPressed: _openDownloadsView,
                 icon: const Icon(Icons.download)),
-            IconButton(onPressed: _refreshPage, icon: const Icon(Icons.sync)),
-            IconButton(onPressed: _quitPage, icon: const Icon(Icons.close)),
+            IconButton(
+                tooltip: "Reload page",
+                onPressed: _refreshPage,
+                icon: const Icon(Icons.sync)),
+            IconButton(
+                tooltip: "Leave the browser",
+                onPressed: _quitPage,
+                icon: const Icon(Icons.close)),
           ],
           title: SingleChildScrollView(
               scrollDirection: Axis.horizontal,

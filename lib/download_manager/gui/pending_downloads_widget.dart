@@ -168,6 +168,7 @@ class PendingDownloadsStandalonePage extends StatelessWidget {
         title: const Text('Downloads'),
         actions: [
           IconButton(
+              tooltip: "Remove completed downloads",
               onPressed: App.downloadManager.clearCompleted,
               icon: const Icon(Icons.playlist_remove))
         ],

@@ -80,6 +80,7 @@ class DownloadsTabState extends State<DownloadsTab> {
           PlaylistWidget(
               playlist: App.downloadManager.downloadToPlaylist!,
               extraIcon: IconButton(
+                tooltip: "Clear playlist selection",
                 icon: const Icon(Icons.close),
                 onPressed: _clearPlaylist,
               )),
@@ -152,6 +153,7 @@ class DownloadsTabState extends State<DownloadsTab> {
           title: const Text('Download manager'),
           actions: [
             IconButton(
+                tooltip: "Remove completed downloads",
                 onPressed: App.downloadManager.clearCompleted,
                 icon: const Icon(Icons.playlist_remove))
           ],

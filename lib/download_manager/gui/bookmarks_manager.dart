@@ -41,6 +41,7 @@ class BookmarksManagerState extends State<BookmarksManager> {
               ? const SizedBox()
               : IconButton(
                   icon: const Icon(Icons.home),
+                  tooltip: "Set as home page",
                   onPressed: () {
                     prefs.homepage = bookmark.url;
                     App.preferences.webBookmarks = prefs;
@@ -49,6 +50,7 @@ class BookmarksManagerState extends State<BookmarksManager> {
                 ),
           IconButton(
             icon: const Icon(Icons.delete),
+            tooltip: "remove",
             onPressed: () async {
               prefs.bookmarks.removeAt(index);
               App.preferences.webBookmarks = prefs;
@@ -99,10 +101,14 @@ class BookmarksManagerState extends State<BookmarksManager> {
   Widget build(BuildContext context) {
     return Scaffold(
         appBar: AppBar(
-          title: const Text('Favorites'),
+          title: const Text('Bookmarks'),
           actions: [
-            IconButton(onPressed: _addNew, icon: const Icon(Icons.add)),
             IconButton(
+                tooltip: "Add now",
+                onPressed: _addNew,
+                icon: const Icon(Icons.add)),
+            IconButton(
+                tooltip: "Restore to default bookmarks",
                 onPressed: _revertDefault,
                 icon: const Icon(Icons.cleaning_services_outlined)),
           ],

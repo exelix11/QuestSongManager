@@ -334,6 +334,7 @@ class OptionsPageState extends State<OptionsPage> {
           title: Text(user.username!),
           subtitle: const Text("Current BeatSaver account"),
           trailing: IconButton(
+            tooltip: "Logout",
             icon: const Icon(Icons.logout),
             onPressed: () => {
               setState(() {
@@ -352,6 +353,7 @@ class OptionsPageState extends State<OptionsPage> {
               "Failed to retrieve user data from BeatSaver.\nTap to try again."),
           onTap: () => App.beatSaverClient.tryLoginFromStoredCredentials(),
           trailing: IconButton(
+            tooltip: "Logout",
             icon: const Icon(Icons.logout),
             onPressed: () => {
               setState(() {

@@ -312,6 +312,7 @@ class PlaylistDetailPageState extends State<PlaylistDetailPage> {
   }
 
   IconButton _songDeleteButton(PlayListSong song) => IconButton(
+      tooltip: "Remove from this playlist",
       onPressed: () => _removeSongByHash(song.hash),
       icon: const Icon(Icons.delete));
 

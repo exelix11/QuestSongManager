@@ -65,10 +65,12 @@ class SongListWidgetController extends GenericListRenderer<Song> {
     }
 
     actions.add(IconButton(
+        tooltip: "Add selection to playlist",
         icon: const Icon(Icons.playlist_add),
         onPressed: () => _addSelectionToPlaylist(context)));
 
     actions.add(IconButton(
+        tooltip: "Delete selected items",
         icon: const Icon(Icons.delete),
         onPressed: () => _deleteSelection(context)));
   }

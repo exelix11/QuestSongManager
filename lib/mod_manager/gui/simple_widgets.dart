@@ -108,11 +108,14 @@ class UnknownSongWidget extends StatelessWidget {
 
     if (onDelete != null) {
       buttons.add(IconButton(
-          onPressed: () => onDelete!(hash), icon: const Icon(Icons.delete)));
+          tooltip: "Remove song",
+          onPressed: () => onDelete!(hash),
+          icon: const Icon(Icons.delete)));
     }
 
     if (onDownload != null && !isDownloading) {
       buttons.add(IconButton(
+          tooltip: "Download song",
           onPressed: () => onDownload!(hash),
           icon: const Icon(Icons.download)));
     }

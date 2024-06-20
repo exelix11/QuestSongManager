@@ -60,7 +60,9 @@ class SongUpdateListPageState extends State<SongUpdateListPage> {
           title: const Text("Update songs"),
           actions: [
             IconButton(
-                onPressed: _downloadSelected, icon: const Icon(Icons.download)),
+                tooltip: "Download",
+                onPressed: _downloadSelected,
+                icon: const Icon(Icons.download)),
             PopupMenuButton(
                 itemBuilder: (context) => [
                       PopupMenuItem(

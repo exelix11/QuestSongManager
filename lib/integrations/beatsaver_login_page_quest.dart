@@ -58,7 +58,10 @@ class BeatSaverLoginPageQuestState extends State<BeatSaverLoginPageQuest> {
     return Scaffold(
         appBar: AppBar(
           actions: [
-            IconButton(onPressed: _quitPage, icon: const Icon(Icons.close)),
+            IconButton(
+                tooltip: "Cancel",
+                onPressed: _quitPage,
+                icon: const Icon(Icons.close)),
           ],
           title: const Text("BeatSaver Login"),
         ),
