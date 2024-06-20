@@ -317,10 +317,11 @@ class PlaylistDetailPageState extends State<PlaylistDetailPage> {
 
   Widget _buildSong(PlayListSong song) {
     if (App.modManager.songs.containsKey(song.hash)) {
+      var appSong = App.modManager.songs[song.hash]!;
       return SongWidget(
-        song: App.modManager.songs[song.hash]!,
+        song: appSong,
         extraIcon: _songDeleteButton(song),
-        onTap: (song) => _songDetails(context, song),
+        onTap: () => _songDetails(context, appSong),
       );
     } else {
       return UnknownSongWidget(

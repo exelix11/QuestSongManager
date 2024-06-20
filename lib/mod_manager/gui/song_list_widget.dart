@@ -1,3 +1,4 @@
+import 'package:bsaberquest/util/generic_list_widget.dart';
 import 'package:bsaberquest/util/gui_util.dart';
 import 'package:bsaberquest/main.dart';
 import 'package:bsaberquest/mod_manager/gui/simple_widgets.dart';
@@ -8,61 +9,71 @@ import 'package:flutter/material.dart';
 
 import '../model/playlist.dart';
 
-class SongListWidgetController {
-  Map<String, Song>? _initialSongs;
-  SongListWidgetController(this._initialSongs);
-  SongListWidgetState? _state;
+class SongListWidget extends StatelessWidget {
+  final SongListWidgetController renderer;
+  final GenericListController<Song> _listController;
 
-  void _subscribe(SongListWidgetState state) {
-    state.songListChanged(_initialSongs ?? {});
-    _initialSongs = null;
-    _state = state;
+  SongListWidget(this.renderer, {super.key})
+      : _listController = GenericListController.map(
+            renderer, renderer._initialContent ?? {}) {
+    renderer._initialContent = null;
   }
 
-  void songListChanged(Map<String, Song> songs) {
-    if (_state != null) {
-      _state!.songListChanged(songs);
-    } else {
-      _initialSongs = songs;
-    }
-  }
+  @override
+  Widget build(BuildContext context) =>
+      GenericList<Song>(controller: _listController);
 }
 
-class SongListWidgetState extends State<SongListWidget> {
-  final Set<String> _selection = <String>{};
-  final Set<String> _searchHits = <String>{};
-  final TextEditingController _searchController = TextEditingController();
+class SongListWidgetController extends GenericListRenderer<Song> {
+  Map<String, Song>? _initialContent;
 
-  List<Song> _allSongs = [];
-  Map<String, Song> _songMap = {};
+  SongListWidgetController(this._initialContent);
 
-  bool _showSearch = false;
-
-  @override
-  void initState() {
-    var controller = widget.controller;
-    controller._subscribe(this);
-    super.initState();
+  void songListChanged(Map<String, Song> songs) {
+    controller.setItems(songs);
   }
 
   @override
-  void dispose() {
-    super.dispose();
+  String getItemUniqueKey(Song item) => item.hash;
+
+  @override
+  bool queryItem(Song item, String query) =>
+      item.isValid && item.meta.query(query);
+
+  @override
+  Widget? renderItem(BuildContext context, Song item, bool isSelected,
+      bool isAnySelected, Function()? selectCallback) {
+    if (isAnySelected) {
+      return SongWidget(
+        song: item,
+        onTap: selectCallback,
+        highlight: isSelected,
+      );
+    } else {
+      return SongWidget(
+        song: item,
+        onTap: () => _openSongPage(context, item),
+        onLongPress: selectCallback,
+      );
+    }
   }
 
-  void _addOrRemoveSongFromSelection(Song song) {
-    var hash = song.hash;
+  @override
+  void configureAppButtons(BuildContext context, List<Widget> actions) {
+    if (controller.selection.isEmpty) {
+      return;
+    }
 
-    setState(() {
-      if (_selection.contains(hash)) {
-        _selection.remove(hash);
-      } else {
-        _selection.add(hash);
-      }
-    });
+    actions.add(IconButton(
+        icon: const Icon(Icons.playlist_add),
+        onPressed: () => _addSelectionToPlaylist(context)));
+
+    actions.add(IconButton(
+        icon: const Icon(Icons.delete),
+        onPressed: () => _deleteSelection(context)));
   }
 
-  void _openSongPage(Song song) {
+  void _openSongPage(BuildContext context, Song song) {
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -71,93 +82,20 @@ class SongListWidgetState extends State<SongListWidget> {
     );
   }
 
-  void _onSearchTextChanged(String text) {
-    setState(() {
-      _searchHits.clear();
-      _searchHits.addAll(_allSongs
-          .where((element) => element.isValid && element.meta.query(text))
-          .map((e) => e.hash));
-    });
-  }
-
-  Widget? _buildItem(BuildContext context, int index) {
-    var song = _allSongs[index];
-
-    if (_searchController.text.isNotEmpty) {
-      if (!_searchHits.contains(song.hash)) return Container();
-    }
-
-    if (_isAnySelected()) {
-      return SongWidget(
-        song: song,
-        onTap: _addOrRemoveSongFromSelection,
-        highlight: _selection.contains(song.hash),
-      );
-    } else {
-      return SongWidget(
-        song: song,
-        onTap: _openSongPage,
-        onLongPress: _addOrRemoveSongFromSelection,
-      );
-    }
-  }
-
-  bool _isAnySelected() {
-    return _selection.isNotEmpty;
-  }
-
-  void _selectAllInView() {
-    setState(() {
-      _selection.addAll(_allSongs.map((e) => e.hash));
-    });
-  }
-
-  void _clearSelection() {
-    setState(() {
-      _selection.clear();
-    });
-  }
-
-  void songListChanged(Map<String, Song> songs) {
-    setState(() {
-      _songMap = songs;
-      _allSongs = songs.values.toList();
-      _removeInvalidSongsFromSelection();
-    });
-  }
-
-  void _openSearch() {
-    setState(() {
-      _showSearch = true;
-    });
-  }
-
-  void _closeSearch() {
-    setState(() {
-      _searchController.text = "";
-      _showSearch = false;
-    });
-  }
-
-  void _removeInvalidSongsFromSelection() {
-    _selection.removeWhere((hash) => !_songMap.containsKey(hash));
-    _searchHits.removeWhere((hash) => !_songMap.containsKey(hash));
-  }
-
-  void _addSelectionToPlaylist() async {
+  void _addSelectionToPlaylist(BuildContext context) async {
     var playlist = await CommonPickers.pickPlaylist(context);
 
     if (playlist == null) {
       return;
     }
 
-    var songs = _selection
-        .map((e) => _songMap[e])
+    var songs = controller.selection
+        .map((e) => controller.items[e])
         .where((x) => x != null && x.isValid)
         .map((e) => PlayListSong(e!.hash, e.meta.songName))
         .toList();
 
-    _clearSelection();
+    controller.clearSelection();
 
     playlist.songs.addAll(songs);
 
@@ -169,20 +107,20 @@ class SongListWidgetState extends State<SongListWidget> {
     }
   }
 
-  void _deleteSelection() async {
+  void _deleteSelection(BuildContext context) async {
     var confirm = await GuiUtil.confirmChoice(context, "Delete songs",
-        "Are you sure you want to delete ${_selection.length} songs?");
+        "Are you sure you want to delete ${controller.selection.length} songs?");
     if (confirm == null || !confirm) {
       return;
     }
 
-    var toDelete = _selection
-        .map((e) => _songMap[e])
+    var toDelete = controller.selection
+        .map((e) => controller.items[e])
         .where((x) => x != null && x.isValid)
         .map((e) => e!)
         .toList();
 
-    _clearSelection();
+    controller.clearSelection();
 
     try {
       await App.modManager.deleteSongs(toDelete);
@@ -191,82 +129,4 @@ class SongListWidgetState extends State<SongListWidget> {
       App.showToast('Error $e');
     }
   }
-
-  AppBar _appbar() {
-    var titleText = "";
-
-    if (_isAnySelected()) {
-      titleText = "${_selection.length} selected";
-    } else if (_searchController.text.isNotEmpty) {
-      titleText = "${_searchHits.length} results";
-    } else {
-      titleText = "Found ${_allSongs.length} songs";
-    }
-
-    List<Widget> actions = [];
-
-    if (_showSearch) {
-      actions.add(IconButton(
-          icon: const Icon(Icons.search_off_outlined),
-          onPressed: _closeSearch));
-    } else {
-      actions.add(
-          IconButton(icon: const Icon(Icons.search), onPressed: _openSearch));
-    }
-
-    if (_isAnySelected()) {
-      actions.add(IconButton(
-          icon: const Icon(Icons.playlist_add),
-          onPressed: _addSelectionToPlaylist));
-      actions.add(IconButton(
-          icon: const Icon(Icons.delete), onPressed: _deleteSelection));
-
-      actions.add(IconButton(
-          icon: const Icon(Icons.clear), onPressed: _clearSelection));
-    } else {
-      actions.add(IconButton(
-          icon: const Icon(Icons.select_all), onPressed: _selectAllInView));
-    }
-
-    if (_showSearch) {
-      return AppBar(
-        title: Row(children: [
-          Text(titleText),
-          const SizedBox(width: 10),
-          Expanded(
-            child: TextField(
-              controller: _searchController,
-              onChanged: _onSearchTextChanged,
-              decoration: const InputDecoration(
-                hintText: 'Search',
-              ),
-            ),
-          ),
-        ]),
-        actions: actions,
-      );
-    } else {
-      return AppBar(title: Text(titleText), actions: actions);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: _appbar(),
-      body: ListView.builder(
-          padding: GuiUtil.defaultViewPadding(context),
-          itemCount: _allSongs.length,
-          itemBuilder: _buildItem),
-    );
-  }
-}
-
-class SongListWidget extends StatefulWidget {
-  const SongListWidget(this.controller, {super.key});
-
-  final SongListWidgetController controller;
-
-  @override
-  State<SongListWidget> createState() => SongListWidgetState();
 }

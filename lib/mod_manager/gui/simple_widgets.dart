@@ -17,8 +17,8 @@ class SongWidget extends StatelessWidget {
 
   final IconButton? extraIcon;
   final Song song;
-  final Function(Song)? onTap;
-  final Function(Song)? onLongPress;
+  final Function()? onTap;
+  final Function()? onLongPress;
   final bool highlight;
 
   void _onTapEvent() {
@@ -29,7 +29,7 @@ class SongWidget extends StatelessWidget {
     }
 
     if (onTap != null) {
-      onTap!(song);
+      onTap!();
     }
   }
 
@@ -40,7 +40,7 @@ class SongWidget extends StatelessWidget {
     }
 
     if (onLongPress != null) {
-      onLongPress!(song);
+      onLongPress!();
     }
   }
 
