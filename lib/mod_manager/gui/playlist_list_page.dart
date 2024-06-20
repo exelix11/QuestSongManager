@@ -182,7 +182,7 @@ class PlaylistListPageState extends State<PlaylistListPage> {
 
   Widget _bodyContent() {
     return Column(children: [
-      if (!showPlaylistIconFormatWarning) _iconFormatIssueWidget(),
+      if (showPlaylistIconFormatWarning) _iconFormatIssueWidget(),
       if (showPlaylistErrorList) _playlistErrors(),
       Expanded(child: _buildPlaylistList())
     ]);
