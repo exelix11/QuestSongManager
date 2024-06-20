@@ -480,6 +480,11 @@ class BeatSaverPlaylistMetadata {
   final bool private;
   final String downloadUrl;
 
+  bool query(String query) {
+    return name.toLowerCase().contains(query) ||
+        authorName.toLowerCase().contains(query);
+  }
+
   BeatSaverPlaylistMetadata(
       {required this.id,
       required this.name,

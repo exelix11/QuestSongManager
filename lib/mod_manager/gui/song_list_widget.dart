@@ -14,10 +14,7 @@ class SongListWidget extends StatelessWidget {
   final GenericListController<Song> _listController;
 
   SongListWidget(this.renderer, {super.key})
-      : _listController = GenericListController.map(
-            renderer, renderer._initialContent ?? {}) {
-    renderer._initialContent = null;
-  }
+      : _listController = GenericListController(renderer);
 
   @override
   Widget build(BuildContext context) =>
@@ -25,12 +22,12 @@ class SongListWidget extends StatelessWidget {
 }
 
 class SongListWidgetController extends GenericListRenderer<Song> {
-  Map<String, Song>? _initialContent;
+  final Function(BuildContext, Map<String, Song>) deleteSongs;
 
-  SongListWidgetController(this._initialContent);
-
-  void songListChanged(Map<String, Song> songs) {
-    controller.setItems(songs);
+  SongListWidgetController(Map<String, Song>? initial, this.deleteSongs) {
+    initialItems = initial;
+    itemName = "song";
+    itemsName = "songs";
   }
 
   @override
@@ -72,7 +69,12 @@ class SongListWidgetController extends GenericListRenderer<Song> {
     actions.add(IconButton(
         tooltip: "Delete selected items",
         icon: const Icon(Icons.delete),
-        onPressed: () => _deleteSelection(context)));
+        onPressed: () => _handleDeleteSelection(context)));
+  }
+
+  void _handleDeleteSelection(BuildContext context) {
+    deleteSongs(context, controller.getSelection());
+    controller.clearSelection();
   }
 
   void _openSongPage(BuildContext context, Song song) {
@@ -108,25 +110,20 @@ class SongListWidgetController extends GenericListRenderer<Song> {
       App.showToast('Error $e');
     }
   }
+}
 
-  void _deleteSelection(BuildContext context) async {
+class GenericSongControllerActions {
+  static void deleteSelected(
+      BuildContext context, Map<String, Song> songs) async {
     var confirm = await GuiUtil.confirmChoice(context, "Delete songs",
-        "Are you sure you want to delete ${controller.selection.length} songs?");
+        "Are you sure you want to delete ${songs.length} songs?");
     if (confirm == null || !confirm) {
       return;
     }
 
-    var toDelete = controller.selection
-        .map((e) => controller.items[e])
-        .where((x) => x != null && x.isValid)
-        .map((e) => e!)
-        .toList();
-
-    controller.clearSelection();
-
     try {
-      await App.modManager.deleteSongs(toDelete);
-      App.showToast('Deleted ${toDelete.length} songs');
+      await App.modManager.deleteSongs(songs.values.toList());
+      App.showToast('Deleted ${songs.length} songs');
     } catch (e) {
       App.showToast('Error $e');
     }

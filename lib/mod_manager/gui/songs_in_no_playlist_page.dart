@@ -9,7 +9,8 @@ class SongsInNoPlaylistState extends State<SongsInNoPlaylistPage> {
   late StreamSubscription _songListSubscription;
   late StreamSubscription _playlistSubscription;
 
-  final SongListWidgetController _controller = SongListWidgetController(null);
+  final SongListWidgetController _controller = SongListWidgetController(
+      null, GenericSongControllerActions.deleteSelected);
 
   final Set<String> _songsInNoPlaylist = {};
 
@@ -54,12 +55,17 @@ class SongsInNoPlaylistState extends State<SongsInNoPlaylistPage> {
       }
     }
 
-    _controller.songListChanged(songs);
+    _controller.trySetItems(songs);
   }
 
   @override
   Widget build(BuildContext context) {
-    return SongListWidget(_controller);
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text("Songs that are not in any playlist"),
+      ),
+      body: SongListWidget(_controller),
+    );
   }
 }
 

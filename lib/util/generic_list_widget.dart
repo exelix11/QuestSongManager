@@ -2,7 +2,13 @@ import 'package:bsaberquest/util/gui_util.dart';
 import 'package:flutter/material.dart';
 
 abstract class GenericListRenderer<T> {
+  Map<String, T>? initialItems;
+
   late GenericListController<T> controller;
+  bool subscribed = false;
+
+  String itemsName = "items";
+  String itemName = "item";
 
   String getItemUniqueKey(T item);
   bool queryItem(T item, String query);
@@ -11,25 +17,33 @@ abstract class GenericListRenderer<T> {
 
   void configureAppButtons(
       BuildContext context, List<Widget> configureAppButtons) {}
+
+  void trySetItems(Map<String, T> items) {
+    if (subscribed) {
+      controller.setItems(items);
+    } else {
+      initialItems = items;
+    }
+  }
+
+  void trySetList(Iterable<T> items) {
+    Map<String, T> mapped =
+        Map.fromIterable(items, key: (e) => getItemUniqueKey(e));
+    trySetItems(mapped);
+  }
 }
 
 class GenericListController<T> {
   GenericListState<T>? _state;
 
   final GenericListRenderer<T> render;
+
   late Map<String, T> items;
   Set<String> selection = {};
 
-  GenericListController(this.render);
-
-  factory GenericListController.map(
-      GenericListRenderer<T> render, Map<String, T> itemMap) {
-    return GenericListController(render)..setItems(itemMap);
-  }
-
-  factory GenericListController.list(
-      GenericListRenderer<T> render, Iterable<T> itemList) {
-    return GenericListController(render)..mapItems(itemList);
+  GenericListController(this.render) {
+    items = render.initialItems ?? {};
+    render.initialItems = null;
   }
 
   void setItems(Map<String, T> itemMap) {
@@ -37,20 +51,27 @@ class GenericListController<T> {
     _state?._itemsChanged();
   }
 
-  void mapItems(Iterable<T> itemList) {
-    items = Map.fromIterable(itemList, key: (e) => render.getItemUniqueKey(e));
-    _state?._itemsChanged();
-  }
-
   void _subscribe(GenericListState<T> state) {
     _state = state;
     render.controller = this;
+    render.subscribed = true;
     state._itemsChanged();
   }
 
   void clearSelection() {
     selection.clear();
     _state?._itemsChanged();
+  }
+
+  Map<String, T> getSelection() {
+    Map<String, T> map = {};
+
+    for (var key in selection) {
+      var item = items[key];
+      if (item != null) map[key] = item;
+    }
+
+    return map;
   }
 }
 
@@ -83,6 +104,7 @@ class GenericListState<T> extends State<GenericList<T>> {
   void _onSearchTextChanged(String text) {
     setState(() {
       _searchHits.clear();
+      text = text.toLowerCase();
       _searchHits.addAll(controller.items.values
           .where((e) => controller.render.queryItem(e, text))
           .map((e) => controller.render.getItemUniqueKey(e)));
@@ -160,7 +182,12 @@ class GenericListState<T> extends State<GenericList<T>> {
     } else if (_searchController.text.isNotEmpty) {
       titleText = "${_searchHits.length} results";
     } else {
-      titleText = "Found ${controller.items.length} items";
+      titleText = "Found ${controller.items.length} ";
+      if (controller.items.length == 1) {
+        titleText += controller.render.itemName;
+      } else {
+        titleText += controller.render.itemsName;
+      }
     }
 
     List<Widget> actions = [];
@@ -170,7 +197,7 @@ class GenericListState<T> extends State<GenericList<T>> {
           tooltip: "Close search",
           icon: const Icon(Icons.search_off_outlined),
           onPressed: _closeSearch));
-    } else {
+    } else if (controller.items.isNotEmpty) {
       actions.add(IconButton(
           tooltip: "Search",
           icon: const Icon(Icons.search),
@@ -182,7 +209,7 @@ class GenericListState<T> extends State<GenericList<T>> {
           tooltip: "Select none",
           icon: const Icon(Icons.clear),
           onPressed: _clearSelection));
-    } else if (widget.canSelect) {
+    } else if (widget.canSelect && controller.items.isNotEmpty) {
       actions.add(IconButton(
           tooltip: "Select all",
           icon: const Icon(Icons.select_all),
@@ -217,23 +244,53 @@ class GenericListState<T> extends State<GenericList<T>> {
     );
   }
 
+  Widget _buildListView() => ListView(
+          shrinkWrap: widget.fixedList,
+          physics:
+              widget.fixedList ? const NeverScrollableScrollPhysics() : null,
+          children: [
+            ...controller.items.keys.map((key) => _buildItem(context, key)),
+          ]);
+
+  Widget _pad(Widget base) {
+    if (widget.padded) {
+      return Padding(
+        padding: GuiUtil.defaultViewPadding(context),
+        child: base,
+      );
+    } else {
+      return base;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    return ListView(padding: GuiUtil.defaultViewPadding(context), children: [
-      _buildControlBar(),
-      ...controller.items.keys.map((key) => _buildItem(context, key)),
-    ]);
+    return _pad(
+      Column(
+        children: [
+          _buildControlBar(),
+          if (widget.fixedList)
+            _buildListView()
+          else
+            Expanded(child: _buildListView())
+        ],
+      ),
+    );
   }
 }
 
 class GenericList<T> extends StatefulWidget {
   final GenericListController<T> controller;
   final bool canSelect;
+  final bool fixedList;
+  final bool padded;
 
   const GenericList({
     super.key,
     required this.controller,
     this.canSelect = true,
+    this.fixedList = false,
+    this.padded = true,
   });
 
   @override

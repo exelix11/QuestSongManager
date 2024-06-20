@@ -105,6 +105,12 @@ class Playlist {
     return p;
   }
 
+  bool query(String query) {
+    return playlistTitle.toLowerCase().contains(query) ||
+        playlistAuthor.toLowerCase().contains(query) ||
+        (playlistDescription?.toLowerCase().contains(query) ?? false);
+  }
+
   Map<String, dynamic> toJson() {
     var obj = {
       'playlistTitle': playlistTitle,

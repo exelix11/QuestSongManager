@@ -6,8 +6,8 @@ import 'package:flutter/material.dart';
 
 class SongsListState extends State<SongsListPage> {
   late StreamSubscription _songListSubscription;
-  final SongListWidgetController _controller =
-      SongListWidgetController(App.modManager.songs);
+  final SongListWidgetController _controller = SongListWidgetController(
+      App.modManager.songs, GenericSongControllerActions.deleteSelected);
 
   @override
   void initState() {
@@ -26,7 +26,7 @@ class SongsListState extends State<SongsListPage> {
   }
 
   void _songListChanged() {
-    _controller.songListChanged(App.modManager.songs);
+    _controller.trySetItems(App.modManager.songs);
   }
 
   @override

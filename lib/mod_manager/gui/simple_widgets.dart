@@ -87,9 +87,12 @@ class UnknownSongWidget extends StatelessWidget {
   final String songName;
   final String hash;
   final bool isDownloading;
+  final bool highlight;
 
   final Function(String hash)? onDelete;
   final Function(String hash)? onDownload;
+  final Function()? onTap;
+  final Function()? onLongTap;
 
   const UnknownSongWidget(
       {super.key,
@@ -97,7 +100,10 @@ class UnknownSongWidget extends StatelessWidget {
       required this.hash,
       this.onDelete,
       this.onDownload,
-      this.isDownloading = false});
+      this.onTap,
+      this.onLongTap,
+      this.isDownloading = false,
+      this.highlight = false});
 
   Widget? _buidTrailing() {
     if (onDelete == null && onDownload == null) {
@@ -130,25 +136,40 @@ class UnknownSongWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListTile(
-      leading: const Icon(Icons.music_note),
-      title: Text(songName),
-      subtitle: Text("Unknown song ($hash})"),
-      trailing: _buidTrailing(),
-    );
+        leading: const Icon(Icons.music_note),
+        title: Text(songName),
+        subtitle: Text("Unknown song ($hash})"),
+        trailing: _buidTrailing(),
+        tileColor: highlight ? Colors.grey : null,
+        onTap: onTap,
+        onLongPress: onLongTap);
   }
 }
 
 class PlaylistWidget extends StatelessWidget {
   const PlaylistWidget(
-      {super.key, required this.playlist, this.onTap, this.extraIcon});
+      {super.key,
+      required this.playlist,
+      this.onTap,
+      this.extraIcon,
+      this.highlit = false,
+      this.onLongPress});
 
   final IconButton? extraIcon;
   final Playlist playlist;
   final Function(Playlist)? onTap;
+  final Function(Playlist)? onLongPress;
+  final bool highlit;
 
   void _onTapEvent() {
     if (onTap != null) {
       onTap!(playlist);
+    }
+  }
+
+  void _onLongPressEvent() {
+    if (onLongPress != null) {
+      onLongPress!(playlist);
     }
   }
 
@@ -163,6 +184,8 @@ class PlaylistWidget extends StatelessWidget {
         title: Text(playlist.playlistTitle),
         trailing: extraIcon,
         subtitle: Text("${playlist.songs.length} songs\n${playlist.fileName}"),
-        onTap: _onTapEvent);
+        tileColor: highlit ? Colors.grey : null,
+        onTap: _onTapEvent,
+        onLongPress: _onLongPressEvent);
   }
 }

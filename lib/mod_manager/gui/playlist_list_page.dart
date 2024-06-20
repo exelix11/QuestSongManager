@@ -1,15 +1,17 @@
 import 'dart:async';
 
+import 'package:bsaberquest/mod_manager/gui/playlist_list_widget.dart';
 import 'package:bsaberquest/util/gui_util.dart';
 import 'package:bsaberquest/main.dart';
 import 'package:bsaberquest/mod_manager/gui/playlist_detail_page.dart';
-import 'package:bsaberquest/mod_manager/gui/simple_widgets.dart';
 import 'package:bsaberquest/mod_manager/gui/songs_in_no_playlist_page.dart';
 import 'package:flutter/material.dart';
 
 import '../model/playlist.dart';
 
 class PlaylistListPageState extends State<PlaylistListPage> {
+  late PlaylistListWidgetController renderer;
+
   late StreamSubscription _playlistSubscription;
   late StreamSubscription _songListSubscription;
   bool showPlaylistErrorList = false;
@@ -26,10 +28,16 @@ class PlaylistListPageState extends State<PlaylistListPage> {
         App.modManager.playlists.values.any((x) => x.imageCompatibilityIssue);
 
     showPlaylistErrorList = App.modManager.errorPlaylists.isNotEmpty;
+
+    renderer.trySetItems(App.modManager.playlists);
   }
 
   @override
   void initState() {
+    renderer = PlaylistListWidgetController(
+        App.modManager.playlists, _onPlaylistTap,
+        deleteHandler: _onPlaylistDelete, dotsMenu: _buildDotsMenu);
+
     _playlistSubscription =
         App.modManager.playlistObservable.stream.listen((_) {
       setState(() {
@@ -53,13 +61,31 @@ class PlaylistListPageState extends State<PlaylistListPage> {
     super.dispose();
   }
 
-  void _onPlaylistTap(Playlist song) {
+  static void _onPlaylistTap(BuildContext context, Playlist song) {
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => PlaylistDetailPage(playlist: song),
       ),
     );
+  }
+
+  static void _onPlaylistDelete(
+      BuildContext context, Map<String, Playlist> playlists) async {
+    var confirm = await GuiUtil.confirmChoice(context, "Delete playlists",
+        "Are you sure you want to delete ${playlists.length} playlists?");
+
+    if (confirm == true) {
+      try {
+        for (var playlist in playlists.values) {
+          await App.modManager.deletePlaylist(playlist);
+        }
+
+        App.showToast('Deleted ${playlists.length} playlists');
+      } catch (e) {
+        App.showToast('Error $e');
+      }
+    }
   }
 
   void _onNewplaylistTap() async {
@@ -84,14 +110,7 @@ class PlaylistListPageState extends State<PlaylistListPage> {
     );
   }
 
-  Widget _buildPlaylistList() => ListView.builder(
-        padding: GuiUtil.defaultViewPadding(context),
-        itemCount: App.modManager.playlists.length,
-        itemBuilder: (context, index) {
-          var playlist = App.modManager.playlists.values.elementAt(index);
-          return PlaylistWidget(playlist: playlist, onTap: _onPlaylistTap);
-        },
-      );
+  Widget _buildPlaylistList() => PlaylistListWidget(renderer);
 
   String playlistIconWarningText() => App.isQuest
       ? "(for example they were taken from the PC version of the game)"
@@ -164,31 +183,22 @@ class PlaylistListPageState extends State<PlaylistListPage> {
     ]);
   }
 
+  Widget _buildDotsMenu() =>
+      PopupMenuButton(itemBuilder: (BuildContext context) {
+        return [
+          PopupMenuItem(
+            onTap: _onNewplaylistTap,
+            child: const Text('New playlist'),
+          ),
+          PopupMenuItem(
+            onTap: _onSongsInNoPlaylistTap,
+            child: const Text('Find songs that are not in any playlist'),
+          ),
+        ];
+      });
+
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-        appBar: AppBar(
-          actions: [
-            PopupMenuButton(
-              itemBuilder: (BuildContext context) {
-                return [
-                  PopupMenuItem(
-                    onTap: _onNewplaylistTap,
-                    child: const Text('New playlist'),
-                  ),
-                  PopupMenuItem(
-                    onTap: _onSongsInNoPlaylistTap,
-                    child:
-                        const Text('Find songs that are not in any playlist'),
-                  ),
-                ];
-              },
-            )
-          ],
-          title: const Text('Playlists'),
-        ),
-        body: _bodyContent());
-  }
+  Widget build(BuildContext context) => _bodyContent();
 }
 
 class PlaylistListPage extends StatefulWidget {
