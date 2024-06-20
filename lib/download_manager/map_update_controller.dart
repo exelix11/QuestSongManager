@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:bsaberquest/download_manager/beat_saver_api.dart';
 import 'package:bsaberquest/main.dart';
@@ -49,6 +50,11 @@ class MapUpdateController {
           ? AutoMapUpdateState.updatesAvailable
           : AutoMapUpdateState.none);
 
+      stateListener.add(state);
+    } on SocketException catch (_) {
+      // Socket exceptions may print the full url, so we'll just show a shorter error
+      state =
+          AutoUpdateResult(AutoMapUpdateState.none, error: "Connection error");
       stateListener.add(state);
     } catch (e) {
       state = AutoUpdateResult(AutoMapUpdateState.none, error: e.toString());
