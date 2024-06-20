@@ -12,7 +12,9 @@ class ListItemPickerPage<T> extends StatelessWidget {
   final Widget Function(BuildContext, ConfirmCallback, T) itemBuilder;
   final bool Function(String, T) filter;
 
-  late _ParametricPickerRenderer<T> _renderer;
+  final Map<String, T> _content = {};
+  final Map<T, String> _inverseLookup = {};
+
   late GenericListController<T> _controller;
 
   ListItemPickerPage(
@@ -21,11 +23,21 @@ class ListItemPickerPage<T> extends StatelessWidget {
       required this.itemBuilder,
       required this.title,
       required this.filter}) {
-    _renderer = _ParametricPickerRenderer(items, _itemBuilder, filter);
-    _controller = GenericListController(_renderer);
+    for (int i = 0; i < items.length; i++) {
+      _content[i.toString()] = items[i];
+      _inverseLookup[items[i]] = i.toString();
+    }
+
+    _controller = GenericListController(
+        items: _content,
+        getItemUniqueKey: (x) => _inverseLookup[x]!,
+        queryItem: (query, x) => filter(x, query),
+        renderItem: _itemBuilder,
+        canSelect: false);
   }
 
-  Widget _itemBuilder(BuildContext context, T item) {
+  Widget _itemBuilder(BuildContext context, GenericListController<T> controller,
+      T item, bool isSelected) {
     return itemBuilder(context, (x) => _confirmSelection(context, x), item);
   }
 
@@ -39,7 +51,7 @@ class ListItemPickerPage<T> extends StatelessWidget {
         appBar: AppBar(
           title: Text(title),
         ),
-        body: GenericList<T>(controller: _controller, canSelect: false));
+        body: GenericList<T>(controller: _controller));
   }
 }
 
@@ -68,33 +80,5 @@ class CommonPickers {
         itemBuilder: (context, confirm, playlist) {
           return PlaylistWidget(playlist: playlist, onTap: confirm);
         });
-  }
-}
-
-class _ParametricPickerRenderer<T> extends GenericListRenderer<T> {
-  final Map<String, T> _content = {};
-  final Map<T, String> _inverseLookup = {};
-  final Widget Function(BuildContext, T) itemBuilder;
-  final bool Function(String, T) filter;
-
-  _ParametricPickerRenderer(List<T> items, this.itemBuilder, this.filter) {
-    for (int i = 0; i < items.length; i++) {
-      _content[i.toString()] = items[i];
-      _inverseLookup[items[i]] = i.toString();
-    }
-
-    initialItems = _content;
-  }
-
-  @override
-  String getItemUniqueKey(T item) => _inverseLookup[item]!;
-
-  @override
-  bool queryItem(T item, String query) => filter(query, item);
-
-  @override
-  Widget? renderItem(BuildContext context, T item, bool isSelected,
-      bool isAnySelected, Function() selectCallback) {
-    return itemBuilder(context, item);
   }
 }

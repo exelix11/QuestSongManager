@@ -9,8 +9,8 @@ class SongsInNoPlaylistState extends State<SongsInNoPlaylistPage> {
   late StreamSubscription _songListSubscription;
   late StreamSubscription _playlistSubscription;
 
-  final SongListWidgetController _controller = SongListWidgetController(
-      null, GenericSongControllerActions.deleteSelected);
+  final SongListWidgetController _controller = SongListWidgetController(null,
+      deleteHandler: GenericSongControllerActions.deleteSelected);
 
   final Set<String> _songsInNoPlaylist = {};
 
@@ -55,7 +55,7 @@ class SongsInNoPlaylistState extends State<SongsInNoPlaylistPage> {
       }
     }
 
-    _controller.trySetItems(songs);
+    _controller.list.setItems(songs);
   }
 
   @override

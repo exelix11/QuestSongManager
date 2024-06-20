@@ -5,45 +5,44 @@ import 'package:flutter/material.dart';
 
 class PlaylistListWidget extends StatelessWidget {
   final PlaylistListWidgetController renderer;
-  final GenericListController<Playlist> _listController;
 
-  PlaylistListWidget(this.renderer, {super.key})
-      : _listController = GenericListController(renderer) {}
+  const PlaylistListWidget(this.renderer, {super.key});
 
   @override
   Widget build(BuildContext context) =>
-      GenericList<Playlist>(controller: _listController);
+      GenericList<Playlist>(controller: renderer.list);
 }
 
-class PlaylistListWidgetController extends GenericListRenderer<Playlist> {
+class PlaylistListWidgetController {
   final Function(BuildContext, Playlist)? onTap;
-  final Function(BuildContext, Map<String, Playlist>)? deleteHandler;
+  final Function(BuildContext, List<Playlist>)? deleteHandler;
   final Widget Function()? dotsMenu;
+
+  late GenericListController<Playlist> list;
 
   PlaylistListWidgetController(Map<String, Playlist> initial, this.onTap,
       {this.deleteHandler, this.dotsMenu}) {
-    initialItems = initial;
-    itemName = "playlist";
-    itemsName = "playlists";
+    list = GenericListController(
+        itemName: "playlist",
+        itemsName: "playlists",
+        items: initial,
+        getItemUniqueKey: (x) => x.fileName,
+        queryItem: (x, query) => x.query(query),
+        canSelect: true,
+        configureAppButtons: configureAppButtons,
+        renderItem: renderItem);
   }
 
-  @override
-  String getItemUniqueKey(Playlist item) => item.fileName;
-
-  @override
-  bool queryItem(Playlist item, String query) => item.query(query);
-
-  @override
   void configureAppButtons(
       BuildContext context, List<Widget> configureAppButtons) {
-    if (controller.selection.isNotEmpty) {
+    if (list.anySelected) {
       if (deleteHandler != null) {
         configureAppButtons.add(IconButton(
           tooltip: "Delete selected",
           icon: const Icon(Icons.delete),
           onPressed: () {
-            deleteHandler!(context, controller.getSelection());
-            controller.clearSelection();
+            deleteHandler!(context, list.selectedItems);
+            list.clearSelection();
           },
         ));
       }
@@ -54,20 +53,22 @@ class PlaylistListWidgetController extends GenericListRenderer<Playlist> {
     }
   }
 
-  @override
-  Widget? renderItem(BuildContext context, Playlist item, bool isSelected,
-      bool isAnySelected, Function() selectCallback) {
-    if (isAnySelected) {
+  Widget? renderItem(
+      BuildContext context,
+      GenericListController<Playlist> controller,
+      Playlist item,
+      bool isSelected) {
+    if (controller.anySelected) {
       return PlaylistWidget(
         playlist: item,
-        onTap: (e) => selectCallback(),
+        onTap: controller.toggleItemSelection,
         highlit: isSelected,
       );
     } else {
       return PlaylistWidget(
           playlist: item,
           onTap: onTap == null ? null : (e) => onTap!(context, item),
-          onLongPress: (e) => selectCallback());
+          onLongPress: controller.toggleItemSelection);
     }
   }
 }

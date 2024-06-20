@@ -9,55 +9,33 @@ import 'package:flutter/material.dart';
 
 import '../model/playlist.dart';
 
-class SongListWidget extends StatelessWidget {
-  final SongListWidgetController renderer;
-  final GenericListController<Song> _listController;
+class SongListWidgetController {
+  final Function(BuildContext, List<Song>)? deleteHandler;
+  late GenericListController<Song> list;
 
-  SongListWidget(this.renderer, {super.key})
-      : _listController = GenericListController(renderer);
-
-  @override
-  Widget build(BuildContext context) =>
-      GenericList<Song>(controller: _listController);
-}
-
-class SongListWidgetController extends GenericListRenderer<Song> {
-  final Function(BuildContext, Map<String, Song>) deleteSongs;
-
-  SongListWidgetController(Map<String, Song>? initial, this.deleteSongs) {
-    initialItems = initial;
-    itemName = "song";
-    itemsName = "songs";
+  SongListWidgetController(Map<String, Song>? initial, {this.deleteHandler}) {
+    list = GenericListController(
+        itemName: "song",
+        itemsName: "songs",
+        items: initial ?? {},
+        getItemUniqueKey: (x) => x.hash,
+        queryItem: (x, query) => x.isValid && x.meta.query(query),
+        canSelect: true,
+        configureAppButtons: _configureAppButtons,
+        renderItem: _renderItem);
   }
 
-  @override
-  String getItemUniqueKey(Song item) => item.hash;
-
-  @override
-  bool queryItem(Song item, String query) =>
-      item.isValid && item.meta.query(query);
-
-  @override
-  Widget? renderItem(BuildContext context, Song item, bool isSelected,
-      bool isAnySelected, Function()? selectCallback) {
-    if (isAnySelected) {
-      return SongWidget(
-        song: item,
-        onTap: selectCallback,
-        highlight: isSelected,
-      );
-    } else {
-      return SongWidget(
-        song: item,
-        onTap: () => _openSongPage(context, item),
-        onLongPress: selectCallback,
-      );
-    }
+  static void _openSongPage(BuildContext context, Song song) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => SongDetailPage(song: song),
+      ),
+    );
   }
 
-  @override
-  void configureAppButtons(BuildContext context, List<Widget> actions) {
-    if (controller.selection.isEmpty) {
+  void _configureAppButtons(BuildContext context, List<Widget> actions) {
+    if (!list.anySelected) {
       return;
     }
 
@@ -66,24 +44,29 @@ class SongListWidgetController extends GenericListRenderer<Song> {
         icon: const Icon(Icons.playlist_add),
         onPressed: () => _addSelectionToPlaylist(context)));
 
-    actions.add(IconButton(
-        tooltip: "Delete selected items",
-        icon: const Icon(Icons.delete),
-        onPressed: () => _handleDeleteSelection(context)));
+    if (deleteHandler != null) {
+      actions.add(IconButton(
+          tooltip: "Delete selected items",
+          icon: const Icon(Icons.delete),
+          onPressed: () => deleteHandler!(context, list.selectedItems)));
+    }
   }
 
-  void _handleDeleteSelection(BuildContext context) {
-    deleteSongs(context, controller.getSelection());
-    controller.clearSelection();
-  }
-
-  void _openSongPage(BuildContext context, Song song) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => SongDetailPage(song: song),
-      ),
-    );
+  Widget _renderItem(BuildContext context,
+      GenericListController<Song> controller, Song item, bool isSelected) {
+    if (controller.anySelected) {
+      return SongWidget(
+        song: item,
+        onTap: () => controller.toggleItemSelection(item),
+        highlight: isSelected,
+      );
+    } else {
+      return SongWidget(
+        song: item,
+        onTap: () => _openSongPage(context, item),
+        onLongPress: () => controller.toggleItemSelection(item),
+      );
+    }
   }
 
   void _addSelectionToPlaylist(BuildContext context) async {
@@ -93,13 +76,9 @@ class SongListWidgetController extends GenericListRenderer<Song> {
       return;
     }
 
-    var songs = controller.selection
-        .map((e) => controller.items[e])
-        .where((x) => x != null && x.isValid)
-        .map((e) => PlayListSong(e!.hash, e.meta.songName))
-        .toList();
-
-    controller.clearSelection();
+    var songs = list.selectedItems
+        .where((e) => e.isValid)
+        .map((e) => PlayListSong.fromSong(e));
 
     playlist.songs.addAll(songs);
 
@@ -108,13 +87,25 @@ class SongListWidgetController extends GenericListRenderer<Song> {
       App.showToast('Added ${songs.length} songs to ${playlist.playlistTitle}');
     } catch (e) {
       App.showToast('Error $e');
+      return;
     }
+
+    list.clearSelection();
   }
 }
 
+class SongListWidget extends StatelessWidget {
+  final SongListWidgetController controller;
+
+  const SongListWidget(this.controller, {super.key});
+
+  @override
+  Widget build(BuildContext context) =>
+      GenericList<Song>(controller: controller.list);
+}
+
 class GenericSongControllerActions {
-  static void deleteSelected(
-      BuildContext context, Map<String, Song> songs) async {
+  static void deleteSelected(BuildContext context, List<Song> songs) async {
     var confirm = await GuiUtil.confirmChoice(context, "Delete songs",
         "Are you sure you want to delete ${songs.length} songs?");
     if (confirm == null || !confirm) {
@@ -122,7 +113,7 @@ class GenericSongControllerActions {
     }
 
     try {
-      await App.modManager.deleteSongs(songs.values.toList());
+      await App.modManager.deleteSongs(songs);
       App.showToast('Deleted ${songs.length} songs');
     } catch (e) {
       App.showToast('Error $e');

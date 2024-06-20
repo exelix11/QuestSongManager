@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:collection';
+import 'dart:io';
 
 import 'package:bsaberquest/download_manager/beat_saver_api.dart';
 import 'package:bsaberquest/util/generic_list_widget.dart';
@@ -18,7 +19,7 @@ class PlaylistDetailPageState extends State<PlaylistDetailPage> {
   late StreamSubscription _playlistSubscription;
   late StreamSubscription _songListSubscription;
   final HashSet<String> _downloadingSongs = HashSet();
-  late _PlaylistSongListController _listController;
+  late GenericListController<PlayListSong> _listController;
 
   bool _savePlaylistOnLeave = false;
   bool _hasMissingSongs = false;
@@ -26,7 +27,13 @@ class PlaylistDetailPageState extends State<PlaylistDetailPage> {
 
   @override
   void initState() {
-    _listController = _PlaylistSongListController(onRenderItem: _buildSong);
+    _listController = GenericListController(
+        items: {},
+        getItemUniqueKey: (x) => x.hash,
+        queryItem: (x, query) => x.songName.toLowerCase().contains(query),
+        renderItem: _buildSong,
+        configureAppButtons: _buildExtraActions,
+        canSelect: true);
 
     _playlistSubscription =
         App.modManager.playlistObservable.stream.listen((_) {
@@ -50,6 +57,31 @@ class PlaylistDetailPageState extends State<PlaylistDetailPage> {
       _hasMissingSongs = widget.playlist.songs
           .any((song) => !App.modManager.songs.containsKey(song.hash));
     });
+  }
+
+  void _buildExtraActions(BuildContext context, List<Widget> actions) {
+    if (_isDownloadingAll) {
+      return;
+    }
+
+    if (!_listController.anySelected) {
+      return;
+    }
+
+    actions.add(IconButton(
+        tooltip: "Remove selected songs",
+        icon: const Icon(Icons.delete),
+        onPressed: _deleteSelected));
+  }
+
+  void _deleteSelected() {
+    for (var song in _listController.selectedItems) {
+      widget.playlist.songs.remove(song);
+    }
+
+    _savePlaylistOnLeave = true;
+    _listController.clearSelection();
+    _updateState();
   }
 
   @override
@@ -136,7 +168,7 @@ class PlaylistDetailPageState extends State<PlaylistDetailPage> {
     }
 
     _savePlaylistOnLeave = true;
-    setState(() {});
+    _updateState();
   }
 
   void _deletePlaylist() async {
@@ -323,17 +355,22 @@ class PlaylistDetailPageState extends State<PlaylistDetailPage> {
       onPressed: () => _removeSongByHash(song.hash),
       icon: const Icon(Icons.delete));
 
-  Widget _buildSong(BuildContext context, PlayListSong song, bool isSelected,
-      bool isAnySelected, Function() selectCallback) {
+  Widget _buildSong(
+      BuildContext context,
+      GenericListController<PlayListSong> controller,
+      PlayListSong song,
+      bool isSelected) {
+    selectCall() => controller.toggleItemSelection(song);
+
     if (App.modManager.songs.containsKey(song.hash)) {
       var appSong = App.modManager.songs[song.hash]!;
       return SongWidget(
         song: appSong,
         extraIcon: _songDeleteButton(song),
-        onTap: isAnySelected
-            ? selectCallback
+        onTap: controller.anySelected
+            ? () => selectCall
             : () => _songDetails(context, appSong),
-        onLongPress: isAnySelected ? null : selectCallback,
+        onLongPress: controller.anySelected ? null : selectCall,
         highlight: isSelected,
       );
     } else {
@@ -344,8 +381,8 @@ class PlaylistDetailPageState extends State<PlaylistDetailPage> {
         onDownload: _isDownloadingAll ? null : _tryDownloadMissingSong,
         isDownloading: _downloadingSongs.contains(song.hash),
         highlight: isSelected,
-        onTap: isAnySelected ? selectCallback : null,
-        onLongTap: isAnySelected ? null : selectCallback,
+        onTap: controller.anySelected ? selectCall : null,
+        onLongTap: controller.anySelected ? null : selectCall,
       );
     }
   }
@@ -403,7 +440,8 @@ class PlaylistDetailPageState extends State<PlaylistDetailPage> {
           SliverAppBar(
               actions: [_buildPopupMenu()],
               expandedHeight: 300.0,
-              pinned: false,
+              pinned: !Platform
+                  .isAndroid, // On android we can click back at any time, on pc having the button on the top is better
               flexibleSpace: FlexibleSpaceBar(
                 background: PlaylistWidget.playlistIcon(widget.playlist),
               )),
@@ -421,7 +459,9 @@ class PlaylistDetailPageState extends State<PlaylistDetailPage> {
               )
             ],
           )),
-          SliverToBoxAdapter(child: _PlaylistSongListWidget(_listController)),
+          SliverToBoxAdapter(
+              child: GenericList<PlayListSong>(
+                  controller: _listController, fixedList: true)),
         ],
       ),
     );
@@ -435,42 +475,4 @@ class PlaylistDetailPage extends StatefulWidget {
 
   @override
   PlaylistDetailPageState createState() => PlaylistDetailPageState();
-}
-
-class _PlaylistSongListWidget extends StatelessWidget {
-  final GenericListController<PlayListSong> _controller;
-
-  _PlaylistSongListWidget(_PlaylistSongListController renderer)
-      : _controller = GenericListController(renderer);
-
-  @override
-  Widget build(BuildContext context) {
-    return GenericList<PlayListSong>(controller: _controller, fixedList: true);
-  }
-}
-
-class _PlaylistSongListController extends GenericListRenderer<PlayListSong> {
-  final Widget Function(
-      BuildContext context,
-      PlayListSong item,
-      bool isSelected,
-      bool isAnySelected,
-      Function() selectCallback) onRenderItem;
-
-  _PlaylistSongListController({required this.onRenderItem});
-
-  @override
-  String getItemUniqueKey(PlayListSong item) => item.hash;
-
-  @override
-  bool queryItem(PlayListSong item, String query) {
-    return item.songName.toLowerCase().contains(query);
-  }
-
-  @override
-  Widget? renderItem(BuildContext context, PlayListSong item, bool isSelected,
-      bool isAnySelected, Function() selectCallback) {
-    return onRenderItem(
-        context, item, isSelected, isAnySelected, selectCallback);
-  }
 }

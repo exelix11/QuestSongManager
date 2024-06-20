@@ -29,7 +29,7 @@ class PlaylistListPageState extends State<PlaylistListPage> {
 
     showPlaylistErrorList = App.modManager.errorPlaylists.isNotEmpty;
 
-    renderer.trySetItems(App.modManager.playlists);
+    renderer.list.setItems(App.modManager.playlists);
   }
 
   @override
@@ -71,13 +71,13 @@ class PlaylistListPageState extends State<PlaylistListPage> {
   }
 
   static void _onPlaylistDelete(
-      BuildContext context, Map<String, Playlist> playlists) async {
+      BuildContext context, List<Playlist> playlists) async {
     var confirm = await GuiUtil.confirmChoice(context, "Delete playlists",
         "Are you sure you want to delete ${playlists.length} playlists?");
 
     if (confirm == true) {
       try {
-        for (var playlist in playlists.values) {
+        for (var playlist in playlists) {
           await App.modManager.deletePlaylist(playlist);
         }
 

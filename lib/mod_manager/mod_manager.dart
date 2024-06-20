@@ -453,7 +453,7 @@ class ModManager {
     playlist.imageCompatibilityIssue = false;
   }
 
-  Future deleteSongs(List<Song> songs) async {
+  Future deleteSongs(Iterable<Song> songs) async {
     await reloadIfNeeded();
 
     Set<Playlist> affectedPlaylists = {};
