@@ -113,14 +113,15 @@ class PlaylistListPageState extends State<PlaylistListPage> {
   Widget _buildPlaylistList() => PlaylistListWidget(renderer);
 
   String playlistIconWarningText() => App.isQuest
-      ? "(for example they were taken from the PC version of the game)"
-      : "(for example they were taken from the Quest version of the game)";
+      ? "This can happen when the playlists have been copied from the PC version of the game."
+      : "This can happen when the playlists have been copied from the Quest version of the game.";
 
   void _fixPlaylistIcons() async {
     var list = App.modManager.playlists.values
         .where((x) => x.imageCompatibilityIssue)
         .toList();
 
+    // Simply writing the playlist is enough as the platform specific code will re-encode the image as needed
     await App.modManager.applyMultiplePlaylistChanges(list);
   }
 
@@ -133,23 +134,16 @@ class PlaylistListPageState extends State<PlaylistListPage> {
 
   Widget _iconFormatIssueWidget() => Padding(
         padding: GuiUtil.defaultViewPadding(context),
-        child: Column(
-          children: [
-            Text(
-                'Some playlists have wrong icon data which will prevent the game from displaying them ${playlistIconWarningText()}.'),
-            const SizedBox(height: 10),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                ElevatedButton(
-                    onPressed: _fixPlaylistIcons, child: const Text('Fix now')),
-                const SizedBox(width: 40),
-                ElevatedButton(
-                    onPressed: _ignorePlaylistIcons,
-                    child: const Text('Ignore')),
-              ],
-            )
-          ],
+        child: ListTile(
+          title: const Text('Invalid playlist icon data'),
+          subtitle: Text(
+              'Some playlists have wrong icon data and will appear without one in game. ${playlistIconWarningText()}\nClick this notification to fix them automatically.'),
+          onTap: _fixPlaylistIcons,
+          trailing: IconButton(
+            tooltip: "Ignore",
+            icon: const Icon(Icons.close),
+            onPressed: _ignorePlaylistIcons,
+          ),
         ),
       );
 
