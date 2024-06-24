@@ -105,10 +105,10 @@ class DownloadsTabState extends State<DownloadsTab> {
 
   Widget _pcDownloadTextInfo() {
     return ListTile(
-        title: const Text('beatsaver:// protocol handler'),
+        title: const Text('OneClick install support'),
         leading: const Icon(Icons.computer),
         subtitle: const Text(
-            "The in-app browser is not available on PC. Download songs from Chrome and Firefox using the beatsaber:// protocol by installing the protocol handler"),
+            "Download songs and playlists directly from your web browser using the 'OneClick' protocol (beatsaver:// and bsplaylist://)"),
         trailing: SizedBox(
             width: 150,
             child: IconButton(

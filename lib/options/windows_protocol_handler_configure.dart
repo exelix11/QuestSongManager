@@ -7,7 +7,7 @@ class ProtocolHandlerConfiguration {
   static Future _removeRpcHandler() async {
     try {
       await RpcManager.removeRpcHandler();
-      App.showToast("Protocol handler removed");
+      App.showToast("OneClick protocol handler removed");
     } catch (e) {
       App.showToast("Error: $e");
     }
@@ -16,7 +16,7 @@ class ProtocolHandlerConfiguration {
   static Future _installRpcHandler() async {
     try {
       await RpcManager.installRpcHandler();
-      App.showToast("Protocol handler installed");
+      App.showToast("OneClick protocol handler installed");
     } catch (e) {
       App.showToast("Error: $e");
     }
@@ -24,15 +24,15 @@ class ProtocolHandlerConfiguration {
 
   static Future configure(BuildContext context) async {
     var add = _ConfigEntry(
-        title: "Install the protocol handler",
+        title: "Install the OneClick protocol handler",
         description:
-            "Click here to install or reset the protocol handler.\nBy installing the protocol handler, you can click on installation links on BeatSaver and other webistes in your browsers and they will automatically be handled by this application. You can disable this feature at any time.",
+            "Click here to install or reset the OneClick protocol handler.\nBy installing the protocol handler, you can click on installation links on BeatSaver and other webistes in your browsers and they will automatically be handled by this application. You can disable this feature at any time.",
         callback: _installRpcHandler,
         icon: const Icon(Icons.install_desktop));
 
     var remove = _ConfigEntry(
-        title: "Remove the protocol handler",
-        description: "Click here to uninstall the protocol handler.",
+        title: "Install the OneClick protocol handler",
+        description: "Click here to uninstall the protocol handler. This app will not handle OneClick installs anymore until you reinstall it.",
         callback: _removeRpcHandler,
         icon: const Icon(Icons.delete_outline));
 
@@ -41,7 +41,7 @@ class ProtocolHandlerConfiguration {
     var picked = await CommonPickers.pick(
         context,
         ListItemPickerPage<_ConfigEntry>(
-          title: "Configure the protocol handler",
+          title: "OneClick install configuration",
           items: entries,
           showListHeading: false,
           itemBuilder: (context, confirm, entry) => ListTile(
