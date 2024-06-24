@@ -7,7 +7,6 @@ import 'package:bsaberquest/options/windows_protocol_handler_configure.dart';
 import 'package:bsaberquest/util/gui_util.dart';
 import 'package:bsaberquest/main.dart';
 import 'package:bsaberquest/mod_manager/gui/simple_widgets.dart';
-import 'package:bsaberquest/rpc/rpc_manager.dart';
 import 'package:bsaberquest/util/list_item_picker_page.dart';
 import 'package:flutter/material.dart';
 

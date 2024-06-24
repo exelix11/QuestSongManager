@@ -9,8 +9,14 @@ typedef ConfigureAppButtonsCallback = void Function(
     BuildContext context, List<Widget> configureAppButtons);
 
 class GenericListController<T> {
-  GenericListState<T>? _state;
+  // Internal state
+  GenericListBodyState<T>? _body;
+  GenericListHeadState<T>? _head;
 
+  final Set<String> _searchHits = <String>{};
+  bool _isSearching = false;
+
+  // public state
   final String itemsName;
   final String itemName;
 
@@ -51,7 +57,8 @@ class GenericListController<T> {
 
   void setItems(Map<String, T> itemMap) {
     items = itemMap;
-    _state?._itemsChanged();
+    _removeInvalidSongsFromSelection();
+    _updateState();
   }
 
   void toggleItemSelection(T item) {
@@ -61,17 +68,30 @@ class GenericListController<T> {
     } else {
       selection.add(key);
     }
-    _state?._itemsChanged();
+    _updateState();
   }
 
-  void _subscribe(GenericListState<T> state) {
-    _state = state;
-    state._itemsChanged();
+  void _subscribeBody(GenericListBodyState<T> state) {
+    _body = state;
+  }
+
+  void _subscribeHead(GenericListHeadState<T> state) {
+    _head = state;
+  }
+
+  void _removeInvalidSongsFromSelection() {
+    selection.removeWhere((key) => !items.containsKey(key));
+    _searchHits.removeWhere((key) => !items.containsKey(key));
+  }
+
+  void _updateState() {
+    _body?._updateState();
+    _head?._updateState();
   }
 
   void clearSelection() {
     selection.clear();
-    _state?._itemsChanged();
+    _updateState();
   }
 
   Map<String, T> getSelection() {
@@ -86,30 +106,15 @@ class GenericListController<T> {
   }
 }
 
-class GenericListState<T> extends State<GenericList<T>> {
+class GenericListBodyState<T> extends State<GenericListBody<T>> {
   final GenericListController<T> controller;
-  final Set<String> _searchHits = <String>{};
-  final TextEditingController _searchController = TextEditingController();
-  bool _showSearch = false;
 
-  GenericListState({required this.controller});
+  GenericListBodyState({required this.controller});
 
   @override
   void initState() {
-    controller._subscribe(this);
+    controller._subscribeBody(this);
     super.initState();
-  }
-
-  void _onSearchTextChanged(String text) {
-    if (controller.queryItem == null) return;
-
-    setState(() {
-      _searchHits.clear();
-      text = text.toLowerCase();
-      _searchHits.addAll(controller.items.values
-          .where((e) => controller.queryItem!(e, text))
-          .map((e) => controller.getItemUniqueKey(e)));
-    });
   }
 
   Widget _buildItem(BuildContext context, String key) {
@@ -119,8 +124,8 @@ class GenericListState<T> extends State<GenericList<T>> {
       return Container(); // This should never happen, but we do it to silence dart warnings
     }
 
-    if (_searchController.text.isNotEmpty) {
-      if (!_searchHits.contains(key)) return Container();
+    if (controller._isSearching) {
+      if (!controller._searchHits.contains(key)) return Container();
     }
 
     var isSelected = controller.canSelect &&
@@ -133,21 +138,68 @@ class GenericListState<T> extends State<GenericList<T>> {
     return rendered;
   }
 
+  void _updateState() {
+    setState(() {});
+  }
+
+  Widget _buildListView() => ListView(
+          shrinkWrap: widget.fixedList,
+          physics:
+              widget.fixedList ? const NeverScrollableScrollPhysics() : null,
+          children: [
+            ...controller.items.keys.map((key) => _buildItem(context, key)),
+          ]);
+
+  @override
+  Widget build(BuildContext context) {
+    return _buildListView();
+  }
+}
+
+class GenericListHeadState<T> extends State<GenericListHead<T>> {
+  final GenericListController<T> controller;
+  final TextEditingController _searchController = TextEditingController();
+  bool _showSearch = false;
+
+  GenericListHeadState({required this.controller});
+
+  @override
+  void initState() {
+    controller._subscribeHead(this);
+    super.initState();
+  }
+
+  void _updateState() {
+    setState(() {});
+  }
+
+  void _onSearchTextChanged(String text) {
+    if (controller.queryItem == null) return;
+
+    controller._isSearching = text.isNotEmpty;
+
+    controller._searchHits.clear();
+    if (controller._isSearching) {
+      text = text.toLowerCase();
+      controller._searchHits.addAll(controller.items.values
+          .where((e) => controller.queryItem!(e, text))
+          .map((e) => controller.getItemUniqueKey(e)));
+    }
+
+    controller._updateState();
+  }
+
   void _selectAllInView() {
-    setState(() {
-      controller.selection.addAll(
-          _searchController.text.isEmpty ? controller.items.keys : _searchHits);
-    });
+    controller.selection.addAll(_searchController.text.isEmpty
+        ? controller.items.keys
+        : controller._searchHits);
+
+    controller._updateState();
   }
 
   void _clearSelection() {
-    setState(() {
-      controller.selection.clear();
-    });
-  }
-
-  void _itemsChanged() {
-    _removeInvalidSongsFromSelection();
+    controller.selection.clear();
+    controller._updateState();
   }
 
   void _openSearch() {
@@ -157,27 +209,21 @@ class GenericListState<T> extends State<GenericList<T>> {
   }
 
   void _closeSearch() {
+    _searchController.text = "";
+    _onSearchTextChanged("");
     setState(() {
-      _searchController.text = "";
       _showSearch = false;
     });
   }
 
-  void _removeInvalidSongsFromSelection() {
-    controller.selection
-        .removeWhere((key) => !controller.items.containsKey(key));
-    _searchHits.removeWhere((key) => !controller.items.containsKey(key));
-
-    setState(() {});
-  }
-
-  Widget _buildControlBar() {
+  @override
+  Widget build(BuildContext context) {
     var titleText = "";
 
     if (controller.canSelect && controller.selection.isNotEmpty) {
       titleText = "${controller.selection.length} selected";
     } else if (_searchController.text.isNotEmpty) {
-      titleText = "${_searchHits.length} results";
+      titleText = "${controller._searchHits.length} results";
     } else {
       titleText = "Found ${controller.items.length} ";
       if (controller.items.length == 1) {
@@ -243,43 +289,32 @@ class GenericListState<T> extends State<GenericList<T>> {
       ],
     );
   }
-
-  Widget _buildListView() => ListView(
-          shrinkWrap: widget.fixedList,
-          physics:
-              widget.fixedList ? const NeverScrollableScrollPhysics() : null,
-          children: [
-            ...controller.items.keys.map((key) => _buildItem(context, key)),
-          ]);
-
-  Widget _pad(Widget base) {
-    if (widget.padded) {
-      return Padding(
-        padding: GuiUtil.defaultViewPadding(context),
-        child: base,
-      );
-    } else {
-      return base;
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return _pad(
-      Column(
-        children: [
-          _buildControlBar(),
-          if (widget.fixedList)
-            _buildListView()
-          else
-            Expanded(child: _buildListView())
-        ],
-      ),
-    );
-  }
 }
 
-class GenericList<T> extends StatefulWidget {
+class GenericListHead<T> extends StatefulWidget {
+  final GenericListController<T> controller;
+  const GenericListHead(this.controller, {super.key});
+
+  @override
+  GenericListHeadState<T> createState() =>
+      // ignore: no_logic_in_create_state
+      GenericListHeadState<T>(controller: controller);
+}
+
+class GenericListBody<T> extends StatefulWidget {
+  final GenericListController<T> controller;
+  final bool fixedList;
+
+  const GenericListBody(
+      {super.key, required this.controller, this.fixedList = false});
+
+  @override
+  GenericListBodyState<T> createState() =>
+      // ignore: no_logic_in_create_state
+      GenericListBodyState<T>(controller: controller);
+}
+
+class GenericList<T> extends StatelessWidget {
   final GenericListController<T> controller;
   final bool fixedList;
   final bool padded;
@@ -291,8 +326,29 @@ class GenericList<T> extends StatefulWidget {
     this.padded = true,
   });
 
+  Widget _pad(BuildContext context, Widget base) {
+    if (padded) {
+      return Padding(
+        padding: GuiUtil.defaultViewPadding(context),
+        child: base,
+      );
+    } else {
+      return base;
+    }
+  }
+
   @override
-  GenericListState<T> createState() =>
-      // ignore: no_logic_in_create_state
-      GenericListState<T>(controller: controller);
+  Widget build(BuildContext context) => _pad(
+      context,
+      Column(
+        children: [
+          GenericListHead(controller),
+          Expanded(
+            child: GenericListBody(
+              controller: controller,
+              fixedList: fixedList,
+            ),
+          )
+        ],
+      ));
 }

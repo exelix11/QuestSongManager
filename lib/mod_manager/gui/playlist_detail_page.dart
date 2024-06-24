@@ -440,8 +440,8 @@ class PlaylistDetailPageState extends State<PlaylistDetailPage> {
           SliverAppBar(
               actions: [_buildPopupMenu()],
               expandedHeight: 300.0,
-              pinned: !Platform
-                  .isAndroid, // On android we can click back at any time, on pc having the button on the top is better
+              pinned: true,
+              title: GenericListHead<PlayListSong>(_listController),
               flexibleSpace: FlexibleSpaceBar(
                 background: PlaylistWidget.playlistIcon(widget.playlist),
               )),
@@ -460,7 +460,7 @@ class PlaylistDetailPageState extends State<PlaylistDetailPage> {
             ],
           )),
           SliverToBoxAdapter(
-              child: GenericList<PlayListSong>(
+              child: GenericListBody<PlayListSong>(
                   controller: _listController, fixedList: true)),
         ],
       ),

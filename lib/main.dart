@@ -4,7 +4,6 @@ import 'package:bsaberquest/app_initialization_page.dart';
 import 'package:bsaberquest/download_manager/map_update_controller.dart';
 import 'package:bsaberquest/download_manager/beat_saver_api.dart';
 import 'package:bsaberquest/download_manager/downloader.dart';
-import 'package:bsaberquest/main_page.dart';
 import 'package:bsaberquest/options/preferences.dart';
 import 'package:bsaberquest/rpc/rpc_manager.dart';
 import 'package:bsaberquest/rpc/schema_parser.dart';
