@@ -57,7 +57,10 @@ class Playlist {
 
   Map<String, dynamic>? customData;
 
-  String? get syncUrl => customData?['syncURL'] as String?;
+  String? get _syncUrl => customData?['syncURL'] as String?;
+
+  String? get syncUrl =>
+      _syncUrl != null && _syncUrl!.isNotEmpty ? _syncUrl : null;
 
   set syncUrl(String? value) {
     customData ??= {};

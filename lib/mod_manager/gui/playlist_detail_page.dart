@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:collection';
-import 'dart:io';
 
 import 'package:bsaberquest/download_manager/beat_saver_api.dart';
 import 'package:bsaberquest/util/generic_list_widget.dart';
@@ -28,6 +27,8 @@ class PlaylistDetailPageState extends State<PlaylistDetailPage> {
   @override
   void initState() {
     _listController = GenericListController(
+        itemName: "song",
+        itemsName: "songs",
         items: {},
         getItemUniqueKey: (x) => x.hash,
         queryItem: (x, query) => x.query(query),
@@ -338,15 +339,19 @@ class PlaylistDetailPageState extends State<PlaylistDetailPage> {
 
   List<Widget> _buildMetadata() {
     return [
-      Text(widget.playlist.fileName),
+      Text(widget.playlist.playlistTitle, style: const TextStyle(fontSize: 24)),
       Text(widget.playlist.playlistAuthor),
-      Text("${widget.playlist.songs.length} songs"),
+      Text(widget.playlist.fileName),
+      if (_hasMissingSongs)
+        const Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.warning),
+            Text("Some songs are missing"),
+          ],
+        ),
       if (widget.playlist.syncUrl != null)
-        const Text("This playlist is linked to the cloud"),
-      if (widget.playlist.playlistDescription != null)
-        Text(widget.playlist.playlistDescription!),
-      if (widget.playlist.syncUrl != null)
-        Text("Update url ${widget.playlist.syncUrl}"),
+        Text("This playlist is linked to ${widget.playlist.syncUrl}"),
     ];
   }
 
@@ -443,25 +448,48 @@ class PlaylistDetailPageState extends State<PlaylistDetailPage> {
               pinned: true,
               title: GenericListHead<PlayListSong>(_listController),
               flexibleSpace: FlexibleSpaceBar(
-                background: PlaylistWidget.playlistIcon(widget.playlist),
+                background: Padding(
+                    padding: const EdgeInsets.only(top: 40),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        SizedBox(
+                            height: 220,
+                            child:
+                                PlaylistWidget.playlistIcon(widget.playlist)),
+                        SizedBox(
+                            width: MediaQuery.of(context).size.width * 0.5,
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: _buildMetadata(),
+                            ))
+                      ],
+                    )),
+                collapseMode: CollapseMode.pin,
               )),
-          SliverList(
-              delegate: SliverChildListDelegate(
-            [
-              Center(
-                child: Padding(
-                  padding: const EdgeInsets.only(left: 10, right: 10),
-                  child: Column(children: [
-                    ..._buildMetadata(),
-                    const Divider(),
-                  ]),
-                ),
-              )
-            ],
-          )),
+          if (widget.playlist.playlistDescription != null)
+            SliverList(
+                delegate: SliverChildListDelegate(
+              [
+                Center(
+                  child: Padding(
+                    padding: GuiUtil.defaultViewPadding(context),
+                    child: Column(children: [
+                      const Divider(),
+                      Text(widget.playlist.playlistDescription!),
+                      const Divider(),
+                    ]),
+                  ),
+                )
+              ],
+            )),
           SliverToBoxAdapter(
-              child: GenericListBody<PlayListSong>(
-                  controller: _listController, fixedList: true)),
+              child: Padding(
+            padding: GuiUtil.defaultViewPadding(context),
+            child: GenericListBody<PlayListSong>(
+                controller: _listController, fixedList: true),
+          )),
         ],
       ),
     );
