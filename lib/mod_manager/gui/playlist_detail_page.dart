@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:collection';
 
 import 'package:bsaberquest/download_manager/beat_saver_api.dart';
+import 'package:bsaberquest/mod_manager/gui/playlist_reorder_page.dart';
 import 'package:bsaberquest/util/generic_list_widget.dart';
 import 'package:bsaberquest/util/gui_util.dart';
 import 'package:bsaberquest/main.dart';
@@ -337,6 +338,15 @@ class PlaylistDetailPageState extends State<PlaylistDetailPage> {
     }
   }
 
+  void _reorderPlaylist(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => PlaylistReorderPage(widget.playlist),
+      ),
+    );
+  }
+
   List<Widget> _buildMetadata() {
     return [
       Text(widget.playlist.playlistTitle, style: const TextStyle(fontSize: 24)),
@@ -371,7 +381,7 @@ class PlaylistDetailPageState extends State<PlaylistDetailPage> {
       var appSong = App.modManager.songs[song.hash]!;
       return SongWidget(
         song: appSong,
-        extraIcon: _songDeleteButton(song),
+        extraIcons: [_songDeleteButton(song)],
         onTap: controller.anySelected
             ? () => selectCall
             : () => _songDetails(context, appSong),
@@ -382,9 +392,19 @@ class PlaylistDetailPageState extends State<PlaylistDetailPage> {
       return UnknownSongWidget(
         hash: song.hash,
         songName: song.songName,
-        onDelete: _removeSongByHash,
-        onDownload: _isDownloadingAll ? null : _tryDownloadMissingSong,
-        isDownloading: _downloadingSongs.contains(song.hash),
+        extraIcons: [
+          IconButton(
+              tooltip: "Remove song",
+              onPressed: () => _removeSongByHash(song.hash),
+              icon: const Icon(Icons.delete)),
+          if (!_isDownloadingAll && !_downloadingSongs.contains(song.hash))
+            IconButton(
+                tooltip: "Download song",
+                onPressed: () => _tryDownloadMissingSong(song.hash),
+                icon: const Icon(Icons.download)),
+          if (_downloadingSongs.contains(song.hash))
+            const CircularProgressIndicator(),
+        ],
         highlight: isSelected,
         onTap: controller.anySelected ? selectCall : null,
         onLongTap: controller.anySelected ? null : selectCall,
@@ -432,6 +452,11 @@ class PlaylistDetailPageState extends State<PlaylistDetailPage> {
         PopupMenuItem(
           onTap: _deletePlaylist,
           child: const Text('Delete this playlist'),
+        ),
+
+        PopupMenuItem(
+          onTap: () => _reorderPlaylist(context),
+          child: const Text('Change song order'),
         ),
       ],
     );

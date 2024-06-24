@@ -11,11 +11,13 @@ class SongWidget extends StatelessWidget {
       {super.key,
       required this.song,
       this.onTap,
-      this.extraIcon,
+      this.extraIcons,
       this.onLongPress,
-      this.highlight = false});
+      this.highlight = false,
+      this.alwaysShowExtraIcons = false});
 
-  final IconButton? extraIcon;
+  final bool alwaysShowExtraIcons;
+  final List<Widget>? extraIcons;
   final Song song;
   final Function()? onTap;
   final Function()? onLongPress;
@@ -61,12 +63,27 @@ class SongWidget extends StatelessWidget {
     return const Icon(Icons.music_note);
   }
 
-  Widget? _extraIconWidget() {
-    if (!song.isValid) {
+  static Widget? _widgetForExtraIcons(List<Widget>? extraIcons) {
+    if (extraIcons == null || extraIcons.isEmpty) {
       return null;
     }
 
-    return extraIcon;
+    if (extraIcons.length == 1) {
+      return extraIcons.first;
+    }
+
+    return SizedBox(
+        width: 100,
+        child: Row(
+            mainAxisAlignment: MainAxisAlignment.end, children: extraIcons));
+  }
+
+  Widget? _extraIconWidget() {
+    if (!song.isValid && !alwaysShowExtraIcons) {
+      return null;
+    }
+
+    return _widgetForExtraIcons(extraIcons);
   }
 
   @override
@@ -76,8 +93,8 @@ class SongWidget extends StatelessWidget {
       title: Text(song.meta.songName),
       trailing: _extraIconWidget(),
       subtitle: Text(song.prettyMetaInfo()),
-      onTap: _onTapEvent,
-      onLongPress: _onLongPressEvent,
+      onTap: onTap == null ? null : _onTapEvent,
+      onLongPress: onLongPress == null ? null : _onLongPressEvent,
       tileColor: highlight ? Theme.of(context).focusColor : null,
     );
   }
@@ -86,11 +103,9 @@ class SongWidget extends StatelessWidget {
 class UnknownSongWidget extends StatelessWidget {
   final String songName;
   final String hash;
-  final bool isDownloading;
   final bool highlight;
+  final List<Widget>? extraIcons;
 
-  final Function(String hash)? onDelete;
-  final Function(String hash)? onDownload;
   final Function()? onTap;
   final Function()? onLongTap;
 
@@ -98,40 +113,10 @@ class UnknownSongWidget extends StatelessWidget {
       {super.key,
       required this.songName,
       required this.hash,
-      this.onDelete,
-      this.onDownload,
       this.onTap,
       this.onLongTap,
-      this.isDownloading = false,
-      this.highlight = false});
-
-  Widget? _buidTrailing() {
-    if (onDelete == null && onDownload == null) {
-      return null;
-    }
-
-    List<Widget> buttons = [];
-
-    if (onDelete != null) {
-      buttons.add(IconButton(
-          tooltip: "Remove song",
-          onPressed: () => onDelete!(hash),
-          icon: const Icon(Icons.delete)));
-    }
-
-    if (onDownload != null && !isDownloading) {
-      buttons.add(IconButton(
-          tooltip: "Download song",
-          onPressed: () => onDownload!(hash),
-          icon: const Icon(Icons.download)));
-    }
-
-    if (isDownloading) {
-      buttons.add(const CircularProgressIndicator());
-    }
-
-    return Wrap(children: buttons);
-  }
+      this.highlight = false,
+      this.extraIcons});
 
   @override
   Widget build(BuildContext context) {
@@ -139,7 +124,7 @@ class UnknownSongWidget extends StatelessWidget {
         leading: const Icon(Icons.music_note),
         title: Text(songName),
         subtitle: Text("Unknown song ($hash})"),
-        trailing: _buidTrailing(),
+        trailing: SongWidget._widgetForExtraIcons(extraIcons),
         tileColor: highlight ? Theme.of(context).focusColor : null,
         onTap: onTap,
         onLongPress: onLongTap);
