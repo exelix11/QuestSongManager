@@ -33,7 +33,39 @@ Future main(List<String> arguments) async {
   runApp(const App());
 }
 
-class App extends StatelessWidget {
+class _AppState extends State<App> {
+  ThemeMode _themeMode = ThemeMode.light;
+
+  @override
+  void initState() {
+    super.initState();
+
+    if (App.preferences.darkTheme) _themeMode = ThemeMode.dark;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      scaffoldMessengerKey: App._scaffoldMessengerKey,
+      title: 'Song manager',
+      themeMode: _themeMode,
+      darkTheme: ThemeData.dark(),
+      theme: ThemeData.light(),
+      home: const AppInitializationPage(),
+    );
+  }
+
+  static _AppState of(BuildContext context) =>
+      context.findAncestorStateOfType<_AppState>()!;
+
+  void changeTheme(ThemeMode themeMode) {
+    setState(() {
+      _themeMode = themeMode;
+    });
+  }
+}
+
+class App extends StatefulWidget {
   static const bool _devSimulateQuest = false;
   static const String versionName = "1.4-dev";
 
@@ -64,19 +96,12 @@ class App extends StatelessWidget {
     });
   }
 
+  static void changeTheme(BuildContext context, ThemeMode themeMode) {
+    _AppState.of(context).changeTheme(themeMode);
+  }
+
   const App({super.key});
 
-  // This widget is the root of your application.
   @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      scaffoldMessengerKey: _scaffoldMessengerKey,
-      title: 'Song manager',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        useMaterial3: true,
-      ),
-      home: const AppInitializationPage(),
-    );
-  }
+  State<StatefulWidget> createState() => _AppState();
 }

@@ -117,7 +117,15 @@ class OptionsPageState extends State<OptionsPage> {
     });
   }
 
-  List<Widget> _utilOptions() => [
+  void _darkThemeChange(BuildContext context, bool? value) {
+    value ??= false;
+    App.changeTheme(context, value ? ThemeMode.dark : ThemeMode.light);
+    setState(() {
+      App.preferences.darkTheme = value!;
+    });
+  }
+
+  List<Widget> _utilOptions(BuildContext context) => [
         ListTile(
           leading: const Icon(Icons.refresh),
           title: const Text("Reload songs and playlists"),
@@ -129,6 +137,11 @@ class OptionsPageState extends State<OptionsPage> {
             title: const Text("Manage browser bookmarks"),
             onTap: _openBookmarksManager,
           ),
+        CheckboxListTile(
+          title: const Text("Dark theme"),
+          value: App.preferences.darkTheme,
+          onChanged: (value) => _darkThemeChange(context, value),
+        ),
         CheckboxListTile(
           value: App.preferences.removeFromPlaylistOnSongDelete,
           onChanged: _removeFromPlaylistOnSongDeleteChange,
@@ -380,7 +393,7 @@ class OptionsPageState extends State<OptionsPage> {
           ..._beatSaverIntegration(),
           const Divider(),
           ..._permissionCheckWidget(),
-          ..._utilOptions(),
+          ..._utilOptions(context),
           _installLocationOptions(),
           const Divider(),
           ..._buildAdvancedOptions(),

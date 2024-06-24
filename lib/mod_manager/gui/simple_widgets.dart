@@ -78,7 +78,7 @@ class SongWidget extends StatelessWidget {
       subtitle: Text(song.prettyMetaInfo()),
       onTap: _onTapEvent,
       onLongPress: _onLongPressEvent,
-      tileColor: highlight ? Colors.grey : null,
+      tileColor: highlight ? Theme.of(context).focusColor : null,
     );
   }
 }
@@ -140,7 +140,7 @@ class UnknownSongWidget extends StatelessWidget {
         title: Text(songName),
         subtitle: Text("Unknown song ($hash})"),
         trailing: _buidTrailing(),
-        tileColor: highlight ? Colors.grey : null,
+        tileColor: highlight ? Theme.of(context).focusColor : null,
         onTap: onTap,
         onLongPress: onLongTap);
   }
@@ -184,7 +184,7 @@ class PlaylistWidget extends StatelessWidget {
         title: Text(playlist.playlistTitle),
         trailing: extraIcon,
         subtitle: Text("${playlist.songs.length} songs\n${playlist.fileName}"),
-        tileColor: highlit ? Colors.grey : null,
+        tileColor: highlit ? Theme.of(context).focusColor : null,
         onTap: _onTapEvent,
         onLongPress: _onLongPressEvent);
   }

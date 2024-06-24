@@ -139,6 +139,14 @@ class PreferencesManager {
   set lastMapUpdateCheck(DateTime time) {
     _prefs.setString("last_map_update_check", time.toIso8601String());
   }
+
+  bool get darkTheme {
+    return _prefs.getBool("dark_theme") ?? false;
+  }
+
+  set darkTheme(bool value) {
+    _prefs.setBool("dark_theme", value);
+  }
 }
 
 enum PreferredCustomSongFolder { auto, songLoader, songCore }
