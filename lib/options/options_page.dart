@@ -158,9 +158,6 @@ class OptionsPageState extends State<OptionsPage> {
   void _openInstallLocationOptions() async {
     if (!App.isQuest) throw Exception("This should not be called on PC");
 
-    // Initialize version cache in case it was not done yet
-    await BeatSaberVersionDetector.getBeatSaberVersion();
-
     var pref = App.preferences.preferredCustomSongFolder;
 
     if (mounted) {
@@ -276,7 +273,7 @@ class OptionsPageState extends State<OptionsPage> {
         },
       ),
       ListTile(
-        title: const Text("Rehash all songs hashes"),
+        title: const Text("Rehash all songs"),
         subtitle: const Text(
             "This will recalculate the hash of all the songs. This is useful if you have modified the songs files. It may take some time"),
         onTap: _rehashAllSongs,

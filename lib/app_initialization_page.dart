@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:bsaberquest/main.dart';
 import 'package:bsaberquest/main_page.dart';
 import 'package:bsaberquest/mod_manager/mod_manager.dart';
+import 'package:bsaberquest/mod_manager/version_detector.dart';
 import 'package:bsaberquest/options/game_path_picker_page.dart';
 import 'package:bsaberquest/options/options_page.dart';
 import 'package:bsaberquest/options/quest_install_location_options.dart';
@@ -79,6 +80,7 @@ class AppInitializationPageState extends State<AppInitializationPage> {
 
     if (App.isQuest) {
       try {
+        await BeatSaberVersionDetector.initializeBeatSaberVersion();
         var preferred = App.preferences.preferredCustomSongFolder;
         await QuestInstallLocationOptions.setLocation(preferred);
       } catch (e) {
@@ -98,8 +100,7 @@ class AppInitializationPageState extends State<AppInitializationPage> {
           App.showToast("Initialization error: $e");
           return;
         }
-      }
-      else {
+      } else {
         App.showToast("Initialization error: $e");
         return;
       }

@@ -352,14 +352,7 @@ class PlaylistDetailPageState extends State<PlaylistDetailPage> {
       Text(widget.playlist.playlistTitle, style: const TextStyle(fontSize: 24)),
       Text(widget.playlist.playlistAuthor),
       Text(widget.playlist.fileName),
-      if (_hasMissingSongs)
-        const Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.warning),
-            Text("Some songs are missing"),
-          ],
-        ),
+      if (_hasMissingSongs) const WarningLabel("Some songs are missing"),
       if (widget.playlist.syncUrl != null)
         Text("This playlist is linked to ${widget.playlist.syncUrl}"),
     ];

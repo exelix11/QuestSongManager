@@ -67,24 +67,35 @@ class SongDetailPage extends StatelessWidget {
 
   Widget _beatSaberVersionWarn() {
     // On PC this warning is not needed
-    if (!App.isQuest) return const SizedBox(height: 30);
+    if (!App.isQuest) return const SizedBox();
 
     // For new beat saber versions no need to show a warning
     if (BeatSaberVersionDetector.cachedResult ==
         BeatSaberVersion.v_1_35_OrNewer) {
-      return const SizedBox(height: 30);
+      return const SizedBox();
     }
 
     // No warning for the old location or if we failed to get it
     var location = App.modManager.getLocationForSong(song);
     if (location != CustomLevelLocation.songCore) {
-      return const SizedBox(height: 30);
+      return const SizedBox();
     }
 
-    return const Padding(
-        padding: EdgeInsets.all(20),
-        child: Text(
-            "This song is installed in the 'SongCore' folder, Beat Saber versions older than 1.35 will not be able to load it."));
+    var warningText = "This song is installed in the 'SongCore' folder, ";
+
+    // Do we know the exact version ?
+    if (BeatSaberVersionDetector.cachedResult ==
+        BeatSaberVersion.olderThan_v_1_35) {
+      warningText +=
+          "your BeatSaber version is too old and will not be able to load it";
+    } else {
+      // If not we just show a generic warning
+      warningText +=
+          "BeatSaber versions older than 1.35 will not be able to load it.";
+    }
+
+    return Padding(
+        padding: const EdgeInsets.all(14), child: WarningLabel(warningText));
   }
 
   void _openPlaylistDetails(BuildContext context, Playlist playlist) {

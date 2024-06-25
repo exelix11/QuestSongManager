@@ -174,3 +174,22 @@ class PlaylistWidget extends StatelessWidget {
         onLongPress: _onLongPressEvent);
   }
 }
+
+class WarningLabel extends StatelessWidget {
+  final String text;
+
+  const WarningLabel(this.text, {super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        const Icon(Icons.warning),
+        const SizedBox(width: 10),
+        Flexible(child: Text(text)),
+      ],
+    );
+  }
+}

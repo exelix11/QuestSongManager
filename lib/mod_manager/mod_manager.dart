@@ -589,14 +589,26 @@ class ModManager {
   }
 
   CustomLevelLocation? getLocationForSong(Song song) {
-    return CustomLevelLocation.songCore;
-    // if (song.folderPath.startsWith("$gameRoot/$_songLoaderlevelsPath")) {
-    //   return CustomLevelLocation.songLoader;
-    // } else if (song.folderPath.startsWith("$gameRoot/$_songCoreLevelsPath")) {
-    //   return CustomLevelLocation.songCore;
-    // }
+    // This only matters on quest
+    if (paths is! QuestPaths) {
+      return null;
+    }
 
-    // return null;
+    final path = song.folderPath.toLowerCase();
+
+    final quest = paths as QuestPaths;
+
+    final root = gameRoot.toLowerCase();
+    final songLoader = quest._songLoaderlevelsPath.toLowerCase();
+    final songCore = quest._songCoreLevelsPath.toLowerCase();
+
+    if (path.contains("$root/$songLoader")) {
+      return CustomLevelLocation.songLoader;
+    } else if (path.contains("$root/$songCore")) {
+      return CustomLevelLocation.songCore;
+    }
+
+    return null;
   }
 }
 

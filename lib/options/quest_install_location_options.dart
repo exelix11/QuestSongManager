@@ -19,9 +19,7 @@ class QuestInstallLocationOptions {
     }
 
     if (folder == PreferredCustomSongFolder.auto) {
-      var version = await BeatSaberVersionDetector.getBeatSaberVersion();
-
-      switch (version) {
+      switch (BeatSaberVersionDetector.cachedResult) {
         // In case detection fails, default to the most compatible location
         case BeatSaberVersion.unknown:
         case BeatSaberVersion.olderThan_v_1_35:
@@ -31,7 +29,8 @@ class QuestInstallLocationOptions {
           paths.preferredInstallLocation = CustomLevelLocation.songCore;
           break;
         default:
-          throw Exception('Unsupported enum value: $version');
+          throw Exception(
+              'Unsupported enum value: ${BeatSaberVersionDetector.cachedResult}');
       }
     } else {
       paths.preferredInstallLocation =
