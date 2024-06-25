@@ -28,8 +28,8 @@ class PreferencesManager {
   BrowserPreferences _getDefaults() {
     return BrowserPreferences()
       ..bookmarks = [
-        WebBookmark('bsaber.info', 'https://bsaber.info/'),
-        WebBookmark('beatsaver.com', 'https://beatsaver.com/'),
+        WebBookmark('BeastSaber', 'https://bsaber.com/'),
+        WebBookmark('BeatSaver', 'https://beatsaver.com/'),
       ];
   }
 

@@ -7,7 +7,7 @@ Starting with 1.4 an experimental build for Windows is also available.
 
 - Manage songs and playlists
 - Download songs and playlists from websites that support the `beatsaver://` and `bsplaylist://` protocols, examples are
-	- https://bsaber.info/
+	- https://bsaber.com/
 	- https://beatsaver.com/
 - Download songs directly to playlists
 - Add your own sources to the browser bookmarks
