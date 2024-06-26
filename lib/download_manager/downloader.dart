@@ -223,6 +223,9 @@ class DownloadManager {
   // These may differ for example when we are requesting an hash for an old map and the api returns a newer version
   Future<DownloadResult> _downloadAndAddMap(String? expectedHash,
       String downloadHash, String downloadUrl, String? playlistName) async {
+    expectedHash = expectedHash?.toLowerCase();
+    downloadHash = downloadHash.toLowerCase();
+
     if (App.modManager.hasSong(downloadHash)) {
       // The map is already downloaded but if the the new hash is different than the old one we are trying to update an outdated playlist
       if (expectedHash != null && expectedHash != downloadHash) {

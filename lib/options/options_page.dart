@@ -8,7 +8,6 @@ import 'package:bsaberquest/util/gui_util.dart';
 import 'package:bsaberquest/integrations/beatsaver_integration.dart';
 import 'package:bsaberquest/main.dart';
 import 'package:bsaberquest/mod_manager/mod_manager.dart';
-import 'package:bsaberquest/mod_manager/version_detector.dart';
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 

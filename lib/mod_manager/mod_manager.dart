@@ -395,7 +395,7 @@ class ModManager {
 
     // When we are expecting a hash different than the one we calculated, it's probably because a song was updated
     // Update all its references in playlists and remove the old song
-    if (expectedHash != null && hash != expectedHash) {
+    if (expectedHash != null && hash != expectedHash.toLowerCase()) {
       await _handleSongUpdate(expectedHash, hash);
     }
 

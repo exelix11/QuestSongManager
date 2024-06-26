@@ -455,7 +455,7 @@ class MapVersion {
 
   factory MapVersion.fromJson(Map<String, dynamic> json) {
     return MapVersion(
-      hash: json["hash"] as String,
+      hash: (json["hash"] as String).toLowerCase(),
       coverUrl: json["coverURL"] as String?,
       downloadUrl: json["downloadURL"] as String,
       state: json["state"] as String,
@@ -527,7 +527,7 @@ class BeatSaverMapInfo {
       {String? requestKey, String? requestHash}) {
     return BeatSaverMapInfo(
       requestKey: requestKey,
-      requestHash: requestHash,
+      requestHash: requestHash?.toLowerCase(),
       lastUpdate: json["lastPublishedAt"] as String,
       name: json["name"] as String,
       id: json["id"] as String,
