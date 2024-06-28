@@ -52,25 +52,25 @@ class PlaylistDownloadPageState extends State<PlaylistDownloadPage> {
       if (res == null || !res) {
         return;
       }
-
-      var sameName =
-          await App.modManager.getPlaylistByName(_playlist.playlistTitle);
-
-      if (sameName != null) await App.modManager.deletePlaylist(sameName);
-
-      App.downloadManager
-          .startPlaylistDownload(
-              _playlist,
-              _songsToDownload.entries
-                  .where((x) => x.value)
-                  .map((e) => e.key)
-                  .toSet(),
-              widget.webSource)
-          .future
-          // Do not wait here
-          .then((value) => App.showToast(value.message))
-          .onError((error, stackTrace) => App.showToast("Error: $error"));
     }
+
+    var sameName =
+        await App.modManager.getPlaylistByName(_playlist.playlistTitle);
+
+    if (sameName != null) await App.modManager.deletePlaylist(sameName);
+
+    App.downloadManager
+        .startPlaylistDownload(
+            _playlist,
+            _songsToDownload.entries
+                .where((x) => x.value)
+                .map((e) => e.key)
+                .toSet(),
+            widget.webSource)
+        .future
+        // Do not wait here
+        .then((value) => App.showToast(value.message))
+        .onError((error, stackTrace) => App.showToast("Error: $error"));
   }
 
   Future _doDownloadPlaylist() async {
@@ -123,7 +123,7 @@ class PlaylistDownloadPageState extends State<PlaylistDownloadPage> {
       Flexible(
           child: Padding(
         padding: const EdgeInsets.fromLTRB(10, 0, 10, 0),
-        child: Column(children: [
+        child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
           Text("Playlist name: ${_playlist.playlistTitle}"),
           if (!_playlistNameValid)
             Column(children: [
@@ -146,58 +146,61 @@ class PlaylistDownloadPageState extends State<PlaylistDownloadPage> {
     ]);
   }
 
-  Widget _getContent() {
-    return Column(children: [
-      Padding(
-          padding: const EdgeInsets.fromLTRB(40, 0, 40, 0),
-          child: _playlistMetadata()),
-      const SizedBox(
-        height: 10,
-      ),
-      Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          ElevatedButton(
-              onPressed: _selectAll, child: const Text("Select all")),
-          ElevatedButton(
-              onPressed: _selectNone, child: const Text("Select none"))
-        ],
-      ),
-      Expanded(
-          child: ListView.builder(
-              itemCount: _playlist.songs.length,
-              itemBuilder: (x, i) {
-                var song = _playlist.songs[i];
-                return CheckboxListTile(
-                    title: Text(song.songName),
-                    value: _songsToDownload[song.hash],
-                    onChanged: (value) {
-                      setState(() {
-                        _songsToDownload[song.hash] = value!;
-                      });
-                    });
-              })),
-      const SizedBox(
-        height: 4,
-      ),
-      Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-        ElevatedButton(
-            onPressed: _downloadPlaylist,
-            child: const Text("Download playlist"))
-      ]),
-      const SizedBox(
-        height: 4,
-      ),
+  Widget _buildMainBody() {
+    return CustomScrollView(slivers: [
+      SliverAppBar(
+          actions: [
+            IconButton(
+                onPressed: _downloadPlaylist,
+                icon: const Row(
+                  children: [
+                    Icon(Icons.download),
+                    SizedBox(width: 5),
+                    Text("Download"),
+                    SizedBox(width: 5),
+                  ],
+                )),
+            PopupMenuButton(
+                itemBuilder: (context) => [
+                      PopupMenuItem(
+                          onTap: _selectAll, child: const Text("Select all")),
+                      PopupMenuItem(
+                          onTap: _selectNone, child: const Text("Select none"))
+                    ])
+          ],
+          expandedHeight: 300,
+          stretch: true,
+          pinned: true,
+          title: const Text("Download playlist"),
+          flexibleSpace: FlexibleSpaceBar(
+              collapseMode: CollapseMode.pin,
+              background: Padding(
+                  padding: const EdgeInsets.only(top: 60),
+                  child: _playlistMetadata()))),
+      SliverList(
+          delegate: SliverChildBuilderDelegate(
+        (context, index) {
+          var song = _playlist.songs[index];
+          return CheckboxListTile(
+              title: Text(song.songName),
+              value: _songsToDownload[song.hash],
+              onChanged: (value) {
+                setState(() {
+                  _songsToDownload[song.hash] = value ?? false;
+                });
+              });
+        },
+        childCount: _playlist.songs.length,
+      )),
     ]);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Download playlist"),
-      ),
-      body: FutureBuilder(
+        body: Padding(
+      padding: GuiUtil.defaultViewPadding(context),
+      child: FutureBuilder(
         future: _pendingAction,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
@@ -212,10 +215,10 @@ class PlaylistDownloadPageState extends State<PlaylistDownloadPage> {
             );
           }
 
-          return _getContent();
+          return _buildMainBody();
         },
       ),
-    );
+    ));
   }
 }
 

@@ -454,7 +454,7 @@ class MapVersion {
   bool get isStatePublished => state == "Published";
 
   factory MapVersion.fromJson(Map<String, dynamic> json) {
-    return MapVersion(
+    return MapVersion._(
       hash: (json["hash"] as String).toLowerCase(),
       coverUrl: json["coverURL"] as String?,
       downloadUrl: json["downloadURL"] as String,
@@ -463,7 +463,7 @@ class MapVersion {
     );
   }
 
-  MapVersion(
+  MapVersion._(
       {required this.hash,
       required this.coverUrl,
       required this.downloadUrl,
@@ -525,7 +525,7 @@ class BeatSaverMapInfo {
 
   factory BeatSaverMapInfo.fromJson(Map<String, dynamic> json,
       {String? requestKey, String? requestHash}) {
-    return BeatSaverMapInfo(
+    return BeatSaverMapInfo._(
       requestKey: requestKey,
       requestHash: requestHash?.toLowerCase(),
       lastUpdate: json["lastPublishedAt"] as String,
@@ -537,7 +537,7 @@ class BeatSaverMapInfo {
     );
   }
 
-  BeatSaverMapInfo(
+  BeatSaverMapInfo._(
       {this.requestKey,
       this.requestHash,
       required this.lastUpdate,
