@@ -75,8 +75,7 @@ class PlaylistDownloadPageState extends State<PlaylistDownloadPage> {
 
   Future _doDownloadPlaylist() async {
     await _downloadNew();
-    if (!mounted) throw Exception("Failed to leave the page");
-    Navigator.pop(context);
+    if (mounted) Navigator.pop(context);
   }
 
   void _renamePlaylist() async {

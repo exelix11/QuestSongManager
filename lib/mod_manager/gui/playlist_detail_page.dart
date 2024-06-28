@@ -130,6 +130,8 @@ class PlaylistDetailPageState extends State<PlaylistDetailPage> {
 
     var res = await Future.wait(pending);
 
+    if (!mounted) return;
+
     if (res.any((e) => e.error)) {
       App.showToast("Failed to download some songs");
     } else {
@@ -149,9 +151,11 @@ class PlaylistDetailPageState extends State<PlaylistDetailPage> {
     var download = App.downloadManager.downloadMapByHash(hash, null, null);
     var res = await download.future;
 
-    setState(() {
-      _downloadingSongs.remove(hash);
-    });
+    if (mounted) {
+      setState(() {
+        _downloadingSongs.remove(hash);
+      });
+    }
 
     App.showToast(res.message);
   }
@@ -238,8 +242,8 @@ class PlaylistDetailPageState extends State<PlaylistDetailPage> {
     }
 
     App.modManager.applyPlaylistChanges(widget.playlist);
-    setState(() {});
 
+    setState(() {});
     App.showToast("Download completed");
   }
 
