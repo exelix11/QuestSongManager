@@ -46,7 +46,7 @@ class DownloadManager {
 
   void addTestElements() {
     for (int i = 0; i < 10; i++) {
-      var item = SongDownloadItem("Test $i", null, null);
+      var item = SongDownloadItem("Test $i", null, true, null);
       item.statusMessage = "Test message";
       if (i > 5) {
         item.status = ItemDownloadStatus.done;
@@ -62,9 +62,8 @@ class DownloadManager {
   }
 
   void _beginBackgroundOperation(
-      DownloadItem item, Future<DownloadResult> Function() action,
-      {bool skipQueue = false}) async {
-    if (skipQueue) {
+      DownloadItem item, Future<DownloadResult> Function() action) async {
+    if (!item._countsForQueue) {
       _processBackgroundOperation(_QueuedItem(item, action));
     } else {
       _downloadQueue.add(_QueuedItem(item, action));
@@ -74,7 +73,9 @@ class DownloadManager {
 
   void _tryRunNextInQueue() {
     var pendingCount = items
-        .where((element) => element.status == ItemDownloadStatus.pending)
+        .where((element) =>
+            element.status == ItemDownloadStatus.pending &&
+            element._countsForQueue)
         .length;
 
     if (pendingCount < maxConcurrentDownloads) {
@@ -123,16 +124,15 @@ class DownloadManager {
 
   DownloadItem startPlaylistDownload(
       Playlist playlist, Set<String>? songsToDownload, String? webSource) {
-    var item =
-        PlaylistDownloadItem("[Playlist] ${playlist.playlistTitle}", webSource);
+    // We skip the queue because playlists depend on the individual songs which are queued
+    // Otherwise, if we started 10 playlists at the same time the queue would be full and everything would be stuck
+    var item = PlaylistDownloadItem(
+        "[Playlist] ${playlist.playlistTitle}", webSource, false);
 
     item.statusMessage = "Storing metadata";
     item.downloadedIcon = playlist.imageBytes;
 
-    // We skip the queue because it depends on elements that depend on the queue
-    // If we start 10 playlists at the same time, the queue will be full and the playlist will not be able to download the songs
-    // The songs themselves are each their own download item so they will be queued
-    _beginBackgroundOperation(skipQueue: true, item, () async {
+    _beginBackgroundOperation(item, () async {
       // Since this is a playlist we are downloading from the internet if there's the image issue it will be automatically fixed so force the warning to false
       playlist.imageCompatibilityIssue = false;
       await App.modManager.addPlaylist(playlist);
@@ -175,8 +175,8 @@ class DownloadManager {
 
   DownloadItem downloadMapByMetadata(
       BeatSaverMapInfo info, String? webSource, Playlist? downloadTOPlaylist) {
-    var item =
-        SongDownloadItem(info.name, webSource, downloadToPlaylist?.fileName);
+    var item = SongDownloadItem(
+        info.name, webSource, true, downloadToPlaylist?.fileName);
     item.statusMessage = "Downloading metadata";
 
     _beginBackgroundOperation(item, () async {
@@ -190,7 +190,8 @@ class DownloadManager {
 
   DownloadItem downloadMapByHash(
       String hash, String? webSource, Playlist? downloadTOPlaylist) {
-    var item = SongDownloadItem(hash, webSource, downloadToPlaylist?.fileName);
+    var item =
+        SongDownloadItem(hash, webSource, true, downloadToPlaylist?.fileName);
     item.statusMessage = "Downloading metadata";
 
     _beginBackgroundOperation(item, () async {
@@ -205,7 +206,8 @@ class DownloadManager {
 
   DownloadItem downloadMapByID(
       String id, String? webSource, Playlist? downloadTOPlaylist) {
-    var item = SongDownloadItem(id, webSource, downloadToPlaylist?.fileName);
+    var item =
+        SongDownloadItem(id, webSource, true, downloadToPlaylist?.fileName);
     item.statusMessage = "Downloading metadata";
 
     _beginBackgroundOperation(item, () async {
@@ -297,6 +299,7 @@ enum ItemDownloadStatus { pending, done, error }
 class DownloadItem {
   final String? webSource;
   final Completer<DownloadResult> _completer = Completer();
+  final bool _countsForQueue;
 
   Future<DownloadResult> get future => _completer.future;
 
@@ -308,18 +311,20 @@ class DownloadItem {
 
   ItemDownloadStatus status = ItemDownloadStatus.pending;
 
-  DownloadItem(this.name, this.webSource, {this.urlIcon, this.downloadedIcon});
+  DownloadItem(this.name, this.webSource, this._countsForQueue,
+      {this.urlIcon, this.downloadedIcon});
 }
 
 class SongDownloadItem extends DownloadItem {
   final String? playlist;
   String? hash;
 
-  SongDownloadItem(super.name, super.webSource, this.playlist);
+  SongDownloadItem(
+      super.name, super.webSource, super._countsForQueue, this.playlist);
 }
 
 class PlaylistDownloadItem extends DownloadItem {
   String? playlistFileName;
 
-  PlaylistDownloadItem(super.name, super.webSource);
+  PlaylistDownloadItem(super.name, super.webSource, super._countsForQueue);
 }
