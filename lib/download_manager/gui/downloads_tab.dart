@@ -142,9 +142,7 @@ class DownloadsTabState extends State<DownloadsTab> {
           padding: GuiUtil.defaultViewPadding(context),
           children: [
             _playlistSelectWidget(context),
-            const SizedBox(height: 20),
             App.isQuest ? _questOpenBrowser() : _pcDownloadTextInfo(),
-            const SizedBox(height: 30),
             const MapUpdateCheckWidget(),
             PendingDownloadsWidget(
               navigateCallback: _openBrowser,
