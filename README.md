@@ -6,9 +6,10 @@ Starting with 1.4 an experimental build for Windows is also available.
 ## Features
 
 - Manage songs and playlists
-- Download songs and playlists from websites that support the `beatsaver://` and `bsplaylist://` protocols, examples are
+- OneClick download of songs and playlists from websites that support the `beatsaver://` and `bsplaylist://` protocols, examples are
 	- https://bsaber.com/
 	- https://beatsaver.com/
+- Login with your beatsaver account to sync private playlists
 - Download songs directly to playlists
 - Add your own sources to the browser bookmarks
 - Find songs that are not in any playlist
@@ -30,6 +31,8 @@ I tested this app only on my own device where I use a limited number of mods, us
 The app will scan the beat saber `ModData` folder in the quest internal storage. It can load and save `json` playlists in a way that is compatible with BMBF.
 
 Additionally, the app caches the song hashes to files called `.bsq_hash_cache` in each song folder. These files can be safely deleted and this feature can be disabled in the settings, but it will make the app start much slower.
+
+The Windows version works mostly fine, however it does not implement all the common playlist json fields so it may lose some metadata when saving playlists.
 
 ## Screenshots
 
