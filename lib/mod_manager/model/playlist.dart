@@ -128,10 +128,13 @@ class Playlist {
     var obj = {
       'playlistTitle': playlistTitle,
       'playlistAuthor': playlistAuthor,
-      'customData': customData,
       'playlistDescription': playlistDescription,
       'songs': songs.map((e) => e.toJson()).toList(),
     };
+
+    if (customData != null && customData.isNotEmpty) {
+      obj['customData'] =  customData;
+    }
 
     if (imageBytes != null) {
       var encodedImage = base64Encode(imageBytes!);
