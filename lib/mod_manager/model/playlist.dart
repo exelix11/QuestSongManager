@@ -57,10 +57,7 @@ class Playlist {
 
   Map<String, dynamic>? customData;
 
-  String? get _syncUrl => customData?['syncURL'] as String?;
-
-  String? get syncUrl =>
-      _syncUrl != null && _syncUrl!.isNotEmpty ? _syncUrl : null;
+  String? get syncUrl => customData?['syncURL'] as String?;
 
   set syncUrl(String? value) {
     customData ??= {};
@@ -132,7 +129,7 @@ class Playlist {
       'songs': songs.map((e) => e.toJson()).toList(),
     };
 
-    if (customData != null && customData.isNotEmpty) {
+    if (customData?.isNotEmpty ?? false) {
       obj['customData'] =  customData;
     }
 
