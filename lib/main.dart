@@ -67,7 +67,7 @@ class _AppState extends State<App> {
 
 class App extends StatefulWidget {
   static const bool _devSimulateQuest = false;
-  static const String versionName = "1.5";
+  static const String versionName = "1.5.1";
 
   static final bool isDev = _devSimulateQuest && !Platform.isAndroid;
   static final bool isQuest = Platform.isAndroid || _devSimulateQuest;
