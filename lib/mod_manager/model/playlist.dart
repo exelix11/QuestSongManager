@@ -9,6 +9,9 @@ class PlayListSong {
   final String hash;
   final String songName;
 
+  // When loading playlists from json, preserve additional attributes we don't support such as difficulties
+  final Map<String, dynamic> _extraJsonAttributes = {};
+
   BeatSaberSongInfo? _info;
 
   // Lazily try to get additional song info if we have the song
@@ -25,11 +28,23 @@ class PlayListSong {
   }
 
   factory PlayListSong.fromJson(Map<String, dynamic> json) {
-    return PlayListSong(
+    var p = PlayListSong(
       (json['hash'] as String).toLowerCase(),
       json['songName'] as String,
       key: json['key'] as String?,
     );
+
+    for (var entry in json.entries) {
+      if (entry.key == "hash" ||
+          entry.key == "songName" ||
+          entry.key == "key") {
+        continue;
+      }
+
+      p._extraJsonAttributes[entry.key] = entry.value;
+    }
+
+    return p;
   }
 
   bool query(String query) {
@@ -37,11 +52,17 @@ class PlayListSong {
         (meta?.query(query) ?? false);
   }
 
-  Map<String, dynamic> toJson() => {
-        'hash': hash,
-        'songName': songName,
-        'key': key,
-      };
+  Map<String, dynamic> toJson() {
+    Map<String, dynamic> obj = {
+      'hash': hash,
+      'songName': songName,
+      'key': key,
+    };
+
+    obj.addEntries(_extraJsonAttributes.entries);
+
+    return obj;
+  }
 }
 
 class Playlist {
@@ -92,10 +113,13 @@ class Playlist {
       ..playlistTitle = json['playlistTitle'] as String? ?? "unknown name"
       ..playlistAuthor = json['playlistAuthor'] as String? ?? "unknown"
       ..playlistDescription = json['playlistDescription'] as String?
-      ..customData = json['customData'] as Map<String, dynamic>?
-      ..songs = (json['songs'] as List)
-          .map((e) => PlayListSong.fromJson(e as Map<String, dynamic>))
-          .toList();
+      ..customData = json['customData'] as Map<String, dynamic>?;
+
+    for (Map<String, dynamic> song in json['songs'] as List) {
+      if (song.containsKey("hash") && song.containsKey("songName")) {
+        p.songs.add(PlayListSong.fromJson(song));
+      }
+    }
 
     if (image != null) {
       // The pc version prepends base64, to the image string
@@ -130,7 +154,7 @@ class Playlist {
     };
 
     if (customData?.isNotEmpty ?? false) {
-      obj['customData'] =  customData;
+      obj['customData'] = customData;
     }
 
     if (imageBytes != null) {
