@@ -32,30 +32,6 @@ class PlaylistReorderPageState extends State<PlaylistReorderPage> {
     super.dispose();
   }
 
-  void _moveSongUp(int index) {
-    if (index == 0) return;
-    _isDirty = true;
-
-    setState(() {
-      var temp = widget.playlist.songs[index - 1];
-      var song = widget.playlist.songs[index];
-      widget.playlist.songs[index - 1] = song;
-      widget.playlist.songs[index] = temp;
-    });
-  }
-
-  void _moveSongDown(int index) {
-    if (index == widget.playlist.songs.length - 1) return;
-    _isDirty = true;
-
-    setState(() {
-      var temp = widget.playlist.songs[index + 1];
-      var song = widget.playlist.songs[index];
-      widget.playlist.songs[index + 1] = song;
-      widget.playlist.songs[index] = temp;
-    });
-  }
-
   void _reorder(int oldIndex, int newIndex) {
     if (oldIndex == newIndex) return;
     if (newIndex >= widget.playlist.songs.length) return;

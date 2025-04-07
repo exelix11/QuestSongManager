@@ -160,8 +160,8 @@ class ModManager {
       if (entity is File) {
         // Only use lwPath here and not to store the file for platforms where file casing matters
         var lwPath = entity.path.toLowerCase();
-        if (!lwPath.endsWith(".json") && !lwPath.endsWith(".bplist")) {
-          continue;
+        if (lwPath.startsWith(".")) {
+          continue; // Ignore hidden files
         }
 
         Playlist playlist;
@@ -486,7 +486,9 @@ class ModManager {
   }
 
   String _playlistNameToFileName(String name) {
-    var filename = "${name.replaceAll(" ", "_")}.bplist_BMBF.json";
+    // Replace invalid characters with an underscore
+    var sanitized = name.replaceAll(RegExp(r'[<>:"\/\\|?*\0\s]'), '_');
+    var filename = "$sanitized.json";
     return filename;
   }
 

@@ -42,10 +42,6 @@ class PlaylistSyncPageState extends State<PlaylistSyncPage> {
     Navigator.of(context).pop(true);
   }
 
-  void _cancel() {
-    Navigator.of(context).pop(false);
-  }
-
   void _selectBatch(bool from, bool to) {
     for (var i = 0; i < _fromChecked.length; i++) {
       _fromChecked[i] = from;
