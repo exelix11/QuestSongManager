@@ -26,7 +26,7 @@ class BeatSaberVersionDetector {
     }
 
     // If we are simulating the quest on PC
-    if (App.isDev) {
+    if (App.isQuestSimulator) {
       detectedVersion = "fake for development";
 
       return dev_simulate_v_1_35

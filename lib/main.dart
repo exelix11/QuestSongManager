@@ -46,13 +46,13 @@ class _AppState extends State<App> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      scaffoldMessengerKey: App._scaffoldMessengerKey,
-      title: 'Song manager',
-      themeMode: _themeMode,
-      darkTheme: ThemeData.dark(),
-      theme: ThemeData.light(),
-      home: const AppInitializationPage(),
-    );
+        scaffoldMessengerKey: App._scaffoldMessengerKey,
+        title: 'Song manager',
+        themeMode: _themeMode,
+        darkTheme: ThemeData.dark(),
+        theme: ThemeData.light(),
+        home: const AppInitializationPage(),
+        debugShowCheckedModeBanner: false);
   }
 
   static _AppState of(BuildContext context) =>
@@ -66,10 +66,13 @@ class _AppState extends State<App> {
 }
 
 class App extends StatefulWidget {
-  static const bool _devSimulateQuest = false;
   static const String versionName = "1.5.1";
 
-  static final bool isDev = _devSimulateQuest && !Platform.isAndroid;
+  static const bool _devSimulateQuest = false;
+  static const String DevQuestSimulateRoot =
+      "/home/user/bsaberquest/test_sd_root/ModData/com.beatgames.beatsaber";
+
+  static final bool isQuestSimulator = _devSimulateQuest && !Platform.isAndroid;
   static final bool isQuest = Platform.isAndroid || _devSimulateQuest;
 
   static late ModManager modManager;
