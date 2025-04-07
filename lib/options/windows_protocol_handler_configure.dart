@@ -31,8 +31,9 @@ class ProtocolHandlerConfiguration {
         icon: const Icon(Icons.install_desktop));
 
     var remove = _ConfigEntry(
-        title: "Install the OneClick protocol handler",
-        description: "Click here to uninstall the protocol handler. This app will not handle OneClick installs anymore until you reinstall it.",
+        title: "Uninstall the OneClick protocol handler",
+        description:
+            "Click here to uninstall the protocol handler. This app will not handle OneClick installs anymore until you reinstall it.",
         callback: _removeRpcHandler,
         icon: const Icon(Icons.delete_outline));
 
