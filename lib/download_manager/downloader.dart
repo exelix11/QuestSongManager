@@ -249,7 +249,7 @@ class DownloadManager {
       final archive = ZipDecoder().decodeBytes(res.bodyBytes);
       for (var file in archive) {
         if (file.isFile && !file.name.contains("/")) {
-          files[file.name] = file.content as Uint8List;
+          files[file.name] = file.content;
         }
       }
     } catch (e) {

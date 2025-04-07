@@ -28,6 +28,7 @@ class QuestInstallLocationOptions {
         case BeatSaberVersion.v_1_35_OrNewer:
           paths.preferredInstallLocation = CustomLevelLocation.songCore;
           break;
+        // ignore: unreachable_switch_default
         default:
           throw Exception(
               'Unsupported enum value: ${BeatSaberVersionDetector.cachedResult}');

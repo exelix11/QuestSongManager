@@ -22,7 +22,7 @@ class AppInitializationPageState extends State<AppInitializationPage> {
   Future<String?> _getGameRootPath() async {
     // For dev when simulating a quest use this path
     if (App.isQuest && App.isQuestSimulator) {
-      return App.DevQuestSimulateRoot;
+      return App.devQuestSimulateRoot;
     }
 
     // On a quest use the default path

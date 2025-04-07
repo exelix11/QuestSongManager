@@ -69,7 +69,7 @@ class App extends StatefulWidget {
   static const String versionName = "1.5.1";
 
   static const bool _devSimulateQuest = false;
-  static const String DevQuestSimulateRoot =
+  static const String devQuestSimulateRoot =
       "/home/user/bsaberquest/test_sd_root/ModData/com.beatgames.beatsaber";
 
   static final bool isQuestSimulator = _devSimulateQuest && !Platform.isAndroid;
