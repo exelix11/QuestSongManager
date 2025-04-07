@@ -66,7 +66,7 @@ class _AppState extends State<App> {
 }
 
 class App extends StatefulWidget {
-  static const String versionName = "1.5.1";
+  static const String versionName = "1.5.2";
 
   static const bool _devSimulateQuest = false;
   static const String devQuestSimulateRoot =
