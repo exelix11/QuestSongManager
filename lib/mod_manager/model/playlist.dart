@@ -9,6 +9,8 @@ class PlayListSong {
   final String hash;
   final String songName;
 
+  final bool isBuiltinSong;
+
   // When loading playlists from json, preserve additional attributes we don't support such as difficulties
   final Map<String, dynamic> _extraJsonAttributes = {};
 
@@ -17,7 +19,8 @@ class PlayListSong {
   // Lazily try to get additional song info if we have the song
   BeatSaberSongInfo? get meta => _info ??= App.modManager.songs[hash]?.meta;
 
-  PlayListSong(this.hash, this.songName, {this.key});
+  PlayListSong(this.hash, this.songName,
+      {this.key, this.isBuiltinSong = false});
 
   factory PlayListSong.fromSong(Song song) {
     if (!song.isValid) {
@@ -28,11 +31,19 @@ class PlayListSong {
   }
 
   factory PlayListSong.fromJson(Map<String, dynamic> json) {
-    var p = PlayListSong(
-      (json['hash'] as String).toLowerCase(),
-      json['songName'] as String,
-      key: json['key'] as String?,
-    );
+    var name = json['songName'] as String;
+    var hash = json['hash'] as String?;
+    var isBuiltin = false;
+
+    // If the hash is not set, use the name as a hash
+    // This is only the case for builtin songs
+    if (hash == null) {
+      hash = name;
+      isBuiltin = true;
+    }
+
+    var p = PlayListSong(hash.toLowerCase(), name,
+        key: json['key'] as String?, isBuiltinSong: isBuiltin);
 
     for (var entry in json.entries) {
       if (entry.key == "hash" ||
@@ -40,7 +51,6 @@ class PlayListSong {
           entry.key == "key") {
         continue;
       }
-
       p._extraJsonAttributes[entry.key] = entry.value;
     }
 
@@ -54,10 +64,13 @@ class PlayListSong {
 
   Map<String, dynamic> toJson() {
     Map<String, dynamic> obj = {
-      'hash': hash,
       'songName': songName,
       'key': key,
     };
+
+    if (!isBuiltinSong) {
+      obj['hash'] = hash;
+    }
 
     obj.addEntries(_extraJsonAttributes.entries);
 
@@ -116,7 +129,7 @@ class Playlist {
       ..customData = json['customData'] as Map<String, dynamic>?;
 
     for (Map<String, dynamic> song in json['songs'] as List) {
-      if (song.containsKey("hash") && song.containsKey("songName")) {
+      if (song.containsKey("songName")) {
         p.songs.add(PlayListSong.fromJson(song));
       }
     }

@@ -408,13 +408,15 @@ class BeatSaverClient {
 
     var remove = remote.songs
         .where((song) =>
+            !song.isBuiltinSong && // Don't try to sync songs without a hash
             !playlist.songs.any((element) => element.hash == song.hash))
         .map((e) => e.hash)
         .toList();
 
     var add = playlist.songs
-        .where(
-            (song) => !remote.songs.any((element) => element.hash == song.hash))
+        .where((song) =>
+            !song.isBuiltinSong && // Don't try to sync songs without a hash
+            !remote.songs.any((element) => element.hash == song.hash))
         .map((e) => e.hash)
         .toList();
 

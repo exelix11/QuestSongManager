@@ -164,10 +164,12 @@ class PlaylistSyncState {
   PlaylistSyncState(this.playlistFrom, this.playlistTo)
       : _onlyFrom = playlistFrom.songs
             .where((song) =>
+                !song.isBuiltinSong && // Don't try to sync songs without a hash
                 !playlistTo.songs.any((element) => element.hash == song.hash))
             .toList(),
         _onlyTo = playlistTo.songs
             .where((song) =>
+                !song.isBuiltinSong &&
                 !playlistFrom.songs.any((element) => element.hash == song.hash))
             .toList() {
     _fromChecked = List.filled(_onlyFrom.length, true);

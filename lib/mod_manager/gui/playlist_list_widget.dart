@@ -62,7 +62,7 @@ class PlaylistListWidgetController {
       return PlaylistWidget(
         playlist: item,
         onTap: controller.toggleItemSelection,
-        highlit: isSelected,
+        highlight: isSelected,
       );
     } else {
       return PlaylistWidget(

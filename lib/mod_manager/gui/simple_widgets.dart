@@ -123,7 +123,7 @@ class UnknownSongWidget extends StatelessWidget {
     return ListTile(
         leading: const Icon(Icons.music_note),
         title: Text(songName),
-        subtitle: Text("Unknown song ($hash})"),
+        subtitle: Text("Unknown song ($hash)"),
         trailing: SongWidget._widgetForExtraIcons(extraIcons),
         tileColor: highlight ? Theme.of(context).focusColor : null,
         onTap: onTap,
@@ -137,14 +137,14 @@ class PlaylistWidget extends StatelessWidget {
       required this.playlist,
       this.onTap,
       this.extraIcon,
-      this.highlit = false,
+      this.highlight = false,
       this.onLongPress});
 
   final IconButton? extraIcon;
   final Playlist playlist;
   final Function(Playlist)? onTap;
   final Function(Playlist)? onLongPress;
-  final bool highlit;
+  final bool highlight;
 
   void _onTapEvent() {
     if (onTap != null) {
@@ -169,7 +169,7 @@ class PlaylistWidget extends StatelessWidget {
         title: Text(playlist.playlistTitle),
         trailing: extraIcon,
         subtitle: Text("${playlist.songs.length} songs\n${playlist.fileName}"),
-        tileColor: highlit ? Theme.of(context).focusColor : null,
+        tileColor: highlight ? Theme.of(context).focusColor : null,
         onTap: _onTapEvent,
         onLongPress: _onLongPressEvent);
   }

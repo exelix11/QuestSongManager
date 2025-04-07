@@ -374,7 +374,7 @@ class PlaylistDetailPageState extends State<PlaylistDetailPage> {
       bool isSelected) {
     selectCall() => controller.toggleItemSelection(song);
 
-    if (App.modManager.songs.containsKey(song.hash)) {
+    if (!song.isBuiltinSong && App.modManager.songs.containsKey(song.hash)) {
       var appSong = App.modManager.songs[song.hash]!;
       return SongWidget(
         song: appSong,
@@ -387,14 +387,16 @@ class PlaylistDetailPageState extends State<PlaylistDetailPage> {
       );
     } else {
       return UnknownSongWidget(
-        hash: song.hash,
+        hash: song.isBuiltinSong ? "Built-in song" : song.hash,
         songName: song.songName,
         extraIcons: [
           IconButton(
               tooltip: "Remove song",
               onPressed: () => _removeSongByHash(song.hash),
               icon: const Icon(Icons.delete)),
-          if (!_isDownloadingAll && !_downloadingSongs.contains(song.hash))
+          if (!_isDownloadingAll &&
+              !_downloadingSongs.contains(song.hash) &&
+              !song.isBuiltinSong)
             IconButton(
                 tooltip: "Download song",
                 onPressed: () => _tryDownloadMissingSong(song.hash),
