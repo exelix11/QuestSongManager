@@ -86,7 +86,34 @@ class BeatSaberSongInfo {
     return false;
   }
 
-  factory BeatSaberSongInfo.fromJson(Map<String, dynamic> json) {
+  static fromJson(Map<String, dynamic> json) {
+    if (json.containsKey('_songName')) {
+      return BeatSaberSongInfo.fromJsonLegacy(json);
+    }
+
+    if (json.containsKey('song')) {
+      return BeatSaberSongInfo.fromJsonV4(json);
+    }
+
+    throw Exception(
+        "The song info JSON is not valid. It could be using an unsupported version.");
+  }
+
+  // TODO: This is very barebones, it's only a fix to allow downloading such songs, may need better support in the future.
+  factory BeatSaberSongInfo.fromJsonV4(Map<String, dynamic> json) {
+    return BeatSaberSongInfo(
+      json['song']['title'] as String,
+      json['coverImageFilename'] as String?,
+      json['song']['subTitle'] as String?,
+      json['song']['author'] as String?,
+      null,
+      (json['difficultyBeatmaps'] as List)
+          .map((e) => e["beatmapDataFilename"] as String)
+          .toList(),
+    );
+  }
+
+  factory BeatSaberSongInfo.fromJsonLegacy(Map<String, dynamic> json) {
     return BeatSaberSongInfo(
       json['_songName'] as String,
       json['_coverImageFilename'] as String?,
