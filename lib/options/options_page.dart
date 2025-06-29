@@ -91,11 +91,10 @@ class OptionsPageState extends State<OptionsPage> {
     }
 
     var future = _doRehashAllSongs();
-    var res = await GuiUtil.loadingDialog(
+    var num = await GuiUtil.loadingDialog(
         context, "Recalculating the hash of all the songs...", future);
 
-    if (res != null) {
-      var num = await res;
+    if (num != null) {
       if (num == 0) {
         App.showToast("All songs hashes were correct");
       } else {

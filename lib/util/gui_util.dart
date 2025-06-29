@@ -31,9 +31,9 @@ class GuiUtil {
     );
   }
 
-  static Future<Future<T>?> loadingDialog<T>(
+  static Future<T?> loadingDialog<T>(
       BuildContext context, String message, Future<T> future) async {
-    return showDialog<Future<T>>(
+    return await showDialog<T>(
       context: context,
       barrierDismissible: false,
       builder: (BuildContext context) {
@@ -49,7 +49,7 @@ class GuiUtil {
 
                 // Schedule a pop to happen after the toast
                 SchedulerBinding.instance.addPostFrameCallback((_) {
-                  Navigator.of(context).pop();
+                  Navigator.of(context).pop(snapshot.data);
                 });
               }
               return const Center(

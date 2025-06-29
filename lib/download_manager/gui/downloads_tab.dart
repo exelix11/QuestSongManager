@@ -1,9 +1,12 @@
 import 'dart:io';
 
+import 'package:bsaberquest/download_manager/beat_saver_api.dart';
 import 'package:bsaberquest/download_manager/gui/browser_page.dart';
 import 'package:bsaberquest/download_manager/gui/pending_downloads_widget.dart';
 import 'package:bsaberquest/download_manager/gui/song_update_check_widget.dart';
+import 'package:bsaberquest/download_manager/gui/util.dart';
 import 'package:bsaberquest/options/windows_protocol_handler_configure.dart';
+import 'package:bsaberquest/util/account_playlist_picker.dart';
 import 'package:bsaberquest/util/gui_util.dart';
 import 'package:bsaberquest/main.dart';
 import 'package:bsaberquest/mod_manager/gui/simple_widgets.dart';
@@ -65,6 +68,13 @@ class DownloadsTabState extends State<DownloadsTab> {
     });
   }
 
+  void _userCloudPlaylists() async {
+    var playlist = await AccountPlaylistPicker.pick(context);
+    if (playlist != null && mounted) {
+      DownloadUtil.downloadPlaylist(context, playlist.makeLinkUrl(), null);
+    }
+  }
+
   Widget _playlistSelectWidget(BuildContext context) {
     if (App.downloadManager.downloadToPlaylist == null) {
       return ListTile(
@@ -118,6 +128,12 @@ class DownloadsTabState extends State<DownloadsTab> {
                 ))));
   }
 
+  Widget _myCloudPlaylistsButton() => ListTile(
+        onTap: _userCloudPlaylists,
+        title: const Text('My BeatSaver playlists'),
+        leading: const Icon(Icons.cloud),
+      );
+
   Widget _questOpenBrowser() {
     return ListTile(
       onTap: () => _openBrowser(null),
@@ -143,6 +159,8 @@ class DownloadsTabState extends State<DownloadsTab> {
           children: [
             _playlistSelectWidget(context),
             App.isQuest ? _questOpenBrowser() : _pcDownloadTextInfo(),
+            if (App.beatSaverClient.userState.state == LoginState.authenticated)
+              _myCloudPlaylistsButton(),
             const MapUpdateCheckWidget(),
             PendingDownloadsWidget(
               navigateCallback: _openBrowser,

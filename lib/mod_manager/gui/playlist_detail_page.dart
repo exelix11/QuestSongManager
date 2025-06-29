@@ -3,6 +3,7 @@ import 'dart:collection';
 
 import 'package:bsaberquest/download_manager/beat_saver_api.dart';
 import 'package:bsaberquest/mod_manager/gui/playlist_reorder_page.dart';
+import 'package:bsaberquest/util/account_playlist_picker.dart';
 import 'package:bsaberquest/util/generic_list_widget.dart';
 import 'package:bsaberquest/util/gui_util.dart';
 import 'package:bsaberquest/main.dart';
@@ -293,32 +294,10 @@ class PlaylistDetailPageState extends State<PlaylistDetailPage> {
 
   void _linkPlaylist() async {
     try {
-      var userPlaylists = await App.beatSaverClient.getUserPlaylists();
-
-      if (!mounted) return;
-
-      var picked = await CommonPickers.pick(
-          context,
-          ListItemPickerPage(
-            title: "Select a playlist from your account",
-            items: userPlaylists,
-            filter: (text, playlist) => playlist.query(text),
-            itemBuilder: (context, confirm, playlist) {
-              return ListTile(
-                onTap: () => confirm(playlist),
-                title: Text(playlist.name),
-                subtitle: Text(playlist.private ? "Private" : "Public"),
-                leading: playlist.image == null
-                    ? const Icon(Icons.music_note)
-                    : Image.network(playlist.image!),
-              );
-            },
-          ));
-
+      var picked = await AccountPlaylistPicker.pick(context);
       if (picked == null) return;
 
-      var url = BeatSaverClient.makePlaylistLinkUrl(picked);
-      widget.playlist.syncUrl = url;
+      widget.playlist.syncUrl = picked.makeLinkUrl();
       App.modManager.applyPlaylistChanges(widget.playlist);
     } catch (e) {
       App.showToast("$e");

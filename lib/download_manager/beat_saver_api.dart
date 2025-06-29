@@ -380,6 +380,7 @@ class BeatSaverClient {
       throw Exception("You must be logged in to view playlists");
     }
 
+    // TODO: support multiple pages, this only returns the first page.
     var data = await get("$_apiUri/playlists/user/${userState.userId}/0");
     var json = List<dynamic>.from(jsonDecode(data)["docs"]);
     return json.map((e) => BeatSaverPlaylistMetadata.fromJson(e)).toList();
@@ -476,6 +477,7 @@ class MapVersion {
 class BeatSaverPlaylistMetadata {
   final String id;
   final String name;
+  final String? description;
   final String authorId;
   final String authorName;
   final String? image;
@@ -487,6 +489,8 @@ class BeatSaverPlaylistMetadata {
         authorName.toLowerCase().contains(query);
   }
 
+  String makeLinkUrl() => BeatSaverClient.makePlaylistLinkUrl(this);
+
   BeatSaverPlaylistMetadata(
       {required this.id,
       required this.name,
@@ -494,7 +498,8 @@ class BeatSaverPlaylistMetadata {
       required this.authorName,
       String? image,
       required this.private,
-      required this.downloadUrl})
+      required this.downloadUrl,
+      this.description})
       : image = image == null
             ? null
             // Sometimes the image is in the format file:// which is not valid
@@ -512,6 +517,7 @@ class BeatSaverPlaylistMetadata {
           json["playlistImage"] as String?,
       private: json["type"] == "Private",
       downloadUrl: json["downloadURL"] as String,
+      description: json["description"] as String?,
     );
   }
 }
