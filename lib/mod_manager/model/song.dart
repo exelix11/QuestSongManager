@@ -49,9 +49,19 @@ class Song {
   }
 
   factory Song.fromError(String folderPath, String error, String identifier) {
-    return Song(identifier, folderPath, "error", false,
-        BeatSaberSongInfo("Error: $error", "", null, null, null, []));
+    return Song(
+        identifier,
+        folderPath,
+        "error",
+        false,
+        BeatSaberSongInfo(
+            "Error: $error", "", null, null, null, [], SongVersion.legacy));
   }
+}
+
+enum SongVersion {
+  v4,
+  legacy // TODO: Actually, not sure about what's the right name for this.
 }
 
 class BeatSaberSongInfo {
@@ -61,6 +71,8 @@ class BeatSaberSongInfo {
   final String? songSubName;
   final String? songAuthorName;
   final String? levelAuthorName;
+
+  final SongVersion version;
 
   final List<String> fileNames;
 
@@ -110,6 +122,7 @@ class BeatSaberSongInfo {
       (json['difficultyBeatmaps'] as List)
           .map((e) => e["beatmapDataFilename"] as String)
           .toList(),
+      SongVersion.v4,
     );
   }
 
@@ -124,9 +137,10 @@ class BeatSaberSongInfo {
           .expand((e) => e["_difficultyBeatmaps"] as List)
           .map((e) => e["_beatmapFilename"] as String)
           .toList(),
+      SongVersion.legacy,
     );
   }
 
   BeatSaberSongInfo(this.songName, this.coverImageFilename, this.songSubName,
-      this.songAuthorName, this.levelAuthorName, this.fileNames);
+      this.songAuthorName, this.levelAuthorName, this.fileNames, this.version);
 }

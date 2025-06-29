@@ -140,6 +140,8 @@ class SongDetailPage extends StatelessWidget {
                   _beatSaberVersionWarn(),
                   Text("Path on disk: ${song.folderPath}"),
                   Text("Song hash: ${_nameOrUnknown(song.hash)}"),
+                  if (song.meta.version == SongVersion.v4)
+                    Text("Song format version: v4"),
                 ],
               ),
             ),
